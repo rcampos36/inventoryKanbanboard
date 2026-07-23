@@ -13,6 +13,7 @@ interface ManagerColumnProps {
   manager: Manager;
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
+  onEditCheckoutDates?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -25,7 +26,12 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function ManagerColumn({ manager, cars, onMove }: ManagerColumnProps) {
+export function ManagerColumn({
+  manager,
+  cars,
+  onMove,
+  onEditCheckoutDates,
+}: ManagerColumnProps) {
   const containerId = managerContainerId(manager.id);
   const { setNodeRef, isOver } = useDroppable({
     id: containerId,
@@ -64,7 +70,12 @@ export function ManagerColumn({ manager, cars, onMove }: ManagerColumnProps) {
           strategy={verticalListSortingStrategy}
         >
           {cars.map((car) => (
-            <CarCard key={car.id} car={car} onMove={onMove} />
+            <CarCard
+              key={car.id}
+              car={car}
+              onMove={onMove}
+              onEditCheckoutDates={onEditCheckoutDates}
+            />
           ))}
         </SortableContext>
 

@@ -24,21 +24,34 @@ import {
 } from "@/lib/data";
 import {
   applyContainerLocation,
+  applyHalfDeal,
   carContainerId,
+  carInvolvesSalesperson,
   currentMonthKey,
   formatMonthLabel,
+  formatShortDate,
+  isCheckoutAssignment,
   managerContainerId,
   monthKeyFromDate,
+  needsCheckoutDates,
   overnightContainerId,
+  saleCreditFor,
   salespersonContainerId,
+  addDaysIsoDate,
+  todayIsoDate,
+  tomorrowIsoDate,
   type Car,
+  type CheckoutDates,
 } from "@/lib/types";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
+import { TodaySalesColumn } from "./TodaySalesColumn";
 import { ManagerColumn } from "./ManagerColumn";
 import { OvernightColumn } from "./OvernightColumn";
 import { CarCard } from "./CarCard";
 import { AddCarModal } from "./AddCarModal";
+import { CheckoutDatesModal } from "./CheckoutDatesModal";
+import { HalfDealModal } from "./HalfDealModal";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -69,9 +82,41 @@ export function KanbanBoard() {
   const [modalOpen, setModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [salesMonth, setSalesMonth] = useState(currentMonthKey);
+  const [salesDay, setSalesDay] = useState(todayIsoDate);
+  const [halfDealCarId, setHalfDealCarId] = useState<string | null>(null);
+  const [checkoutPrompt, setCheckoutPrompt] = useState<{
+    carId: string;
+    targetContainerId: string;
+    outDate: string;
+    returnDate: string;
+    tagNumber: string;
+    mode: "assign" | "edit";
+  } | null>(null);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  // Overnight (or anytime the calendar date changes): roll the sales day forward.
+  useEffect(() => {
+    let lastCalendarDay = todayIsoDate();
+
+    function syncCalendarDay() {
+      const now = todayIsoDate();
+      if (now !== lastCalendarDay) {
+        lastCalendarDay = now;
+        setSalesDay(now);
+      }
+    }
+
+    const intervalId = window.setInterval(syncCalendarDay, 30_000);
+    window.addEventListener("focus", syncCalendarDay);
+    document.addEventListener("visibilitychange", syncCalendarDay);
+    return () => {
+      window.clearInterval(intervalId);
+      window.removeEventListener("focus", syncCalendarDay);
+      document.removeEventListener("visibilitychange", syncCalendarDay);
+    };
   }, []);
 
   const sensors = useSensors(
@@ -125,13 +170,27 @@ export function KanbanBoard() {
     return options;
   }, []);
 
+  const allSoldCars = useMemo(() => {
+    return SALESPEOPLE.flatMap(
+      (person) => board[salespersonContainerId(person.id)] ?? []
+    );
+  }, [board]);
+
   const rankedSalespeople = useMemo(() => {
     const scored = SALESPEOPLE.map((person) => {
-      const allCars = board[salespersonContainerId(person.id)] ?? [];
-      const monthCars = allCars.filter(
-        (car) => car.soldAt && monthKeyFromDate(car.soldAt) === salesMonth
+      const monthCarsAll = allSoldCars.filter(
+        (car) =>
+          car.soldAt &&
+          monthKeyFromDate(car.soldAt) === salesMonth &&
+          carInvolvesSalesperson(car, person.id)
       );
-      return { person, monthCars, count: monthCars.length };
+      // Open sales day stays in Daily Sales until End day / overnight rollover.
+      const monthCars = monthCarsAll.filter((car) => car.soldAt !== salesDay);
+      const count = monthCarsAll.reduce(
+        (sum, car) => sum + saleCreditFor(car, person.id),
+        0
+      );
+      return { person, monthCars, count };
     });
 
     scored.sort((a, b) => {
@@ -143,7 +202,27 @@ export function KanbanBoard() {
       ...entry,
       rank: index + 1,
     }));
-  }, [board, salesMonth]);
+  }, [allSoldCars, salesMonth, salesDay]);
+
+  const todaySalesByPerson = useMemo(() => {
+    return SALESPEOPLE.map((person) => {
+      const todayCars = allSoldCars.filter(
+        (car) =>
+          car.soldAt === salesDay && carInvolvesSalesperson(car, person.id)
+      );
+      const saleCount = todayCars.reduce(
+        (sum, car) => sum + saleCreditFor(car, person.id),
+        0
+      );
+      return { person, todayCars, saleCount };
+    });
+  }, [allSoldCars, salesDay]);
+
+  const halfDealFound = halfDealCarId ? findCar(halfDealCarId) : null;
+
+  function endSalesDay() {
+    setSalesDay((day) => addDaysIsoDate(day, 1));
+  }
 
   function findContainer(id: string): string | undefined {
     if (id in board) return id;
@@ -183,7 +262,9 @@ export function KanbanBoard() {
 
       const moved = applyContainerLocation(
         activeItems[activeIndex],
-        overContainer
+        overContainer,
+        undefined,
+        salesDay
       );
       const overIndex = overItems.findIndex((c) => c.id === overId);
       const insertAt = overIndex >= 0 ? overIndex : overItems.length;
@@ -197,6 +278,147 @@ export function KanbanBoard() {
           ...overItems.slice(insertAt),
         ],
       };
+    });
+  }
+
+  function findCar(carId: string): { car: Car; containerId: string } | null {
+    const containerId = CONTAINER_IDS.find((id) =>
+      board[id]?.some((c) => c.id === carId)
+    );
+    if (!containerId) return null;
+    const car = board[containerId].find((c) => c.id === carId);
+    if (!car) return null;
+    return { car, containerId };
+  }
+
+  function moveCar(
+    carId: string,
+    targetContainerId: string,
+    checkoutDates?: CheckoutDates
+  ) {
+    setBoard((prev) => {
+      const source = CONTAINER_IDS.find((id) =>
+        prev[id]?.some((c) => c.id === carId)
+      );
+      if (!source) return prev;
+      const car = prev[source].find((c) => c.id === carId);
+      if (!car) return prev;
+
+      // Editing dates in place (same overnight container).
+      if (source === targetContainerId) {
+        if (!checkoutDates) return prev;
+        return {
+          ...prev,
+          [source]: prev[source].map((c) =>
+            c.id === carId
+              ? {
+                  ...c,
+                  outDate: checkoutDates.outDate,
+                  returnDate: checkoutDates.returnDate,
+                  tagNumber: checkoutDates.tagNumber,
+                }
+              : c
+          ),
+        };
+      }
+
+      const moved = applyContainerLocation(
+        car,
+        targetContainerId,
+        checkoutDates,
+        salesDay
+      );
+      return {
+        ...prev,
+        [source]: prev[source].filter((c) => c.id !== carId),
+        [targetContainerId]: [...(prev[targetContainerId] ?? []), moved],
+      };
+    });
+  }
+
+  function requestMove(carId: string, targetContainerId: string) {
+    const found = findCar(carId);
+    if (!found) return;
+
+    if (needsCheckoutDates(targetContainerId)) {
+      setCheckoutPrompt({
+        carId,
+        targetContainerId,
+        outDate: found.car.outDate ?? todayIsoDate(),
+        returnDate: found.car.returnDate ?? tomorrowIsoDate(),
+        tagNumber: found.car.tagNumber ?? "",
+        mode: "assign",
+      });
+      return;
+    }
+
+    moveCar(carId, targetContainerId);
+  }
+
+  function assignHalfDeal(
+    carId: string,
+    primaryId: string,
+    partnerId: string
+  ) {
+    setBoard((prev) => {
+      const source = CONTAINER_IDS.find((id) =>
+        prev[id]?.some((c) => c.id === carId)
+      );
+      if (!source) return prev;
+      const car = prev[source].find((c) => c.id === carId);
+      if (!car) return prev;
+
+      const moved = applyHalfDeal(car, primaryId, partnerId, salesDay);
+      const target = salespersonContainerId(primaryId);
+      if (source === target) {
+        return {
+          ...prev,
+          [source]: prev[source].map((c) => (c.id === carId ? moved : c)),
+        };
+      }
+      return {
+        ...prev,
+        [source]: prev[source].filter((c) => c.id !== carId),
+        [target]: [...(prev[target] ?? []), moved],
+      };
+    });
+    setHalfDealCarId(null);
+  }
+
+  function halfDealWith(carId: string, partnerId: string) {
+    const found = findCar(carId);
+    if (!found?.car.salespersonId) {
+      setHalfDealCarId(carId);
+      return;
+    }
+    assignHalfDeal(carId, found.car.salespersonId, partnerId);
+  }
+
+  function clearHalfDeal(carId: string) {
+    setBoard((prev) => {
+      const source = CONTAINER_IDS.find((id) =>
+        prev[id]?.some((c) => c.id === carId)
+      );
+      if (!source) return prev;
+      return {
+        ...prev,
+        [source]: prev[source].map((c) =>
+          c.id === carId ? { ...c, coSalespersonId: undefined } : c
+        ),
+      };
+    });
+  }
+
+  function requestEditCheckoutDates(carId: string) {
+    const found = findCar(carId);
+    if (!found || !isCheckoutAssignment(found.car)) return;
+    setCheckoutPrompt({
+      carId,
+      targetContainerId: found.containerId,
+      outDate: found.car.outDate ?? todayIsoDate(),
+      returnDate: found.car.returnDate ?? tomorrowIsoDate(),
+      tagNumber: found.car.tagNumber ?? "",
+      mode: "edit",
     });
   }
 
@@ -222,24 +444,23 @@ export function KanbanBoard() {
           [activeContainer]: arrayMove(prev[activeContainer], oldIndex, newIndex),
         }));
       }
+      return;
     }
-  }
 
-  function moveCar(carId: string, targetContainerId: string) {
-    setBoard((prev) => {
-      const source = CONTAINER_IDS.find((id) =>
-        prev[id]?.some((c) => c.id === carId)
-      );
-      if (!source || source === targetContainerId) return prev;
-      const car = prev[source].find((c) => c.id === carId);
-      if (!car) return prev;
-      const moved = applyContainerLocation(car, targetContainerId);
-      return {
-        ...prev,
-        [source]: prev[source].filter((c) => c.id !== carId),
-        [targetContainerId]: [...(prev[targetContainerId] ?? []), moved],
-      };
-    });
+    // After a cross-container drop onto overnight, confirm dates.
+    if (needsCheckoutDates(overContainer)) {
+      const car = board[overContainer]?.find((c) => c.id === activeId);
+      if (car) {
+        setCheckoutPrompt({
+          carId: activeId,
+          targetContainerId: overContainer,
+          outDate: car.outDate ?? todayIsoDate(),
+          returnDate: car.returnDate ?? tomorrowIsoDate(),
+          tagNumber: car.tagNumber ?? "",
+          mode: "assign",
+        });
+      }
+    }
   }
 
   function handleAddCar(car: Omit<Car, "id">) {
@@ -354,7 +575,11 @@ export function KanbanBoard() {
                     key={column.id}
                     column={column}
                     cars={filteredBoard[column.id] ?? []}
-                    onMove={moveCar}
+                    onMove={requestMove}
+                    onEditCheckoutDates={requestEditCheckoutDates}
+                    onRequestHalfDeal={setHalfDealCarId}
+                    onHalfDealWith={halfDealWith}
+                    onClearHalfDeal={clearHalfDeal}
                   />
                 ))}
               </div>
@@ -389,9 +614,66 @@ export function KanbanBoard() {
                   cars={monthCars}
                   rank={rank}
                   monthSoldCount={count}
-                  onMove={moveCar}
+                  onMove={requestMove}
+                  onRequestHalfDeal={setHalfDealCarId}
+                  onHalfDealWith={halfDealWith}
+                  onClearHalfDeal={clearHalfDeal}
                 />
               ))}
+            </div>
+
+            <div className="mt-5">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Daily Sales · {formatShortDate(salesDay)}
+                </h3>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    Date
+                    <input
+                      type="date"
+                      value={salesDay}
+                      onChange={(e) => {
+                        if (e.target.value) setSalesDay(e.target.value);
+                      }}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={() => setSalesDay(todayIsoDate())}
+                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                  >
+                    Today
+                  </button>
+                  <button
+                    type="button"
+                    onClick={endSalesDay}
+                    className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+                    title="Close this sales day and move these sales into each team member's monthly column"
+                  >
+                    End day
+                  </button>
+                </div>
+              </div>
+              <p className="mb-3 text-xs text-slate-500">
+                Drop sales here for this date. End day (or overnight) moves them
+                into the monthly columns above.
+              </p>
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {todaySalesByPerson.map(({ person, todayCars, saleCount }) => (
+                  <TodaySalesColumn
+                    key={person.id}
+                    salesperson={person}
+                    cars={todayCars}
+                    saleCount={saleCount}
+                    onMove={requestMove}
+                    onRequestHalfDeal={setHalfDealCarId}
+                    onHalfDealWith={halfDealWith}
+                    onClearHalfDeal={clearHalfDeal}
+                  />
+                ))}
+              </div>
             </div>
           </section>
 
@@ -405,7 +687,7 @@ export function KanbanBoard() {
                   key={manager.id}
                   manager={manager}
                   cars={board[managerContainerId(manager.id)] ?? []}
-                  onMove={moveCar}
+                  onMove={requestMove}
                 />
               ))}
             </div>
@@ -421,7 +703,8 @@ export function KanbanBoard() {
                   key={person.id}
                   person={person}
                   cars={board[overnightContainerId(person.id)] ?? []}
-                  onMove={moveCar}
+                  onMove={requestMove}
+                  onEditCheckoutDates={requestEditCheckoutDates}
                 />
               ))}
             </div>
@@ -438,7 +721,11 @@ export function KanbanBoard() {
                     key={column.id}
                     column={column}
                     cars={filteredBoard[column.id] ?? []}
-                    onMove={moveCar}
+                    onMove={requestMove}
+                    onEditCheckoutDates={requestEditCheckoutDates}
+                    onRequestHalfDeal={setHalfDealCarId}
+                    onHalfDealWith={halfDealWith}
+                    onClearHalfDeal={clearHalfDeal}
                   />
                 ))}
               </div>
@@ -456,6 +743,44 @@ export function KanbanBoard() {
         columns={COLUMNS}
         onClose={() => setModalOpen(false)}
         onAdd={handleAddCar}
+      />
+
+      <CheckoutDatesModal
+        open={Boolean(checkoutPrompt)}
+        title={
+          checkoutPrompt?.mode === "edit"
+            ? "Edit overnight details"
+            : "Overnight demo details"
+        }
+        subtitle={
+          checkoutPrompt
+            ? "Enter the tag number used, when the customer is taking the car out, and when it is due back."
+            : undefined
+        }
+        initialOutDate={checkoutPrompt?.outDate}
+        initialReturnDate={checkoutPrompt?.returnDate}
+        initialTagNumber={checkoutPrompt?.tagNumber}
+        onClose={() => setCheckoutPrompt(null)}
+        onConfirm={(dates) => {
+          if (!checkoutPrompt) return;
+          moveCar(
+            checkoutPrompt.carId,
+            checkoutPrompt.targetContainerId,
+            dates
+          );
+          setCheckoutPrompt(null);
+        }}
+      />
+
+      <HalfDealModal
+        open={Boolean(halfDealCarId)}
+        initialPrimaryId={halfDealFound?.car.salespersonId}
+        initialPartnerId={halfDealFound?.car.coSalespersonId}
+        onClose={() => setHalfDealCarId(null)}
+        onConfirm={(primaryId, partnerId) => {
+          if (!halfDealCarId) return;
+          assignHalfDeal(halfDealCarId, primaryId, partnerId);
+        }}
       />
     </div>
   );

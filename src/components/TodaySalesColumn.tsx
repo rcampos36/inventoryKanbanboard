@@ -8,16 +8,21 @@ import {
 import { CarCard } from "./CarCard";
 import { getModelColor } from "@/lib/colors";
 import {
-  overnightContainerId,
+  formatSaleCount,
+  salespersonContainerId,
   type Car,
   type Salesperson,
 } from "@/lib/types";
 
-interface OvernightColumnProps {
-  person: Salesperson;
+interface TodaySalesColumnProps {
+  salesperson: Salesperson;
   cars: Car[];
+  saleCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onRequestHalfDeal?: (carId: string) => void;
+  onHalfDealWith?: (carId: string, partnerId: string) => void;
+  onClearHalfDeal?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -30,18 +35,22 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-export function OvernightColumn({
-  person,
+export function TodaySalesColumn({
+  salesperson,
   cars,
+  saleCount,
   onMove,
   onEditCheckoutDates,
-}: OvernightColumnProps) {
-  const containerId = overnightContainerId(person.id);
+  onRequestHalfDeal,
+  onHalfDealWith,
+  onClearHalfDeal,
+}: TodaySalesColumnProps) {
+  const containerId = salespersonContainerId(salesperson.id);
   const { setNodeRef, isOver } = useDroppable({
     id: containerId,
-    data: { type: "overnight", overnightId: person.id },
+    data: { type: "salesperson", salespersonId: salesperson.id },
   });
-  const color = getModelColor(person.name);
+  const color = getModelColor(salesperson.name);
 
   return (
     <div className="flex w-72 shrink-0 flex-col rounded-2xl bg-white ring-1 ring-slate-200">
@@ -49,14 +58,15 @@ export function OvernightColumn({
         <span
           className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${color.accent}`}
         >
-          {initials(person.name)}
+          {initials(salesperson.name)}
         </span>
         <div className="min-w-0 flex-1">
           <h3 className="truncate text-sm font-semibold text-slate-800">
-            {person.name}
+            {salesperson.name}
           </h3>
           <p className="text-xs text-slate-500">
-            {cars.length} overnight {cars.length === 1 ? "demo" : "demos"}
+            {formatSaleCount(saleCount)}{" "}
+            {saleCount === 1 ? "sale" : "sales"} this day
           </p>
         </div>
       </div>
@@ -66,26 +76,35 @@ export function OvernightColumn({
         className={[
           "flex flex-1 flex-col gap-2.5 rounded-b-2xl px-3 pb-3 pt-1",
           "min-h-32 transition-colors",
-          isOver ? "bg-amber-50" : "",
+          isOver ? "bg-emerald-50" : "",
         ].join(" ")}
       >
         <SortableContext
-          items={cars.map((c) => c.id)}
+          items={cars
+            .filter((c) => c.salespersonId === salesperson.id)
+            .map((c) => c.id)}
           strategy={verticalListSortingStrategy}
         >
-          {cars.map((car) => (
-            <CarCard
-              key={car.id}
-              car={car}
-              onMove={onMove}
-              onEditCheckoutDates={onEditCheckoutDates}
-            />
-          ))}
+          {cars.map((car) => {
+            const isPrimary = car.salespersonId === salesperson.id;
+            return (
+              <CarCard
+                key={isPrimary ? car.id : `${car.id}__co`}
+                car={car}
+                draggable={isPrimary}
+                onMove={onMove}
+                onEditCheckoutDates={onEditCheckoutDates}
+                onRequestHalfDeal={onRequestHalfDeal}
+                onHalfDealWith={onHalfDealWith}
+                onClearHalfDeal={onClearHalfDeal}
+              />
+            );
+          })}
         </SortableContext>
 
         {cars.length === 0 && (
           <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-6 text-center text-xs text-slate-400">
-            Drop an overnight demo here
+            Drop a sold car here
           </div>
         )}
       </div>

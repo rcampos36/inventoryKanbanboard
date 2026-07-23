@@ -1,13 +1,8 @@
 "use client";
 
-import { useDroppable } from "@dnd-kit/core";
-import {
-  SortableContext,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { CarCard } from "./CarCard";
 import { getModelColor } from "@/lib/colors";
-import { salespersonContainerId, type Car, type Salesperson } from "@/lib/types";
+import { formatSaleCount, type Car, type Salesperson } from "@/lib/types";
 
 interface SalespersonColumnProps {
   salesperson: Salesperson;
@@ -15,6 +10,10 @@ interface SalespersonColumnProps {
   rank: number;
   monthSoldCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
+  onEditCheckoutDates?: (carId: string) => void;
+  onRequestHalfDeal?: (carId: string) => void;
+  onHalfDealWith?: (carId: string, partnerId: string) => void;
+  onClearHalfDeal?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -34,18 +33,18 @@ function rankBadgeClass(rank: number): string {
   return "bg-slate-100 text-slate-600";
 }
 
+/** Month ranking column — display only; drop sales into Daily Sales. */
 export function SalespersonColumn({
   salesperson,
   cars,
   rank,
   monthSoldCount,
   onMove,
+  onEditCheckoutDates,
+  onRequestHalfDeal,
+  onHalfDealWith,
+  onClearHalfDeal,
 }: SalespersonColumnProps) {
-  const containerId = salespersonContainerId(salesperson.id);
-  const { setNodeRef, isOver } = useDroppable({
-    id: containerId,
-    data: { type: "salesperson", salespersonId: salesperson.id },
-  });
   const color = getModelColor(salesperson.name);
 
   return (
@@ -69,31 +68,33 @@ export function SalespersonColumn({
             {salesperson.name}
           </h3>
           <p className="text-xs text-slate-500">
-            {monthSoldCount} {monthSoldCount === 1 ? "sale" : "sales"} this month
+            {formatSaleCount(monthSoldCount)}{" "}
+            {monthSoldCount === 1 ? "sale" : "sales"} this month
           </p>
         </div>
       </div>
 
-      <div
-        ref={setNodeRef}
-        className={[
-          "flex flex-1 flex-col gap-2.5 rounded-b-2xl px-3 pb-3 pt-1",
-          "min-h-32 transition-colors",
-          isOver ? "bg-emerald-50" : "",
-        ].join(" ")}
-      >
-        <SortableContext
-          items={cars.map((c) => c.id)}
-          strategy={verticalListSortingStrategy}
-        >
-          {cars.map((car) => (
-            <CarCard key={car.id} car={car} onMove={onMove} />
-          ))}
-        </SortableContext>
+      <div className="flex flex-1 flex-col gap-2.5 rounded-b-2xl px-3 pb-3 pt-1 min-h-32">
+        {cars.map((car) => (
+          <CarCard
+            key={
+              car.salespersonId === salesperson.id
+                ? `${car.id}__month`
+                : `${car.id}__month-co`
+            }
+            car={car}
+            draggable={false}
+            onMove={onMove}
+            onEditCheckoutDates={onEditCheckoutDates}
+            onRequestHalfDeal={onRequestHalfDeal}
+            onHalfDealWith={onHalfDealWith}
+            onClearHalfDeal={onClearHalfDeal}
+          />
+        ))}
 
         {cars.length === 0 && (
           <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-6 text-center text-xs text-slate-400">
-            Drop a sold car here
+            Closed-day sales appear here
           </div>
         )}
       </div>

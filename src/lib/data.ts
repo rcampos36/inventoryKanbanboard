@@ -1,4 +1,5 @@
 import type { Car, Column, Manager, Salesperson } from "./types";
+import { todayIsoDate } from "./types";
 
 /** New/used inventory grouped by model (and used buckets). */
 export const MODEL_COLUMNS: Column[] = [
@@ -271,6 +272,9 @@ export const INITIAL_CARS: Car[] = [
     condition: "new",
     columnId: "overnight-demo",
     overnightId: "marcus",
+    outDate: "2026-07-22",
+    returnDate: "2026-07-23",
+    tagNumber: "42",
     price: 34200,
   },
   {
@@ -496,7 +500,7 @@ export const INITIAL_CARS: Car[] = [
     condition: "new",
     columnId: "sold",
     salespersonId: "avery",
-    soldAt: "2026-07-15",
+    soldAt: todayIsoDate(),
     price: 34250,
   },
   {
@@ -509,7 +513,8 @@ export const INITIAL_CARS: Car[] = [
     condition: "new",
     columnId: "sold",
     salespersonId: "sofia",
-    soldAt: "2026-07-18",
+    coSalespersonId: "dan",
+    soldAt: todayIsoDate(),
     price: 28060,
   },
   {
@@ -522,7 +527,7 @@ export const INITIAL_CARS: Car[] = [
     condition: "used",
     columnId: "sold",
     salespersonId: "marcus",
-    soldAt: "2026-06-20",
+    soldAt: todayIsoDate(),
     price: 25500,
   },
   {

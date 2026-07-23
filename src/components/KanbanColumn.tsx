@@ -12,9 +12,21 @@ interface KanbanColumnProps {
   column: Column;
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
+  onEditCheckoutDates?: (carId: string) => void;
+  onRequestHalfDeal?: (carId: string) => void;
+  onHalfDealWith?: (carId: string, partnerId: string) => void;
+  onClearHalfDeal?: (carId: string) => void;
 }
 
-export function KanbanColumn({ column, cars, onMove }: KanbanColumnProps) {
+export function KanbanColumn({
+  column,
+  cars,
+  onMove,
+  onEditCheckoutDates,
+  onRequestHalfDeal,
+  onHalfDealWith,
+  onClearHalfDeal,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: "column", columnId: column.id },
@@ -42,7 +54,15 @@ export function KanbanColumn({ column, cars, onMove }: KanbanColumnProps) {
           strategy={verticalListSortingStrategy}
         >
           {cars.map((car) => (
-            <CarCard key={car.id} car={car} onMove={onMove} />
+            <CarCard
+              key={car.id}
+              car={car}
+              onMove={onMove}
+              onEditCheckoutDates={onEditCheckoutDates}
+              onRequestHalfDeal={onRequestHalfDeal}
+              onHalfDealWith={onHalfDealWith}
+              onClearHalfDeal={onClearHalfDeal}
+            />
           ))}
         </SortableContext>
 
