@@ -55,3 +55,9 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
   );
   revalidatePath("/");
 }
+
+export async function clearAllCarsAction(): Promise<number> {
+  const result = await prisma.car.deleteMany({});
+  revalidatePath("/");
+  return result.count;
+}

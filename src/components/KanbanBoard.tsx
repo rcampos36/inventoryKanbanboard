@@ -43,6 +43,7 @@ import {
   type CheckoutDates,
 } from "@/lib/types";
 import {
+  clearAllCarsAction,
   createCarAction,
   updateCarAction,
   updateCarsAction,
@@ -57,6 +58,7 @@ import { CarCard } from "./CarCard";
 import { AddCarModal } from "./AddCarModal";
 import { CheckoutDatesModal } from "./CheckoutDatesModal";
 import { HalfDealModal } from "./HalfDealModal";
+import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -103,6 +105,8 @@ export function KanbanBoard({
   const [query, setQuery] = useState("");
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
+  const [clearingBoard, setClearingBoard] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [salesMonth, setSalesMonth] = useState(currentMonthKey);
   const [salesDay, setSalesDay] = useState(initialSalesDay);
@@ -510,6 +514,19 @@ export function KanbanBoard({
     }
   }
 
+  async function handleClearAllCars() {
+    setClearingBoard(true);
+    try {
+      await clearAllCarsAction();
+      setBoard(groupCars([]));
+      setClearConfirmOpen(false);
+    } catch (error) {
+      console.error("Failed to clear board", error);
+    } finally {
+      setClearingBoard(false);
+    }
+  }
+
   if (!mounted) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-slate-400">
@@ -571,6 +588,16 @@ export function KanbanBoard({
                 </button>
               ))}
             </div>
+
+            <button
+              type="button"
+              onClick={() => setClearConfirmOpen(true)}
+              disabled={totalCount === 0}
+              className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+              title="Remove every vehicle from the board"
+            >
+              Start from zero
+            </button>
 
             <button
               onClick={() => setModalOpen(true)}
@@ -821,6 +848,18 @@ export function KanbanBoard({
         onConfirm={(primaryId, partnerId) => {
           if (!halfDealCarId) return;
           assignHalfDeal(halfDealCarId, primaryId, partnerId);
+        }}
+      />
+
+      <ConfirmClearBoardModal
+        open={clearConfirmOpen}
+        vehicleCount={totalCount}
+        busy={clearingBoard}
+        onClose={() => {
+          if (!clearingBoard) setClearConfirmOpen(false);
+        }}
+        onConfirm={() => {
+          void handleClearAllCars();
         }}
       />
     </div>
