@@ -1,0 +1,40 @@
+// Prisma schema for Inventory Kanban Board (Neon Postgres)
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Car {
+  id              String   @id @default(cuid())
+  stockNumber     String
+  year            Int
+  make            String
+  model           String
+  trim            String
+  condition       String
+  columnId        String
+  salespersonId   String?
+  coSalespersonId String?
+  soldAt          String?
+  managerId       String?
+  overnightId     String?
+  outDate         String?
+  returnDate      String?
+  tagNumber       String?
+  price           Int?
+  position        Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([columnId])
+  @@index([salespersonId])
+  @@index([coSalespersonId])
+  @@index([managerId])
+  @@index([overnightId])
+  @@index([soldAt])
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -16,7 +16,6 @@ import {
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
   COLUMNS,
-  INITIAL_CARS,
   INTAKE_COLUMNS,
   MANAGERS,
   MODEL_COLUMNS,
@@ -43,6 +42,11 @@ import {
   type Car,
   type CheckoutDates,
 } from "@/lib/types";
+import {
+  createCarAction,
+  updateCarAction,
+  updateCarsAction,
+} from "@/app/actions/cars";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
@@ -72,10 +76,24 @@ function groupCars(cars: Car[]): Board {
   return board;
 }
 
-let carCounter = INITIAL_CARS.length;
+function persistCar(car: Car) {
+  void updateCarAction(car).catch((error) => {
+    console.error("Failed to save vehicle", error);
+  });
+}
 
-export function KanbanBoard() {
-  const [board, setBoard] = useState<Board>(() => groupCars(INITIAL_CARS));
+function persistCars(cars: Car[]) {
+  void updateCarsAction(cars).catch((error) => {
+    console.error("Failed to save vehicle order", error);
+  });
+}
+
+interface KanbanBoardProps {
+  initialCars: Car[];
+}
+
+export function KanbanBoard({ initialCars }: KanbanBoardProps) {
+  const [board, setBoard] = useState<Board>(() => groupCars(initialCars));
   const [activeCar, setActiveCar] = useState<Car | null>(null);
   const [query, setQuery] = useState("");
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all");
@@ -92,6 +110,7 @@ export function KanbanBoard() {
     tagNumber: string;
     mode: "assign" | "edit";
   } | null>(null);
+  const dragSourceRef = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -234,6 +253,7 @@ export function KanbanBoard() {
   function handleDragStart(event: DragStartEvent) {
     const car = event.active.data.current?.car as Car | undefined;
     if (car) setActiveCar(car);
+    dragSourceRef.current = findContainer(String(event.active.id)) ?? null;
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -296,44 +316,39 @@ export function KanbanBoard() {
     targetContainerId: string,
     checkoutDates?: CheckoutDates
   ) {
-    setBoard((prev) => {
-      const source = CONTAINER_IDS.find((id) =>
-        prev[id]?.some((c) => c.id === carId)
-      );
-      if (!source) return prev;
-      const car = prev[source].find((c) => c.id === carId);
-      if (!car) return prev;
+    const found = findCar(carId);
+    if (!found) return;
+    const { car, containerId: source } = found;
 
-      // Editing dates in place (same overnight container).
-      if (source === targetContainerId) {
-        if (!checkoutDates) return prev;
-        return {
-          ...prev,
-          [source]: prev[source].map((c) =>
-            c.id === carId
-              ? {
-                  ...c,
-                  outDate: checkoutDates.outDate,
-                  returnDate: checkoutDates.returnDate,
-                  tagNumber: checkoutDates.tagNumber,
-                }
-              : c
-          ),
-        };
-      }
-
-      const moved = applyContainerLocation(
-        car,
-        targetContainerId,
-        checkoutDates,
-        salesDay
-      );
-      return {
-        ...prev,
-        [source]: prev[source].filter((c) => c.id !== carId),
-        [targetContainerId]: [...(prev[targetContainerId] ?? []), moved],
+    // Editing dates in place (same overnight container).
+    if (source === targetContainerId) {
+      if (!checkoutDates) return;
+      const updated: Car = {
+        ...car,
+        outDate: checkoutDates.outDate,
+        returnDate: checkoutDates.returnDate,
+        tagNumber: checkoutDates.tagNumber,
       };
-    });
+      setBoard((prev) => ({
+        ...prev,
+        [source]: prev[source].map((c) => (c.id === carId ? updated : c)),
+      }));
+      persistCar(updated);
+      return;
+    }
+
+    const moved = applyContainerLocation(
+      car,
+      targetContainerId,
+      checkoutDates,
+      salesDay
+    );
+    setBoard((prev) => ({
+      ...prev,
+      [source]: prev[source].filter((c) => c.id !== carId),
+      [targetContainerId]: [...(prev[targetContainerId] ?? []), moved],
+    }));
+    persistCar(moved);
   }
 
   function requestMove(carId: string, targetContainerId: string) {
@@ -360,28 +375,26 @@ export function KanbanBoard() {
     primaryId: string,
     partnerId: string
   ) {
-    setBoard((prev) => {
-      const source = CONTAINER_IDS.find((id) =>
-        prev[id]?.some((c) => c.id === carId)
-      );
-      if (!source) return prev;
-      const car = prev[source].find((c) => c.id === carId);
-      if (!car) return prev;
+    const found = findCar(carId);
+    if (!found) return;
 
-      const moved = applyHalfDeal(car, primaryId, partnerId, salesDay);
-      const target = salespersonContainerId(primaryId);
-      if (source === target) {
-        return {
-          ...prev,
-          [source]: prev[source].map((c) => (c.id === carId ? moved : c)),
-        };
-      }
-      return {
+    const moved = applyHalfDeal(found.car, primaryId, partnerId, salesDay);
+    const target = salespersonContainerId(primaryId);
+    const source = found.containerId;
+
+    if (source === target) {
+      setBoard((prev) => ({
+        ...prev,
+        [source]: prev[source].map((c) => (c.id === carId ? moved : c)),
+      }));
+    } else {
+      setBoard((prev) => ({
         ...prev,
         [source]: prev[source].filter((c) => c.id !== carId),
         [target]: [...(prev[target] ?? []), moved],
-      };
-    });
+      }));
+    }
+    persistCar(moved);
     setHalfDealCarId(null);
   }
 
@@ -395,18 +408,16 @@ export function KanbanBoard() {
   }
 
   function clearHalfDeal(carId: string) {
-    setBoard((prev) => {
-      const source = CONTAINER_IDS.find((id) =>
-        prev[id]?.some((c) => c.id === carId)
-      );
-      if (!source) return prev;
-      return {
-        ...prev,
-        [source]: prev[source].map((c) =>
-          c.id === carId ? { ...c, coSalespersonId: undefined } : c
-        ),
-      };
-    });
+    const found = findCar(carId);
+    if (!found) return;
+    const updated: Car = { ...found.car, coSalespersonId: undefined };
+    setBoard((prev) => ({
+      ...prev,
+      [found.containerId]: prev[found.containerId].map((c) =>
+        c.id === carId ? updated : c
+      ),
+    }));
+    persistCar(updated);
   }
 
   function requestEditCheckoutDates(carId: string) {
@@ -430,46 +441,54 @@ export function KanbanBoard() {
     const activeId = String(active.id);
     const overId = String(over.id);
 
-    const activeContainer = findContainer(activeId);
+    // After dragOver, the car already lives in its destination container.
+    const currentContainer = findContainer(activeId);
     const overContainer = findContainer(overId);
-    if (!activeContainer || !overContainer) return;
+    if (!currentContainer || !overContainer) return;
 
-    if (activeContainer === overContainer) {
-      const items = board[activeContainer];
+    if (currentContainer === overContainer) {
+      const items = board[currentContainer];
       const oldIndex = items.findIndex((c) => c.id === activeId);
       const newIndex = items.findIndex((c) => c.id === overId);
       if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
+        const reordered = arrayMove(items, oldIndex, newIndex);
         setBoard((prev) => ({
           ...prev,
-          [activeContainer]: arrayMove(prev[activeContainer], oldIndex, newIndex),
+          [currentContainer]: reordered,
         }));
+        persistCars(reordered);
+      } else {
+        const car = items.find((c) => c.id === activeId);
+        if (car) persistCar(car);
       }
-      return;
     }
 
-    // After a cross-container drop onto overnight, confirm dates.
-    if (needsCheckoutDates(overContainer)) {
-      const car = board[overContainer]?.find((c) => c.id === activeId);
-      if (car) {
-        setCheckoutPrompt({
-          carId: activeId,
-          targetContainerId: overContainer,
-          outDate: car.outDate ?? todayIsoDate(),
-          returnDate: car.returnDate ?? tomorrowIsoDate(),
-          tagNumber: car.tagNumber ?? "",
-          mode: "assign",
-        });
-      }
+    const car = board[currentContainer]?.find((c) => c.id === activeId);
+    const cameFromElsewhere = dragSourceRef.current !== currentContainer;
+    // After a drop onto overnight from another lane, confirm dates.
+    if (needsCheckoutDates(currentContainer) && cameFromElsewhere && car) {
+      setCheckoutPrompt({
+        carId: activeId,
+        targetContainerId: currentContainer,
+        outDate: car.outDate ?? todayIsoDate(),
+        returnDate: car.returnDate ?? tomorrowIsoDate(),
+        tagNumber: car.tagNumber ?? "",
+        mode: "assign",
+      });
     }
+    dragSourceRef.current = null;
   }
 
-  function handleAddCar(car: Omit<Car, "id">) {
-    carCounter += 1;
-    const newCar: Car = { ...car, id: `car-${carCounter}` };
-    setBoard((prev) => ({
-      ...prev,
-      [newCar.columnId]: [...(prev[newCar.columnId] ?? []), newCar],
-    }));
+  async function handleAddCar(car: Omit<Car, "id">) {
+    try {
+      const created = await createCarAction(car);
+      setBoard((prev) => ({
+        ...prev,
+        [created.columnId]: [...(prev[created.columnId] ?? []), created],
+      }));
+    } catch (error) {
+      console.error("Failed to add vehicle", error);
+    }
   }
 
   if (!mounted) {
