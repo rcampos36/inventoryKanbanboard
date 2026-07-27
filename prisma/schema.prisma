@@ -38,3 +38,11 @@ model Car {
   @@index([overnightId])
   @@index([soldAt])
 }
+
+/** Singleton row (id = "default") for board-wide settings. */
+model AppSettings {
+  id          String   @id @default("default")
+  openSalesDay String
+  updatedAt   DateTime @updatedAt
+}
+

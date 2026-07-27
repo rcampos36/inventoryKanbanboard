@@ -47,6 +47,7 @@ import {
   updateCarAction,
   updateCarsAction,
 } from "@/app/actions/cars";
+import { setOpenSalesDayAction } from "@/app/actions/settings";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
@@ -90,9 +91,13 @@ function persistCars(cars: Car[]) {
 
 interface KanbanBoardProps {
   initialCars: Car[];
+  initialSalesDay: string;
 }
 
-export function KanbanBoard({ initialCars }: KanbanBoardProps) {
+export function KanbanBoard({
+  initialCars,
+  initialSalesDay,
+}: KanbanBoardProps) {
   const [board, setBoard] = useState<Board>(() => groupCars(initialCars));
   const [activeCar, setActiveCar] = useState<Car | null>(null);
   const [query, setQuery] = useState("");
@@ -100,7 +105,8 @@ export function KanbanBoard({ initialCars }: KanbanBoardProps) {
   const [modalOpen, setModalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [salesMonth, setSalesMonth] = useState(currentMonthKey);
-  const [salesDay, setSalesDay] = useState(todayIsoDate);
+  const [salesDay, setSalesDay] = useState(initialSalesDay);
+  const [savingSalesDay, setSavingSalesDay] = useState(false);
   const [halfDealCarId, setHalfDealCarId] = useState<string | null>(null);
   const [checkoutPrompt, setCheckoutPrompt] = useState<{
     carId: string;
@@ -124,7 +130,7 @@ export function KanbanBoard({ initialCars }: KanbanBoardProps) {
       const now = todayIsoDate();
       if (now !== lastCalendarDay) {
         lastCalendarDay = now;
-        setSalesDay(now);
+        void persistSalesDay(now);
       }
     }
 
@@ -137,6 +143,19 @@ export function KanbanBoard({ initialCars }: KanbanBoardProps) {
       document.removeEventListener("visibilitychange", syncCalendarDay);
     };
   }, []);
+
+  async function persistSalesDay(nextDay: string) {
+    setSalesDay(nextDay);
+    setSavingSalesDay(true);
+    try {
+      const saved = await setOpenSalesDayAction(nextDay);
+      setSalesDay(saved);
+    } catch (error) {
+      console.error("Failed to save sales day", error);
+    } finally {
+      setSavingSalesDay(false);
+    }
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -240,7 +259,7 @@ export function KanbanBoard({ initialCars }: KanbanBoardProps) {
   const halfDealFound = halfDealCarId ? findCar(halfDealCarId) : null;
 
   function endSalesDay() {
-    setSalesDay((day) => addDaysIsoDate(day, 1));
+    void persistSalesDay(addDaysIsoDate(salesDay, 1));
   }
 
   function findContainer(id: string): string | undefined {
@@ -652,26 +671,29 @@ export function KanbanBoard({ initialCars }: KanbanBoardProps) {
                     <input
                       type="date"
                       value={salesDay}
+                      disabled={savingSalesDay}
                       onChange={(e) => {
-                        if (e.target.value) setSalesDay(e.target.value);
+                        if (e.target.value) void persistSalesDay(e.target.value);
                       }}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
                     />
                   </label>
                   <button
                     type="button"
-                    onClick={() => setSalesDay(todayIsoDate())}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                    disabled={savingSalesDay}
+                    onClick={() => void persistSalesDay(todayIsoDate())}
+                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
                   >
                     Today
                   </button>
                   <button
                     type="button"
+                    disabled={savingSalesDay}
                     onClick={endSalesDay}
-                    className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700"
+                    className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
                     title="Close this sales day and move these sales into each team member's monthly column"
                   >
-                    End day
+                    {savingSalesDay ? "Saving…" : "End day"}
                   </button>
                 </div>
               </div>
