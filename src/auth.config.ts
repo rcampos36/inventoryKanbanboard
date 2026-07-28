@@ -6,6 +6,7 @@ import Google from "next-auth/providers/google";
  * Used by middleware. Full providers that need the DB live in auth.ts.
  */
 export const authConfig = {
+  trustHost: true,
   pages: {
     signIn: "/login",
     error: "/login",
@@ -14,6 +15,8 @@ export const authConfig = {
     ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
       ? [
           Google({
+            clientId: process.env.AUTH_GOOGLE_ID,
+            clientSecret: process.env.AUTH_GOOGLE_SECRET,
             allowDangerousEmailAccountLinking: true,
           }),
         ]
@@ -28,7 +31,10 @@ export const authConfig = {
       const isAuthApi = pathname.startsWith("/api/auth");
 
       if (isAuthApi) return true;
-      if (isAuthPage) return isLoggedIn ? Response.redirect(new URL("/", request.nextUrl)) : true;
+      if (isAuthPage)
+        return isLoggedIn
+          ? Response.redirect(new URL("/", request.nextUrl))
+          : true;
       return isLoggedIn;
     },
   },
