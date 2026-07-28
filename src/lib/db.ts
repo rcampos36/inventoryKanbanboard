@@ -1,17 +1,29 @@
-import { PrismaNeon } from "@prisma/adapter-neon";
+import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
 };
 
-function createPrismaClient() {
-  const connectionString = process.env.DATABASE_URL;
-  if (!connectionString) {
-    throw new Error("DATABASE_URL is not set");
+function resolveDatabaseUrl(): string {
+  const url =
+    process.env.DATABASE_URL ||
+    process.env.POSTGRES_PRISMA_URL ||
+    process.env.POSTGRES_URL ||
+    process.env.POSTGRES_URL_NON_POOLING ||
+    process.env.DATABASE_URL_UNPOOLED;
+
+  if (!url) {
+    throw new Error(
+      "No database URL found. Set DATABASE_URL (or POSTGRES_URL) in Vercel Environment Variables."
+    );
   }
 
-  const adapter = new PrismaNeon({ connectionString });
+  return url;
+}
+
+function createPrismaClient() {
+  const adapter = new PrismaPg({ connectionString: resolveDatabaseUrl() });
   return new PrismaClient({ adapter });
 }
 

@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/AuthForms";
-import { auth } from "@/auth";
 
 function googleEnabled() {
   return Boolean(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET);
@@ -11,11 +9,6 @@ export default async function LoginPage({
 }: {
   searchParams: Promise<{ callbackUrl?: string; error?: string }>;
 }) {
-  const session = await auth();
-  if (session?.user) {
-    redirect("/");
-  }
-
   const params = await searchParams;
   const callbackUrl = params.callbackUrl || "/";
   const errorMessage =
