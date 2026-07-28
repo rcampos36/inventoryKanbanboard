@@ -94,11 +94,13 @@ function persistCars(cars: Car[]) {
 interface KanbanBoardProps {
   initialCars: Car[];
   initialSalesDay: string;
+  userMenu?: React.ReactNode;
 }
 
 export function KanbanBoard({
   initialCars,
   initialSalesDay,
+  userMenu,
 }: KanbanBoardProps) {
   const [board, setBoard] = useState<Board>(() => groupCars(initialCars));
   const [activeCar, setActiveCar] = useState<Car | null>(null);
@@ -616,6 +618,8 @@ export function KanbanBoard({
               </svg>
               Add Vehicle
             </button>
+
+            {userMenu}
           </div>
         </div>
       </header>
