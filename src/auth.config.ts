@@ -2,8 +2,7 @@ import type { NextAuthConfig } from "next-auth";
 import Google from "next-auth/providers/google";
 
 /**
- * Edge-compatible Auth.js config (no Prisma / Node-only imports).
- * Used by middleware. Full providers that need the DB live in auth.ts.
+ * Shared Auth.js config. Keep this free of Prisma / Node-only imports.
  */
 export const authConfig = {
   trustHost: true,
@@ -22,20 +21,4 @@ export const authConfig = {
         ]
       : []),
   ],
-  callbacks: {
-    authorized({ auth, request }) {
-      const { pathname } = request.nextUrl;
-      const isLoggedIn = Boolean(auth?.user);
-      const isAuthPage =
-        pathname.startsWith("/login") || pathname.startsWith("/signup");
-      const isAuthApi = pathname.startsWith("/api/auth");
-
-      if (isAuthApi) return true;
-      if (isAuthPage)
-        return isLoggedIn
-          ? Response.redirect(new URL("/", request.nextUrl))
-          : true;
-      return isLoggedIn;
-    },
-  },
 } satisfies NextAuthConfig;
