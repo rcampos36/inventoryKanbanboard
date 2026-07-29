@@ -639,7 +639,7 @@ export function KanbanBoard({
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-slate-900">
-              Inventory Kanban Board
+              Pearson Inventory & Sales Board
             </h1>
             <p className="text-sm text-slate-500">
               {totalCount} vehicles · {COLUMNS.length} columns ·{" "}

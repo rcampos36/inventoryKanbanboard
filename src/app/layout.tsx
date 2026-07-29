@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Inventory Kanban Board",
-  description: "Car inventory Kanban board for dealership stock management",
+  title: "Pearson Inventory & Sales Board",
+  description: "Pearson inventory and sales board for dealership stock management",
 };
 
 export default function RootLayout({
