@@ -13,9 +13,11 @@ import {
   isCarSold,
   isCheckoutAssignment,
   isHalfDeal,
+  isWorkingDeal,
   managerContainerId,
   overnightContainerId,
   salespersonContainerId,
+  workingDealContainerId,
   type Car,
 } from "@/lib/types";
 import { overnightDueStatus } from "@/lib/suggest-column";
@@ -48,6 +50,7 @@ export function CarCard({
   const color = getCarColor(car.model, car.condition);
   const isNew = car.condition === "new";
   const isSold = isCarSold(car);
+  const working = isWorkingDeal(car);
   const halfDeal = isHalfDeal(car);
   const isCheckout = isCheckoutAssignment(car);
   const dueStatus = isCheckout ? overnightDueStatus(car.returnDate) : "ok";
@@ -167,12 +170,22 @@ export function CarCard({
                 ? halfDeal
                   ? "bg-violet-100 text-violet-700"
                   : "bg-rose-100 text-rose-700"
-                : isNew
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-slate-200 text-slate-600",
+                : working
+                  ? "bg-sky-100 text-sky-800"
+                  : isNew
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-slate-200 text-slate-600",
             ].join(" ")}
           >
-            {isSold ? (halfDeal ? "½ Deal" : "Sold") : isNew ? "New" : "Used"}
+            {isSold
+              ? halfDeal
+                ? "½ Deal"
+                : "Sold"
+              : working
+                ? "Working"
+                : isNew
+                  ? "New"
+                  : "Used"}
           </span>
 
           {!overlay && onMove && (
@@ -298,6 +311,28 @@ export function CarCard({
                   key={s.id}
                   type="button"
                   onClick={() => handleSelect(salespersonContainerId(s.id))}
+                  className={menuItemClass}
+                >
+                  <span
+                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${sColor.accent}`}
+                  >
+                    {s.name.charAt(0)}
+                  </span>
+                  {s.name}
+                </button>
+              );
+            })}
+
+            <p className={menuLabelClass}>Working deal</p>
+            {SALESPEOPLE.filter(
+              (s) => workingDealContainerId(s.id) !== currentContainer
+            ).map((s) => {
+              const sColor = getModelColor(s.name);
+              return (
+                <button
+                  key={`wd-${s.id}`}
+                  type="button"
+                  onClick={() => handleSelect(workingDealContainerId(s.id))}
                   className={menuItemClass}
                 >
                   <span

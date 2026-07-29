@@ -22,6 +22,7 @@ model Car {
   coSalespersonId String?
   soldAt          String?
   managerId       String?
+  workingDealId   String?
   overnightId     String?
   outDate         String?
   returnDate      String?
@@ -37,6 +38,7 @@ model Car {
   @@index([salespersonId])
   @@index([coSalespersonId])
   @@index([managerId])
+  @@index([workingDealId])
   @@index([overnightId])
   @@index([soldAt])
 }

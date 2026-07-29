@@ -36,6 +36,7 @@ import {
   overnightContainerId,
   saleCreditFor,
   salespersonContainerId,
+  workingDealContainerId,
   addDaysIsoDate,
   todayIsoDate,
   tomorrowIsoDate,
@@ -56,6 +57,7 @@ import { setOpenSalesDayAction } from "@/app/actions/settings";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
+import { WorkingDealColumn } from "./WorkingDealColumn";
 import { ManagerColumn } from "./ManagerColumn";
 import { OvernightColumn } from "./OvernightColumn";
 import { CarCard } from "./CarCard";
@@ -78,6 +80,7 @@ type ConditionFilter = "all" | "new" | "used";
 const CONTAINER_IDS: string[] = [
   ...COLUMNS.map((c) => c.id),
   ...SALESPEOPLE.map((s) => salespersonContainerId(s.id)),
+  ...SALESPEOPLE.map((s) => workingDealContainerId(s.id)),
   ...MANAGERS.map((m) => managerContainerId(m.id)),
   ...SALESPEOPLE.map((s) => overnightContainerId(s.id)),
 ];
@@ -716,6 +719,7 @@ export function KanbanBoard({
                 "min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r",
                 sectionVisibility.sales ||
                 sectionVisibility.dailySales ||
+                sectionVisibility.workingDeals ||
                 sectionVisibility.managers ||
                 sectionVisibility.overnight ||
                 sectionVisibility.intake
@@ -746,6 +750,7 @@ export function KanbanBoard({
 
           {(sectionVisibility.sales ||
             sectionVisibility.dailySales ||
+            sectionVisibility.workingDeals ||
             sectionVisibility.managers ||
             sectionVisibility.overnight ||
             sectionVisibility.intake) && (
@@ -853,6 +858,28 @@ export function KanbanBoard({
               </div>
               )}
             </section>
+            )}
+
+            {sectionVisibility.workingDeals && (
+              <section>
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Working Deals
+                </h2>
+                <p className="mb-3 text-xs text-slate-500">
+                  Deals in progress — not closed yet. Move to Daily Sales when
+                  the deal is done.
+                </p>
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {SALESPEOPLE.map((person) => (
+                    <WorkingDealColumn
+                      key={person.id}
+                      salesperson={person}
+                      cars={board[workingDealContainerId(person.id)] ?? []}
+                      onMove={requestMove}
+                    />
+                  ))}
+                </div>
+              </section>
             )}
 
             {sectionVisibility.managers && (

@@ -17,6 +17,8 @@ export interface Car {
   soldAt?: string;
   /** Set when the car is assigned as a manager demo. */
   managerId?: string;
+  /** Set when the car is in a salesperson's working (not-yet-closed) deal lane. */
+  workingDealId?: string;
   /** Set when the car is assigned as a team overnight demo. */
   overnightId?: string;
   /** ISO date (YYYY-MM-DD) when the car went out on overnight demo. */
@@ -47,6 +49,8 @@ export interface Manager {
 
 /** Prefix used to distinguish salesperson drop containers from stage columns. */
 export const SALESPERSON_PREFIX = "sp-";
+/** Prefix used to distinguish working-deal drop containers. */
+export const WORKING_DEAL_PREFIX = "wd-";
 /** Prefix used to distinguish manager-demo drop containers. */
 export const MANAGER_PREFIX = "mgr-";
 /** Prefix used to distinguish overnight-demo drop containers. */
@@ -54,6 +58,10 @@ export const OVERNIGHT_PREFIX = "ond-";
 
 export function salespersonContainerId(salespersonId: string): string {
   return `${SALESPERSON_PREFIX}${salespersonId}`;
+}
+
+export function workingDealContainerId(salespersonId: string): string {
+  return `${WORKING_DEAL_PREFIX}${salespersonId}`;
 }
 
 export function managerContainerId(managerId: string): string {
@@ -68,6 +76,10 @@ export function isSalespersonContainer(containerId: string): boolean {
   return containerId.startsWith(SALESPERSON_PREFIX);
 }
 
+export function isWorkingDealContainer(containerId: string): boolean {
+  return containerId.startsWith(WORKING_DEAL_PREFIX);
+}
+
 export function isManagerContainer(containerId: string): boolean {
   return containerId.startsWith(MANAGER_PREFIX);
 }
@@ -79,6 +91,7 @@ export function isOvernightContainer(containerId: string): boolean {
 /**
  * Resolves the car field updates for a given drop container.
  * - Salesperson lane → sold + assigned
+ * - Working-deal lane → in-progress deal (not sold yet)
  * - Manager lane → manager demo assignment
  * - Overnight lane → team overnight demo assignment
  * - Inventory column → clears all assignments
@@ -86,6 +99,7 @@ export function isOvernightContainer(containerId: string): boolean {
 export function containerToLocation(containerId: string): {
   columnId: string;
   salespersonId?: string;
+  workingDealId?: string;
   managerId?: string;
   overnightId?: string;
 } {
@@ -93,6 +107,16 @@ export function containerToLocation(containerId: string): {
     return {
       columnId: "sold",
       salespersonId: containerId.slice(SALESPERSON_PREFIX.length),
+      workingDealId: undefined,
+      managerId: undefined,
+      overnightId: undefined,
+    };
+  }
+  if (isWorkingDealContainer(containerId)) {
+    return {
+      columnId: "working-deal",
+      workingDealId: containerId.slice(WORKING_DEAL_PREFIX.length),
+      salespersonId: undefined,
       managerId: undefined,
       overnightId: undefined,
     };
@@ -102,6 +126,7 @@ export function containerToLocation(containerId: string): {
       columnId: "manager-demo",
       managerId: containerId.slice(MANAGER_PREFIX.length),
       salespersonId: undefined,
+      workingDealId: undefined,
       overnightId: undefined,
     };
   }
@@ -110,12 +135,14 @@ export function containerToLocation(containerId: string): {
       columnId: "overnight-demo",
       overnightId: containerId.slice(OVERNIGHT_PREFIX.length),
       salespersonId: undefined,
+      workingDealId: undefined,
       managerId: undefined,
     };
   }
   return {
     columnId: containerId,
     salespersonId: undefined,
+    workingDealId: undefined,
     managerId: undefined,
     overnightId: undefined,
   };
@@ -123,6 +150,7 @@ export function containerToLocation(containerId: string): {
 
 export function carContainerId(car: Car): string {
   if (car.salespersonId) return salespersonContainerId(car.salespersonId);
+  if (car.workingDealId) return workingDealContainerId(car.workingDealId);
   if (car.managerId) return managerContainerId(car.managerId);
   if (car.overnightId) return overnightContainerId(car.overnightId);
   return car.columnId;
@@ -156,6 +184,10 @@ export function needsCheckoutDates(containerId: string): boolean {
 
 export function isCheckoutAssignment(car: Car): boolean {
   return Boolean(car.overnightId);
+}
+
+export function isWorkingDeal(car: Car): boolean {
+  return Boolean(car.workingDealId) || car.columnId === "working-deal";
 }
 
 export type CheckoutDates = {
@@ -206,9 +238,11 @@ export function applyContainerLocation(
     if (!wasCheckout) {
       const isInventoryHome =
         !car.salespersonId &&
+        !car.workingDealId &&
         !car.managerId &&
         !car.overnightId &&
         car.columnId !== "sold" &&
+        car.columnId !== "working-deal" &&
         car.columnId !== "manager-demo" &&
         car.columnId !== "overnight-demo";
       next.homeColumnId = isInventoryHome ? car.columnId : car.homeColumnId;
@@ -273,6 +307,7 @@ export function applyHalfDeal(
     columnId: "sold",
     salespersonId: primaryId,
     coSalespersonId: partnerId,
+    workingDealId: undefined,
     managerId: undefined,
     overnightId: undefined,
     outDate: undefined,
