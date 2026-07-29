@@ -139,17 +139,27 @@ export function CarCard({
   }
 
   function renderColumnOption(column: Column) {
-    if (column.id === currentContainer) return null;
+    const isCurrent = column.id === currentContainer;
     const cColor = getModelColor(column.title);
     return (
       <button
         key={column.id}
         type="button"
-        onClick={() => handleSelect(column.id)}
-        className={menuItemClass}
+        disabled={isCurrent}
+        onClick={() => {
+          if (isCurrent) return;
+          handleSelect(column.id);
+        }}
+        className={[
+          menuItemClass,
+          isCurrent ? "cursor-default opacity-50" : "",
+        ].join(" ")}
       >
         <span className={`h-2 w-2 shrink-0 rounded-full ${cColor.accent}`} />
-        <span className="min-w-0 flex-1 text-left">{column.title}</span>
+        <span className="min-w-0 flex-1 text-left">
+          {column.title}
+          {isCurrent ? " · current" : ""}
+        </span>
       </button>
     );
   }
