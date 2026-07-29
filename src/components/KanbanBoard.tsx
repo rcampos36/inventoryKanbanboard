@@ -53,7 +53,11 @@ import {
   updateCarAction,
   updateCarsAction,
 } from "@/app/actions/cars";
-import { setOpenSalesDayAction } from "@/app/actions/settings";
+import {
+  DEFAULT_BOARD_TITLE,
+  setBoardTitleAction,
+  setOpenSalesDayAction,
+} from "@/app/actions/settings";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
@@ -110,12 +114,14 @@ function persistCars(cars: Car[]) {
 interface KanbanBoardProps {
   initialCars: Car[];
   initialSalesDay: string;
+  initialBoardTitle?: string;
   headerActions?: React.ReactNode;
 }
 
 export function KanbanBoard({
   initialCars,
   initialSalesDay,
+  initialBoardTitle = DEFAULT_BOARD_TITLE,
   headerActions,
 }: KanbanBoardProps) {
   const [board, setBoard] = useState<Board>(() => groupCars(initialCars));
@@ -129,6 +135,10 @@ export function KanbanBoard({
   const [salesMonth, setSalesMonth] = useState(currentMonthKey);
   const [salesDay, setSalesDay] = useState(initialSalesDay);
   const [savingSalesDay, setSavingSalesDay] = useState(false);
+  const [boardTitle, setBoardTitle] = useState(initialBoardTitle);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(initialBoardTitle);
+  const [savingTitle, setSavingTitle] = useState(false);
   const [halfDealCarId, setHalfDealCarId] = useState<string | null>(null);
   const [checkoutPrompt, setCheckoutPrompt] = useState<{
     carId: string;
@@ -191,6 +201,28 @@ export function KanbanBoard({
       console.error("Failed to save sales day", error);
     } finally {
       setSavingSalesDay(false);
+    }
+  }
+
+  function startEditingTitle() {
+    setTitleDraft(boardTitle);
+    setEditingTitle(true);
+  }
+
+  async function saveBoardTitle() {
+    const next = titleDraft.trim() || DEFAULT_BOARD_TITLE;
+    setSavingTitle(true);
+    try {
+      const saved = await setBoardTitleAction(next);
+      setBoardTitle(saved);
+      setEditingTitle(false);
+      if (typeof document !== "undefined") {
+        document.title = saved;
+      }
+    } catch (error) {
+      console.error("Failed to save board title", error);
+    } finally {
+      setSavingTitle(false);
     }
   }
 
@@ -637,10 +669,55 @@ export function KanbanBoard({
     <div className="flex h-full flex-col">
       <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900">
-              Pearson Inventory & Sales Board
-            </h1>
+          <div className="min-w-0 flex-1">
+            {editingTitle ? (
+              <form
+                className="flex max-w-xl flex-wrap items-center gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void saveBoardTitle();
+                }}
+              >
+                <input
+                  value={titleDraft}
+                  onChange={(e) => setTitleDraft(e.target.value)}
+                  disabled={savingTitle}
+                  autoFocus
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xl font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  aria-label="Board title"
+                />
+                <button
+                  type="submit"
+                  disabled={savingTitle}
+                  className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                >
+                  {savingTitle ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  disabled={savingTitle}
+                  onClick={() => {
+                    setEditingTitle(false);
+                    setTitleDraft(boardTitle);
+                  }}
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+                >
+                  Cancel
+                </button>
+              </form>
+            ) : (
+              <div className="flex items-center gap-2">
+                <h1 className="text-xl font-bold text-slate-900">{boardTitle}</h1>
+                <button
+                  type="button"
+                  onClick={startEditingTitle}
+                  className="rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  title="Rename board"
+                >
+                  Edit
+                </button>
+              </div>
+            )}
             <p className="text-sm text-slate-500">
               {totalCount} vehicles · {COLUMNS.length} columns ·{" "}
               {SALESPEOPLE.length} salespeople · {MANAGERS.length} managers

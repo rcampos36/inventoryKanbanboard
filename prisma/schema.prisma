@@ -49,6 +49,7 @@ model Car {
 model AppSettings {
   id           String   @id @default("default")
   openSalesDay String
+  boardTitle   String   @default("Pearson Mazda Inventory and Sales Board")
   updatedAt    DateTime @updatedAt
 }
 

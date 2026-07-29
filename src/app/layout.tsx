@@ -13,8 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pearson Inventory & Sales Board",
-  description: "Pearson inventory and sales board for dealership stock management",
+  title: "Pearson Mazda Inventory and Sales Board",
+  description:
+    "Pearson Mazda inventory and sales board for dealership stock management",
 };
 
 export default function RootLayout({
