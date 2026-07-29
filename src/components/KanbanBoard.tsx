@@ -53,8 +53,8 @@ import {
   updateCarAction,
   updateCarsAction,
 } from "@/app/actions/cars";
+import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import {
-  DEFAULT_BOARD_TITLE,
   setBoardTitleAction,
   setOpenSalesDayAction,
 } from "@/app/actions/settings";

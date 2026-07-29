@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -13,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pearson Mazda Inventory and Sales Board",
+  title: DEFAULT_BOARD_TITLE,
   description:
     "Pearson Mazda inventory and sales board for dealership stock management",
 };

@@ -3,10 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import { todayIsoDate } from "@/lib/types";
 
 const SETTINGS_ID = "default";
-export const DEFAULT_BOARD_TITLE = "Pearson Mazda Inventory and Sales Board";
 
 export type BoardSettings = {
   openSalesDay: string;
