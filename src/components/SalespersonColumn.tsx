@@ -15,6 +15,7 @@ interface SalespersonColumnProps {
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
+  onDelete?: () => void;
 }
 
 function initials(name: string): string {
@@ -46,6 +47,7 @@ export function SalespersonColumn({
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
+  onDelete,
 }: SalespersonColumnProps) {
   const color = getModelColor(salesperson.name);
 
@@ -74,6 +76,16 @@ export function SalespersonColumn({
             {monthSoldCount === 1 ? "sale" : "sales"} this month
           </p>
         </div>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50"
+            title={`Remove ${salesperson.name}`}
+          >
+            Delete
+          </button>
+        )}
       </div>
 
       <div className="flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-2 pb-2.5 pt-1">

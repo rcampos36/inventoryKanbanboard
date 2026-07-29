@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { SALESPEOPLE } from "@/lib/data";
+import type { Salesperson } from "@/lib/types";
 
 interface HalfDealModalProps {
   open: boolean;
+  salespeople: Salesperson[];
   initialPrimaryId?: string;
   initialPartnerId?: string;
   onClose: () => void;
@@ -13,28 +14,30 @@ interface HalfDealModalProps {
 
 export function HalfDealModal({
   open,
+  salespeople,
   initialPrimaryId,
   initialPartnerId,
   onClose,
   onConfirm,
 }: HalfDealModalProps) {
   const [primaryId, setPrimaryId] = useState(
-    initialPrimaryId ?? SALESPEOPLE[0]?.id ?? ""
+    initialPrimaryId ?? salespeople[0]?.id ?? ""
   );
   const [partnerId, setPartnerId] = useState(
-    initialPartnerId ?? SALESPEOPLE[1]?.id ?? ""
+    initialPartnerId ?? salespeople[1]?.id ?? ""
   );
 
   useEffect(() => {
     if (!open) return;
-    setPrimaryId(initialPrimaryId ?? SALESPEOPLE[0]?.id ?? "");
+    setPrimaryId(initialPrimaryId ?? salespeople[0]?.id ?? "");
     setPartnerId(
       initialPartnerId ??
-        SALESPEOPLE.find((s) => s.id !== (initialPrimaryId ?? SALESPEOPLE[0]?.id))
-          ?.id ??
+        salespeople.find(
+          (s) => s.id !== (initialPrimaryId ?? salespeople[0]?.id)
+        )?.id ??
         ""
     );
-  }, [open, initialPrimaryId, initialPartnerId]);
+  }, [open, initialPrimaryId, initialPartnerId, salespeople]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -46,7 +49,7 @@ export function HalfDealModal({
 
   if (!open) return null;
 
-  const partners = SALESPEOPLE.filter((s) => s.id !== primaryId);
+  const partners = salespeople.filter((s) => s.id !== primaryId);
   const canSave = Boolean(primaryId && partnerId && primaryId !== partnerId);
 
   function handleSubmit(e: React.FormEvent) {
@@ -86,13 +89,13 @@ export function HalfDealModal({
                 setPrimaryId(next);
                 if (partnerId === next) {
                   setPartnerId(
-                    SALESPEOPLE.find((s) => s.id !== next)?.id ?? ""
+                    salespeople.find((s) => s.id !== next)?.id ?? ""
                   );
                 }
               }}
               autoFocus
             >
-              {SALESPEOPLE.map((s) => (
+              {salespeople.map((s) => (
                 <option key={s.id} value={s.id}>
                   {s.name}
                 </option>

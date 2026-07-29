@@ -29,12 +29,15 @@ export const INTAKE_COLUMNS: Column[] = [
 /** All moveable inventory columns (model lanes + intake lanes). */
 export const COLUMNS: Column[] = [...MODEL_COLUMNS, ...INTAKE_COLUMNS];
 
-export const SALESPEOPLE: Salesperson[] = [
+export const DEFAULT_SALESPEOPLE: Salesperson[] = [
   { id: "avery", name: "Avery Johnson" },
   { id: "marcus", name: "Marcus Lee" },
   { id: "sofia", name: "Sofia Ramirez" },
   { id: "dan", name: "Dan O'Neill" },
 ];
+
+/** @deprecated Use salespeople loaded from the database via listSalespeopleAction. */
+export const SALESPEOPLE: Salesperson[] = DEFAULT_SALESPEOPLE;
 
 export const MANAGERS: Manager[] = [
   { id: "elena", name: "Elena Vargas" },

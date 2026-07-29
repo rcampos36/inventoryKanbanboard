@@ -19,7 +19,6 @@ import {
   INTAKE_COLUMNS,
   MANAGERS,
   MODEL_COLUMNS,
-  SALESPEOPLE,
 } from "@/lib/data";
 import {
   applyContainerLocation,
@@ -42,6 +41,7 @@ import {
   tomorrowIsoDate,
   type Car,
   type CheckoutDates,
+  type Salesperson,
 } from "@/lib/types";
 import {
   overnightDueStatus,
@@ -58,6 +58,10 @@ import {
   setBoardTitleAction,
   setOpenSalesDayAction,
 } from "@/app/actions/settings";
+import {
+  createSalespersonAction,
+  deleteSalespersonAction,
+} from "@/app/actions/salespeople";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
@@ -71,6 +75,7 @@ import { ExteriorColorModal } from "./ExteriorColorModal";
 import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
+import { SalespeopleProvider } from "./SalespeopleContext";
 import {
   DEFAULT_SECTION_VISIBILITY,
   loadSectionVisibility,
@@ -82,21 +87,31 @@ import {
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
 
-const CONTAINER_IDS: string[] = [
-  ...COLUMNS.map((c) => c.id),
-  ...SALESPEOPLE.map((s) => salespersonContainerId(s.id)),
-  ...SALESPEOPLE.map((s) => workingDealContainerId(s.id)),
-  ...MANAGERS.map((m) => managerContainerId(m.id)),
-  ...SALESPEOPLE.map((s) => overnightContainerId(s.id)),
-];
+function containerIdsFor(salespeople: Salesperson[]): string[] {
+  return [
+    ...COLUMNS.map((c) => c.id),
+    ...salespeople.map((s) => salespersonContainerId(s.id)),
+    ...salespeople.map((s) => workingDealContainerId(s.id)),
+    ...MANAGERS.map((m) => managerContainerId(m.id)),
+    ...salespeople.map((s) => overnightContainerId(s.id)),
+  ];
+}
 
-function groupCars(cars: Car[]): Board {
+function groupCars(cars: Car[], salespeople: Salesperson[]): Board {
   const board: Board = {};
-  for (const id of CONTAINER_IDS) board[id] = [];
+  for (const id of containerIdsFor(salespeople)) board[id] = [];
   for (const car of cars) {
     (board[carContainerId(car)] ??= []).push(car);
   }
   return board;
+}
+
+function personContainerIds(personId: string): string[] {
+  return [
+    salespersonContainerId(personId),
+    workingDealContainerId(personId),
+    overnightContainerId(personId),
+  ];
 }
 
 function persistCar(car: Car) {
@@ -115,6 +130,7 @@ interface KanbanBoardProps {
   initialCars: Car[];
   initialSalesDay: string;
   initialBoardTitle?: string;
+  initialSalespeople: Salesperson[];
   headerActions?: React.ReactNode;
 }
 
@@ -122,9 +138,14 @@ export function KanbanBoard({
   initialCars,
   initialSalesDay,
   initialBoardTitle = DEFAULT_BOARD_TITLE,
+  initialSalespeople,
   headerActions,
 }: KanbanBoardProps) {
-  const [board, setBoard] = useState<Board>(() => groupCars(initialCars));
+  const [salespeople, setSalespeople] =
+    useState<Salesperson[]>(initialSalespeople);
+  const [board, setBoard] = useState<Board>(() =>
+    groupCars(initialCars, initialSalespeople)
+  );
   const [activeCar, setActiveCar] = useState<Car | null>(null);
   const [query, setQuery] = useState("");
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all");
@@ -139,6 +160,9 @@ export function KanbanBoard({
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(initialBoardTitle);
   const [savingTitle, setSavingTitle] = useState(false);
+  const [newSalespersonName, setNewSalespersonName] = useState("");
+  const [savingSalesperson, setSavingSalesperson] = useState(false);
+  const [salespersonError, setSalespersonError] = useState<string | null>(null);
   const [halfDealCarId, setHalfDealCarId] = useState<string | null>(null);
   const [checkoutPrompt, setCheckoutPrompt] = useState<{
     carId: string;
@@ -235,10 +259,15 @@ export function KanbanBoard({
     })
   );
 
+  const containerIds = useMemo(
+    () => containerIdsFor(salespeople),
+    [salespeople]
+  );
+
   const filteredBoard = useMemo<Board>(() => {
     const q = query.trim().toLowerCase();
     const result: Board = {};
-    for (const id of CONTAINER_IDS) {
+    for (const id of containerIds) {
       result[id] = (board[id] ?? []).filter((car) => {
         const matchesCondition =
           conditionFilter === "all" || car.condition === conditionFilter;
@@ -250,7 +279,7 @@ export function KanbanBoard({
       });
     }
     return result;
-  }, [board, query, conditionFilter]);
+  }, [board, query, conditionFilter, containerIds]);
 
   const totalCount = useMemo(
     () => Object.values(board).reduce((sum, list) => sum + list.length, 0),
@@ -278,13 +307,13 @@ export function KanbanBoard({
   }, []);
 
   const allSoldCars = useMemo(() => {
-    return SALESPEOPLE.flatMap(
+    return salespeople.flatMap(
       (person) => board[salespersonContainerId(person.id)] ?? []
     );
-  }, [board]);
+  }, [board, salespeople]);
 
   const rankedSalespeople = useMemo(() => {
-    const scored = SALESPEOPLE.map((person) => {
+    const scored = salespeople.map((person) => {
       const monthCarsAll = allSoldCars.filter(
         (car) =>
           car.soldAt &&
@@ -309,10 +338,10 @@ export function KanbanBoard({
       ...entry,
       rank: index + 1,
     }));
-  }, [allSoldCars, salesMonth, salesDay]);
+  }, [allSoldCars, salesMonth, salesDay, salespeople]);
 
   const todaySalesByPerson = useMemo(() => {
-    return SALESPEOPLE.map((person) => {
+    return salespeople.map((person) => {
       const todayCars = allSoldCars.filter(
         (car) =>
           car.soldAt === salesDay && carInvolvesSalesperson(car, person.id)
@@ -323,12 +352,12 @@ export function KanbanBoard({
       );
       return { person, todayCars, saleCount };
     });
-  }, [allSoldCars, salesDay]);
+  }, [allSoldCars, salesDay, salespeople]);
 
   const dueOvernightDemos = useMemo(() => {
     const today = todayIsoDate();
     const items: { car: Car; status: "due" | "overdue" }[] = [];
-    for (const person of SALESPEOPLE) {
+    for (const person of salespeople) {
       for (const car of board[overnightContainerId(person.id)] ?? []) {
         const status = overnightDueStatus(car.returnDate, today);
         if (status === "due" || status === "overdue") {
@@ -340,7 +369,7 @@ export function KanbanBoard({
       if (a.status !== b.status) return a.status === "overdue" ? -1 : 1;
       return (a.car.returnDate ?? "").localeCompare(b.car.returnDate ?? "");
     });
-  }, [board]);
+  }, [board, salespeople]);
 
   const halfDealFound = halfDealCarId ? findCar(halfDealCarId) : null;
 
@@ -350,7 +379,7 @@ export function KanbanBoard({
 
   function findContainer(id: string): string | undefined {
     if (id in board) return id;
-    return CONTAINER_IDS.find((containerId) =>
+    return containerIds.find((containerId) =>
       board[containerId]?.some((car) => car.id === id)
     );
   }
@@ -407,7 +436,7 @@ export function KanbanBoard({
   }
 
   function findCar(carId: string): { car: Car; containerId: string } | null {
-    const containerId = CONTAINER_IDS.find((id) =>
+    const containerId = containerIds.find((id) =>
       board[id]?.some((c) => c.id === carId)
     );
     if (!containerId) return null;
@@ -542,6 +571,61 @@ export function KanbanBoard({
     setExteriorColorCarId(null);
   }
 
+
+  async function handleAddSalesperson(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newSalespersonName.trim();
+    if (!name || savingSalesperson) return;
+    setSavingSalesperson(true);
+    setSalespersonError(null);
+    try {
+      const result = await createSalespersonAction(name);
+      if (!result.ok) {
+        setSalespersonError(result.error);
+        return;
+      }
+      setSalespeople((prev) => [...prev, result.person]);
+      setBoard((prev) => {
+        const next = { ...prev };
+        for (const id of personContainerIds(result.person.id)) {
+          next[id] ??= [];
+        }
+        return next;
+      });
+      setNewSalespersonName("");
+    } catch (error) {
+      console.error("Failed to add salesperson", error);
+      setSalespersonError("Could not add salesperson.");
+    } finally {
+      setSavingSalesperson(false);
+    }
+  }
+
+  async function handleDeleteSalesperson(personId: string) {
+    const person = salespeople.find((s) => s.id === personId);
+    if (!person) return;
+    if (!window.confirm(`Remove ${person.name} from the sales team?`)) return;
+    setSalespersonError(null);
+    try {
+      const result = await deleteSalespersonAction(personId);
+      if (!result.ok) {
+        setSalespersonError(result.error);
+        return;
+      }
+      setSalespeople((prev) => prev.filter((s) => s.id !== personId));
+      setBoard((prev) => {
+        const next = { ...prev };
+        for (const id of personContainerIds(personId)) {
+          delete next[id];
+        }
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to delete salesperson", error);
+      setSalespersonError("Could not remove salesperson.");
+    }
+  }
+
   function requestEditCheckoutDates(carId: string) {
     const found = findCar(carId);
     if (!found || !isCheckoutAssignment(found.car)) return;
@@ -648,7 +732,7 @@ export function KanbanBoard({
     setClearingBoard(true);
     try {
       await clearAllCarsAction();
-      setBoard(groupCars([]));
+      setBoard(groupCars([], salespeople));
       setClearConfirmOpen(false);
     } catch (error) {
       console.error("Failed to clear board", error);
@@ -666,6 +750,7 @@ export function KanbanBoard({
   }
 
   return (
+    <SalespeopleProvider salespeople={salespeople}>
     <div className="flex h-full flex-col">
       <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
@@ -720,7 +805,7 @@ export function KanbanBoard({
             )}
             <p className="text-sm text-slate-500">
               {totalCount} vehicles · {COLUMNS.length} columns ·{" "}
-              {SALESPEOPLE.length} salespeople · {MANAGERS.length} managers
+              {salespeople.length} salespeople · {MANAGERS.length} managers
             </p>
           </div>
 
@@ -862,21 +947,47 @@ export function KanbanBoard({
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Sales Team · Sold by
                 </h2>
-                <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                  Month
-                  <select
-                    value={salesMonth}
-                    onChange={(e) => setSalesMonth(e.target.value)}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                <div className="flex flex-wrap items-center gap-2">
+                  <form
+                    onSubmit={(e) => void handleAddSalesperson(e)}
+                    className="flex items-center gap-1.5"
                   >
-                    {salesMonthOptions.map((key) => (
-                      <option key={key} value={key}>
-                        {formatMonthLabel(key)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                    <input
+                      value={newSalespersonName}
+                      onChange={(e) => setNewSalespersonName(e.target.value)}
+                      placeholder="New salesperson"
+                      disabled={savingSalesperson}
+                      className="w-40 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                    />
+                    <button
+                      type="submit"
+                      disabled={savingSalesperson || !newSalespersonName.trim()}
+                      className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                    >
+                      {savingSalesperson ? "Adding…" : "Add"}
+                    </button>
+                  </form>
+                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    Month
+                    <select
+                      value={salesMonth}
+                      onChange={(e) => setSalesMonth(e.target.value)}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                    >
+                      {salesMonthOptions.map((key) => (
+                        <option key={key} value={key}>
+                          {formatMonthLabel(key)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
+              {salespersonError && (
+                <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                  {salespersonError}
+                </p>
+              )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
                   <SalespersonColumn
@@ -890,6 +1001,7 @@ export function KanbanBoard({
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
                     onClearHalfDeal={clearHalfDeal}
+                    onDelete={() => void handleDeleteSalesperson(person.id)}
                   />
                 ))}
               </div>
@@ -971,7 +1083,7 @@ export function KanbanBoard({
                   the deal is done.
                 </p>
                 <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                  {SALESPEOPLE.map((person) => (
+                  {salespeople.map((person) => (
                     <WorkingDealColumn
                       key={person.id}
                       salesperson={person}
@@ -1045,7 +1157,7 @@ export function KanbanBoard({
                 </div>
               )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {SALESPEOPLE.map((person) => (
+                {salespeople.map((person) => (
                   <OvernightColumn
                     key={person.id}
                     person={person}
@@ -1155,6 +1267,7 @@ export function KanbanBoard({
 
       <HalfDealModal
         open={Boolean(halfDealCarId)}
+        salespeople={salespeople}
         initialPrimaryId={halfDealFound?.car.salespersonId}
         initialPartnerId={halfDealFound?.car.coSalespersonId}
         onClose={() => setHalfDealCarId(null)}
@@ -1176,5 +1289,6 @@ export function KanbanBoard({
         }}
       />
     </div>
+    </SalespeopleProvider>
   );
 }

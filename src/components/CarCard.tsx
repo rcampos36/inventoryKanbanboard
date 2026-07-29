@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getCarColor, getModelColor } from "@/lib/colors";
-import { INTAKE_COLUMNS, MANAGERS, MODEL_COLUMNS, SALESPEOPLE } from "@/lib/data";
+import { INTAKE_COLUMNS, MANAGERS, MODEL_COLUMNS } from "@/lib/data";
 import { formatNewCarLabel } from "@/lib/format";
 import {
   carContainerId,
@@ -22,6 +22,7 @@ import {
   type Column,
 } from "@/lib/types";
 import { overnightDueStatus } from "@/lib/suggest-column";
+import { useSalespeople } from "./SalespeopleContext";
 
 interface CarCardProps {
   car: Car;
@@ -50,6 +51,7 @@ export function CarCard({
   onHalfDealWith,
   onClearHalfDeal,
 }: CarCardProps) {
+  const salespeople = useSalespeople();
   const color = getCarColor(car.model, car.condition);
   const isNew = car.condition === "new";
   const isSold = isCarSold(car);
@@ -60,10 +62,10 @@ export function CarCard({
   const currentContainer = carContainerId(car);
   const canDrag = draggable && !overlay;
   const partner = halfDeal
-    ? SALESPEOPLE.find((s) => s.id === car.coSalespersonId)
+    ? salespeople.find((s) => s.id === car.coSalespersonId)
     : undefined;
   const primary = isSold
-    ? SALESPEOPLE.find((s) => s.id === car.salespersonId)
+    ? salespeople.find((s) => s.id === car.salespersonId)
     : undefined;
 
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -355,7 +357,7 @@ export function CarCard({
             {INTAKE_COLUMNS.map((column) => renderColumnOption(column))}
 
             <p className={menuLabelClass}>Assign full deal</p>
-            {SALESPEOPLE.filter(
+            {salespeople.filter(
               (s) => salespersonContainerId(s.id) !== currentContainer || halfDeal
             ).map((s) => {
               const sColor = getModelColor(s.name);
@@ -377,7 +379,7 @@ export function CarCard({
             })}
 
             <p className={menuLabelClass}>Working deal</p>
-            {SALESPEOPLE.filter(
+            {salespeople.filter(
               (s) => workingDealContainerId(s.id) !== currentContainer
             ).map((s) => {
               const sColor = getModelColor(s.name);
@@ -415,7 +417,7 @@ export function CarCard({
                 )}
                 {isSold &&
                   onHalfDealWith &&
-                  SALESPEOPLE.filter((s) => s.id !== car.salespersonId).map(
+                  salespeople.filter((s) => s.id !== car.salespersonId).map(
                     (s) => {
                       const sColor = getModelColor(s.name);
                       const selected = car.coSalespersonId === s.id;
@@ -477,7 +479,7 @@ export function CarCard({
             })}
 
             <p className={menuLabelClass}>Assign to overnight demo</p>
-            {SALESPEOPLE.filter(
+            {salespeople.filter(
               (s) => overnightContainerId(s.id) !== currentContainer
             ).map((s) => {
               const sColor = getModelColor(s.name);
