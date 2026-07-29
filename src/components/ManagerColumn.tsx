@@ -40,18 +40,18 @@ export function ManagerColumn({
   const color = getModelColor(manager.name);
 
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-2xl bg-white ring-1 ring-slate-200">
-      <div className="flex items-center gap-3 px-4 pt-4 pb-2">
+    <div className="flex min-w-0 w-full flex-col rounded-2xl bg-white ring-1 ring-slate-200">
+      <div className="flex items-center gap-2 px-2.5 pt-3 pb-2">
         <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold text-white ${color.accent}`}
+          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${color.accent}`}
         >
           {initials(manager.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-semibold text-slate-800">
+          <h3 className="truncate text-xs font-semibold text-slate-800">
             {manager.name}
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="truncate text-[11px] text-slate-500">
             {cars.length} {cars.length === 1 ? "demo" : "demos"}
           </p>
         </div>
@@ -60,8 +60,8 @@ export function ManagerColumn({
       <div
         ref={setNodeRef}
         className={[
-          "flex flex-1 flex-col gap-2.5 rounded-b-2xl px-3 pb-3 pt-1",
-          "min-h-32 transition-colors",
+          "flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-2 pb-2.5 pt-1",
+          "transition-colors",
           isOver ? "bg-sky-50" : "",
         ].join(" ")}
       >

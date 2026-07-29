@@ -656,7 +656,7 @@ export function KanbanBoard({
             </aside>
           )}
 
-          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-6">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
             <section>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -677,7 +677,7 @@ export function KanbanBoard({
                   </select>
                 </label>
               </div>
-              <div className="flex gap-4 overflow-x-auto pb-1">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
                   <SalespersonColumn
                     key={person.id}
@@ -735,7 +735,7 @@ export function KanbanBoard({
                   Drop sales here for this date. End day (or overnight) moves
                   them into the monthly columns above.
                 </p>
-                <div className="flex gap-4 overflow-x-auto pb-1">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                   {todaySalesByPerson.map(
                     ({ person, todayCars, saleCount }) => (
                       <TodaySalesColumn
@@ -758,7 +758,7 @@ export function KanbanBoard({
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Manager Demos
               </h2>
-              <div className="flex gap-4 overflow-x-auto pb-1">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
                 {MANAGERS.map((manager) => (
                   <ManagerColumn
                     key={manager.id}
@@ -774,7 +774,7 @@ export function KanbanBoard({
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Team Overnight Demos
               </h2>
-              <div className="flex gap-4 overflow-x-auto pb-1">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {SALESPEOPLE.map((person) => (
                   <OvernightColumn
                     key={person.id}
@@ -792,11 +792,12 @@ export function KanbanBoard({
                 <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                   Incoming · DX · Loaners
                 </h2>
-                <div className="flex gap-4 overflow-x-auto pb-1">
+                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                   {visibleIntakeColumns.map((column) => (
                     <KanbanColumn
                       key={column.id}
                       column={column}
+                      className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
                       onEditCheckoutDates={requestEditCheckoutDates}

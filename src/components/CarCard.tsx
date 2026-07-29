@@ -137,7 +137,7 @@ export function CarCard({
       {...attributes}
       {...listeners}
       className={[
-        "group relative flex flex-col gap-2 overflow-hidden rounded-xl border bg-white p-3 pl-4 shadow-sm",
+        "group relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border bg-white p-2.5 pl-3.5 shadow-sm",
         "select-none",
         canDrag ? "cursor-grab active:cursor-grabbing" : "",
         color.border,
@@ -151,8 +151,8 @@ export function CarCard({
         aria-hidden
       />
 
-      <div className="flex items-start justify-between gap-2">
-        <span className="font-mono text-xs font-semibold tracking-wide text-slate-500">
+      <div className="flex min-w-0 items-start justify-between gap-1.5">
+        <span className="truncate font-mono text-[11px] font-semibold tracking-wide text-slate-500">
           #{car.stockNumber}
         </span>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -195,31 +195,31 @@ export function CarCard({
       </div>
 
       {isNew ? (
-        <div className="text-sm font-semibold leading-snug text-slate-900">
+        <div className="truncate text-xs font-semibold leading-snug text-slate-900">
           {formatNewCarLabel(car)}
         </div>
       ) : (
         <>
-          <div className="flex flex-col">
-            <span className="text-sm font-semibold text-slate-900">
+          <div className="min-w-0 flex flex-col">
+            <span className="truncate text-xs font-semibold text-slate-900">
               {car.year} {car.make} {car.model}
             </span>
-            <span className="text-xs text-slate-500">{car.trim}</span>
+            <span className="truncate text-[11px] text-slate-500">{car.trim}</span>
           </div>
 
-          <div className="flex items-center gap-2 pt-0.5">
+          <div className="flex min-w-0 items-center gap-2 pt-0.5">
             <span
-              className={`inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold ${color.badgeBg} ${color.badgeText}`}
+              className={`inline-flex max-w-full items-center gap-1.5 truncate rounded-md px-2 py-0.5 text-[11px] font-semibold ${color.badgeBg} ${color.badgeText}`}
             >
-              <span className={`h-1.5 w-1.5 rounded-full ${color.accent}`} />
-              {car.model}
+              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${color.accent}`} />
+              <span className="truncate">{car.model}</span>
             </span>
           </div>
         </>
       )}
 
       {halfDeal && primary && partner && (
-        <div className="rounded-lg bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-900">
+        <div className="truncate rounded-lg bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-900">
           {primary.name} · {partner.name}
         </div>
       )}
