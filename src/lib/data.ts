@@ -275,6 +275,7 @@ export const INITIAL_CARS: Car[] = [
     outDate: "2026-07-22",
     returnDate: "2026-07-23",
     tagNumber: "42",
+    homeColumnId: "cx-5",
     price: 34200,
   },
   {

@@ -18,6 +18,7 @@ import {
   salespersonContainerId,
   type Car,
 } from "@/lib/types";
+import { overnightDueStatus } from "@/lib/suggest-column";
 
 interface CarCardProps {
   car: Car;
@@ -27,6 +28,7 @@ interface CarCardProps {
   draggable?: boolean;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onReviewOvernightDue?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -38,6 +40,7 @@ export function CarCard({
   draggable = true,
   onMove,
   onEditCheckoutDates,
+  onReviewOvernightDue,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -47,6 +50,7 @@ export function CarCard({
   const isSold = isCarSold(car);
   const halfDeal = isHalfDeal(car);
   const isCheckout = isCheckoutAssignment(car);
+  const dueStatus = isCheckout ? overnightDueStatus(car.returnDate) : "ok";
   const currentContainer = carContainerId(car);
   const canDrag = draggable && !overlay;
   const partner = halfDeal
@@ -230,11 +234,31 @@ export function CarCard({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => {
             e.stopPropagation();
+            if (dueStatus !== "ok" && onReviewOvernightDue) {
+              onReviewOvernightDue(car.id);
+              return;
+            }
             onEditCheckoutDates?.(car.id);
           }}
-          className="mt-0.5 w-full rounded-lg bg-amber-50 px-2 py-1.5 text-left text-[11px] font-semibold text-amber-900 hover:bg-amber-100"
-          title="Edit overnight details"
+          className={[
+            "mt-0.5 w-full rounded-lg px-2 py-1.5 text-left text-[11px] font-semibold",
+            dueStatus === "overdue"
+              ? "bg-rose-100 text-rose-900 hover:bg-rose-200"
+              : dueStatus === "due"
+                ? "bg-amber-100 text-amber-950 ring-1 ring-amber-300 hover:bg-amber-200"
+                : "bg-amber-50 text-amber-900 hover:bg-amber-100",
+          ].join(" ")}
+          title={
+            dueStatus !== "ok"
+              ? "Demo due — extend or mark returned"
+              : "Edit overnight details"
+          }
         >
+          {dueStatus === "overdue"
+            ? "Past due · "
+            : dueStatus === "due"
+              ? "Due today · "
+              : ""}
           {car.tagNumber ? `Tag ${car.tagNumber} · ` : ""}
           Out {formatShortDate(car.outDate)} · Back{" "}
           {formatShortDate(car.returnDate)}

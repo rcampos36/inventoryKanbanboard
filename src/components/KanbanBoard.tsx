@@ -43,6 +43,10 @@ import {
   type CheckoutDates,
 } from "@/lib/types";
 import {
+  overnightDueStatus,
+  resolveOvernightHomeColumnId,
+} from "@/lib/suggest-column";
+import {
   clearAllCarsAction,
   createCarAction,
   updateCarAction,
@@ -57,6 +61,7 @@ import { OvernightColumn } from "./OvernightColumn";
 import { CarCard } from "./CarCard";
 import { AddCarModal } from "./AddCarModal";
 import { CheckoutDatesModal } from "./CheckoutDatesModal";
+import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
 
@@ -122,6 +127,9 @@ export function KanbanBoard({
     tagNumber: string;
     mode: "assign" | "edit";
   } | null>(null);
+  const [overnightDueCarId, setOvernightDueCarId] = useState<string | null>(
+    null
+  );
   const dragSourceRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -261,6 +269,23 @@ export function KanbanBoard({
       return { person, todayCars, saleCount };
     });
   }, [allSoldCars, salesDay]);
+
+  const dueOvernightDemos = useMemo(() => {
+    const today = todayIsoDate();
+    const items: { car: Car; status: "due" | "overdue" }[] = [];
+    for (const person of SALESPEOPLE) {
+      for (const car of board[overnightContainerId(person.id)] ?? []) {
+        const status = overnightDueStatus(car.returnDate, today);
+        if (status === "due" || status === "overdue") {
+          items.push({ car, status });
+        }
+      }
+    }
+    return items.sort((a, b) => {
+      if (a.status !== b.status) return a.status === "overdue" ? -1 : 1;
+      return (a.car.returnDate ?? "").localeCompare(b.car.returnDate ?? "");
+    });
+  }, [board]);
 
   const halfDealFound = halfDealCarId ? findCar(halfDealCarId) : null;
 
@@ -457,6 +482,37 @@ export function KanbanBoard({
       mode: "edit",
     });
   }
+
+  function extendOvernightDemo(carId: string, returnDate: string) {
+    const found = findCar(carId);
+    if (!found || !isCheckoutAssignment(found.car)) return;
+    const updated: Car = {
+      ...found.car,
+      returnDate,
+      outDate: found.car.outDate ?? todayIsoDate(),
+      tagNumber: found.car.tagNumber ?? "",
+    };
+    setBoard((prev) => ({
+      ...prev,
+      [found.containerId]: prev[found.containerId].map((c) =>
+        c.id === carId ? updated : c
+      ),
+    }));
+    persistCar(updated);
+    setOvernightDueCarId(null);
+  }
+
+  function markOvernightReturned(carId: string) {
+    const found = findCar(carId);
+    if (!found || !isCheckoutAssignment(found.car)) return;
+    const homeColumnId = resolveOvernightHomeColumnId(found.car);
+    moveCar(carId, homeColumnId);
+    setOvernightDueCarId(null);
+  }
+
+  const overnightDueCar = overnightDueCarId
+    ? findCar(overnightDueCarId)?.car ?? null
+    : null;
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -774,6 +830,42 @@ export function KanbanBoard({
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Team Overnight Demos
               </h2>
+              {dueOvernightDemos.length > 0 && (
+                <div className="mb-3 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5">
+                  <p className="text-xs font-bold uppercase tracking-wider text-amber-800">
+                    {dueOvernightDemos.length} demo
+                    {dueOvernightDemos.length === 1 ? "" : "s"} due back
+                  </p>
+                  <ul className="mt-2 flex flex-col gap-1.5">
+                    {dueOvernightDemos.map(({ car, status }) => (
+                      <li key={car.id}>
+                        <button
+                          type="button"
+                          onClick={() => setOvernightDueCarId(car.id)}
+                          className="flex w-full items-center justify-between gap-2 rounded-lg bg-white/80 px-2.5 py-1.5 text-left text-xs font-semibold text-slate-800 ring-1 ring-amber-200/80 hover:bg-white"
+                        >
+                          <span className="min-w-0 truncate">
+                            #{car.stockNumber}
+                            {car.tagNumber ? ` · Tag ${car.tagNumber}` : ""}
+                            {" · "}
+                            {car.model}
+                          </span>
+                          <span
+                            className={[
+                              "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                              status === "overdue"
+                                ? "bg-rose-100 text-rose-800"
+                                : "bg-amber-100 text-amber-900",
+                            ].join(" ")}
+                          >
+                            {status === "overdue" ? "Past due" : "Due today"}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                 {SALESPEOPLE.map((person) => (
                   <OvernightColumn
@@ -782,6 +874,7 @@ export function KanbanBoard({
                     cars={board[overnightContainerId(person.id)] ?? []}
                     onMove={requestMove}
                     onEditCheckoutDates={requestEditCheckoutDates}
+                    onReviewOvernightDue={setOvernightDueCarId}
                   />
                 ))}
               </div>
@@ -849,6 +942,14 @@ export function KanbanBoard({
           );
           setCheckoutPrompt(null);
         }}
+      />
+
+      <OvernightDueModal
+        open={Boolean(overnightDueCar)}
+        car={overnightDueCar}
+        onClose={() => setOvernightDueCarId(null)}
+        onExtend={extendOvernightDemo}
+        onMarkReturned={markOvernightReturned}
       />
 
       <HalfDealModal

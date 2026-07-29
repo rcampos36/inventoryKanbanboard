@@ -26,6 +26,8 @@ model Car {
   outDate         String?
   returnDate      String?
   tagNumber       String?
+  /** Inventory column to restore when an overnight demo is returned. */
+  homeColumnId    String?
   price           Int?
   position        Int      @default(0)
   createdAt       DateTime @default(now())

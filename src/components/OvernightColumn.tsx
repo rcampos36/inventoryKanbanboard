@@ -18,6 +18,7 @@ interface OvernightColumnProps {
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onReviewOvernightDue?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -35,6 +36,7 @@ export function OvernightColumn({
   cars,
   onMove,
   onEditCheckoutDates,
+  onReviewOvernightDue,
 }: OvernightColumnProps) {
   const containerId = overnightContainerId(person.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -79,6 +81,7 @@ export function OvernightColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
+              onReviewOvernightDue={onReviewOvernightDue}
             />
           ))}
         </SortableContext>

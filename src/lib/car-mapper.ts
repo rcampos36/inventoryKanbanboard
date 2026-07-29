@@ -19,6 +19,7 @@ export function toAppCar(row: DbCar): Car {
     outDate: row.outDate ?? undefined,
     returnDate: row.returnDate ?? undefined,
     tagNumber: row.tagNumber ?? undefined,
+    homeColumnId: row.homeColumnId ?? undefined,
     price: row.price ?? undefined,
   };
 }
@@ -40,6 +41,7 @@ export function toDbCarData(car: Car) {
     outDate: car.outDate ?? null,
     returnDate: car.returnDate ?? null,
     tagNumber: car.tagNumber ?? null,
+    homeColumnId: car.homeColumnId ?? null,
     price: car.price ?? null,
   };
 }

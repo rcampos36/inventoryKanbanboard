@@ -6,8 +6,8 @@ import {
   getModelsForMake,
   getTrimsForMake,
   MAKE_SUGGESTIONS,
-  MODEL_COLUMNS,
 } from "@/lib/data";
+import { suggestInventoryColumnId } from "@/lib/suggest-column";
 import type { Car, CarCondition, Column } from "@/lib/types";
 
 interface AddCarModalProps {
@@ -28,32 +28,6 @@ const EMPTY_FORM = {
   columnId: "",
 };
 
-/** Pick a sensible default column from make + condition + typed model. */
-function suggestColumnId(
-  make: string,
-  model: string,
-  condition: CarCondition
-): string {
-  const normalizedMake = make.trim().toLowerCase();
-  const normalizedModel = model.trim().toLowerCase();
-
-  if (normalizedMake === "mazda" && condition === "new") {
-    // Soft-top and RF share the MX-5 Miata board column.
-    if (normalizedModel.startsWith("mx-5 miata")) return "mx-5-miata";
-
-    const match = MODEL_COLUMNS.find(
-      (col) =>
-        !col.id.startsWith("used-") &&
-        col.title.toLowerCase() === normalizedModel
-    );
-    if (match) return match.id;
-    return "cx-5";
-  }
-
-  if (normalizedMake === "mazda") return "used-mazda";
-  return "used-other";
-}
-
 export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps) {
   const [form, setForm] = useState({
     ...EMPTY_FORM,
@@ -64,7 +38,7 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
     if (open) {
       setForm({
         ...EMPTY_FORM,
-        columnId: suggestColumnId("", "", "new"),
+        columnId: suggestInventoryColumnId("", "", "new"),
       });
     }
   }, [open, columns]);
@@ -93,7 +67,7 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       const next = { ...prev, [key]: value };
 
       if (key === "make" || key === "model" || key === "condition") {
-        next.columnId = suggestColumnId(
+        next.columnId = suggestInventoryColumnId(
           key === "make" ? String(value) : next.make,
           key === "model" ? String(value) : next.model,
           key === "condition" ? (value as CarCondition) : next.condition

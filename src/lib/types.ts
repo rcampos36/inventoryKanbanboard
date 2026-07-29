@@ -25,6 +25,8 @@ export interface Car {
   returnDate?: string;
   /** Dealer tag number used while the car is on overnight demo. */
   tagNumber?: string;
+  /** Inventory column to restore when the overnight demo is returned. */
+  homeColumnId?: string;
   price?: number;
 }
 
@@ -201,10 +203,23 @@ export function applyContainerLocation(
       checkoutDates?.tagNumber ??
       (wasCheckout ? car.tagNumber : undefined) ??
       "";
+    if (!wasCheckout) {
+      const isInventoryHome =
+        !car.salespersonId &&
+        !car.managerId &&
+        !car.overnightId &&
+        car.columnId !== "sold" &&
+        car.columnId !== "manager-demo" &&
+        car.columnId !== "overnight-demo";
+      next.homeColumnId = isInventoryHome ? car.columnId : car.homeColumnId;
+    } else {
+      next.homeColumnId = car.homeColumnId;
+    }
   } else {
     next.outDate = undefined;
     next.returnDate = undefined;
     next.tagNumber = undefined;
+    next.homeColumnId = undefined;
   }
 
   return next;
@@ -263,6 +278,7 @@ export function applyHalfDeal(
     outDate: undefined,
     returnDate: undefined,
     tagNumber: undefined,
+    homeColumnId: undefined,
     soldAt: wasSold
       ? (car.soldAt ?? saleDate ?? todayIsoDate())
       : (saleDate ?? todayIsoDate()),
