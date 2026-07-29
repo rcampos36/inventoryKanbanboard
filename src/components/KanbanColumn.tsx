@@ -11,6 +11,7 @@ import type { Car, Column } from "@/lib/types";
 interface KanbanColumnProps {
   column: Column;
   cars: Car[];
+  className?: string;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
@@ -21,6 +22,7 @@ interface KanbanColumnProps {
 export function KanbanColumn({
   column,
   cars,
+  className,
   onMove,
   onEditCheckoutDates,
   onRequestHalfDeal,
@@ -33,7 +35,12 @@ export function KanbanColumn({
   });
 
   return (
-    <div className="flex w-72 shrink-0 flex-col rounded-2xl bg-slate-100/80">
+    <div
+      className={
+        className ??
+        "flex w-72 shrink-0 flex-col rounded-2xl bg-slate-100/80"
+      }
+    >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
         <h2 className="text-sm font-semibold text-slate-700">{column.title}</h2>
         <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">

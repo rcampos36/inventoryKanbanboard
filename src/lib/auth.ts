@@ -6,33 +6,58 @@ import type { SessionUser } from "@/lib/session-types";
 
 export type { SessionUser };
 
-/** Creates the first admin from env if the users table is empty. */
+/**
+ * Ensures an administrator exists from ADMIN_EMAIL / ADMIN_PASSWORD.
+ * - Creates the admin if that email is missing
+ * - Updates the password if env password no longer matches (so Vercel env resets work)
+ */
 export async function ensureBootstrapAdmin() {
-  const count = await prisma.user.count();
-  if (count > 0) return;
-
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   const name = process.env.ADMIN_NAME?.trim() || "Administrator";
 
   if (!email || !password) {
-    throw new Error(
-      "No users exist yet. Set ADMIN_EMAIL and ADMIN_PASSWORD to create the first admin."
-    );
+    const count = await prisma.user.count();
+    if (count === 0) {
+      throw new Error(
+        "No users exist yet. Set ADMIN_EMAIL and ADMIN_PASSWORD to create the first admin."
+      );
+    }
+    return;
   }
+
   if (password.length < 8) {
     throw new Error("ADMIN_PASSWORD must be at least 8 characters.");
   }
 
-  const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.user.create({
-    data: {
-      email,
-      name,
-      passwordHash,
-      role: "ADMIN",
-    },
-  });
+  const existing = await prisma.user.findUnique({ where: { email } });
+
+  if (!existing) {
+    const passwordHash = await bcrypt.hash(password, 12);
+    await prisma.user.create({
+      data: {
+        email,
+        name,
+        passwordHash,
+        role: "ADMIN",
+      },
+    });
+    return;
+  }
+
+  const passwordMatches = await bcrypt.compare(password, existing.passwordHash);
+  if (!passwordMatches || existing.role !== "ADMIN" || existing.name !== name) {
+    await prisma.user.update({
+      where: { email },
+      data: {
+        passwordHash: passwordMatches
+          ? existing.passwordHash
+          : await bcrypt.hash(password, 12),
+        role: "ADMIN",
+        name,
+      },
+    });
+  }
 }
 
 export async function requireUser(): Promise<SessionUser> {

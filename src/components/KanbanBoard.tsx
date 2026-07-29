@@ -632,17 +632,18 @@ export function KanbanBoard({
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
       >
-        <div className="flex flex-1 flex-col gap-6 overflow-y-auto p-6">
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
           {visibleModelColumns.length > 0 && (
-            <section>
+            <aside className="min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-4 lg:w-[min(42rem,45%)] lg:border-b-0 lg:border-r">
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Inventory by Model
               </h2>
-              <div className="flex gap-4 overflow-x-auto pb-1">
+              <div className="grid grid-cols-2 gap-3">
                 {visibleModelColumns.map((column) => (
                   <KanbanColumn
                     key={column.id}
                     column={column}
+                    className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                     cars={filteredBoard[column.id] ?? []}
                     onMove={requestMove}
                     onEditCheckoutDates={requestEditCheckoutDates}
@@ -652,93 +653,38 @@ export function KanbanBoard({
                   />
                 ))}
               </div>
-            </section>
+            </aside>
           )}
 
-          <section>
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Sales Team · Sold by
-              </h2>
-              <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                Month
-                <select
-                  value={salesMonth}
-                  onChange={(e) => setSalesMonth(e.target.value)}
-                  className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
-                >
-                  {salesMonthOptions.map((key) => (
-                    <option key={key} value={key}>
-                      {formatMonthLabel(key)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <div className="flex gap-4 overflow-x-auto pb-1">
-              {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
-                <SalespersonColumn
-                  key={person.id}
-                  salesperson={person}
-                  cars={monthCars}
-                  rank={rank}
-                  monthSoldCount={count}
-                  onMove={requestMove}
-                  onRequestHalfDeal={setHalfDealCarId}
-                  onHalfDealWith={halfDealWith}
-                  onClearHalfDeal={clearHalfDeal}
-                />
-              ))}
-            </div>
-
-            <div className="mt-5">
+          <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto p-4 lg:p-6">
+            <section>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                  Daily Sales · {formatShortDate(salesDay)}
-                </h3>
-                <div className="flex flex-wrap items-center gap-2">
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
-                    Date
-                    <input
-                      type="date"
-                      value={salesDay}
-                      disabled={savingSalesDay}
-                      onChange={(e) => {
-                        if (e.target.value) void persistSalesDay(e.target.value);
-                      }}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    disabled={savingSalesDay}
-                    onClick={() => void persistSalesDay(todayIsoDate())}
-                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Sales Team · Sold by
+                </h2>
+                <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  Month
+                  <select
+                    value={salesMonth}
+                    onChange={(e) => setSalesMonth(e.target.value)}
+                    className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
                   >
-                    Today
-                  </button>
-                  <button
-                    type="button"
-                    disabled={savingSalesDay}
-                    onClick={endSalesDay}
-                    className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
-                    title="Close this sales day and move these sales into each team member's monthly column"
-                  >
-                    {savingSalesDay ? "Saving…" : "End day"}
-                  </button>
-                </div>
+                    {salesMonthOptions.map((key) => (
+                      <option key={key} value={key}>
+                        {formatMonthLabel(key)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
               </div>
-              <p className="mb-3 text-xs text-slate-500">
-                Drop sales here for this date. End day (or overnight) moves them
-                into the monthly columns above.
-              </p>
               <div className="flex gap-4 overflow-x-auto pb-1">
-                {todaySalesByPerson.map(({ person, todayCars, saleCount }) => (
-                  <TodaySalesColumn
+                {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
+                  <SalespersonColumn
                     key={person.id}
                     salesperson={person}
-                    cars={todayCars}
-                    saleCount={saleCount}
+                    cars={monthCars}
+                    rank={rank}
+                    monthSoldCount={count}
                     onMove={requestMove}
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
@@ -746,63 +692,123 @@ export function KanbanBoard({
                   />
                 ))}
               </div>
-            </div>
-          </section>
 
-          <section>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-              Manager Demos
-            </h2>
-            <div className="flex gap-4 overflow-x-auto pb-1">
-              {MANAGERS.map((manager) => (
-                <ManagerColumn
-                  key={manager.id}
-                  manager={manager}
-                  cars={board[managerContainerId(manager.id)] ?? []}
-                  onMove={requestMove}
-                />
-              ))}
-            </div>
-          </section>
+              <div className="mt-5">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                    Daily Sales · {formatShortDate(salesDay)}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                      Date
+                      <input
+                        type="date"
+                        value={salesDay}
+                        disabled={savingSalesDay}
+                        onChange={(e) => {
+                          if (e.target.value)
+                            void persistSalesDay(e.target.value);
+                        }}
+                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      disabled={savingSalesDay}
+                      onClick={() => void persistSalesDay(todayIsoDate())}
+                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      Today
+                    </button>
+                    <button
+                      type="button"
+                      disabled={savingSalesDay}
+                      onClick={endSalesDay}
+                      className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                      title="Close this sales day and move these sales into each team member's monthly column"
+                    >
+                      {savingSalesDay ? "Saving…" : "End day"}
+                    </button>
+                  </div>
+                </div>
+                <p className="mb-3 text-xs text-slate-500">
+                  Drop sales here for this date. End day (or overnight) moves
+                  them into the monthly columns above.
+                </p>
+                <div className="flex gap-4 overflow-x-auto pb-1">
+                  {todaySalesByPerson.map(
+                    ({ person, todayCars, saleCount }) => (
+                      <TodaySalesColumn
+                        key={person.id}
+                        salesperson={person}
+                        cars={todayCars}
+                        saleCount={saleCount}
+                        onMove={requestMove}
+                        onRequestHalfDeal={setHalfDealCarId}
+                        onHalfDealWith={halfDealWith}
+                        onClearHalfDeal={clearHalfDeal}
+                      />
+                    ),
+                  )}
+                </div>
+              </div>
+            </section>
 
-          <section>
-            <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-              Team Overnight Demos
-            </h2>
-            <div className="flex gap-4 overflow-x-auto pb-1">
-              {SALESPEOPLE.map((person) => (
-                <OvernightColumn
-                  key={person.id}
-                  person={person}
-                  cars={board[overnightContainerId(person.id)] ?? []}
-                  onMove={requestMove}
-                  onEditCheckoutDates={requestEditCheckoutDates}
-                />
-              ))}
-            </div>
-          </section>
-
-          {visibleIntakeColumns.length > 0 && (
             <section>
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
-                Incoming · DX · Loaners
+                Manager Demos
               </h2>
               <div className="flex gap-4 overflow-x-auto pb-1">
-                {visibleIntakeColumns.map((column) => (
-                  <KanbanColumn
-                    key={column.id}
-                    column={column}
-                    cars={filteredBoard[column.id] ?? []}
+                {MANAGERS.map((manager) => (
+                  <ManagerColumn
+                    key={manager.id}
+                    manager={manager}
+                    cars={board[managerContainerId(manager.id)] ?? []}
                     onMove={requestMove}
-                    onEditCheckoutDates={requestEditCheckoutDates}
-                    onRequestHalfDeal={setHalfDealCarId}
-                    onHalfDealWith={halfDealWith}
-                    onClearHalfDeal={clearHalfDeal}
                   />
                 ))}
               </div>
             </section>
-          )}
+
+            <section>
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                Team Overnight Demos
+              </h2>
+              <div className="flex gap-4 overflow-x-auto pb-1">
+                {SALESPEOPLE.map((person) => (
+                  <OvernightColumn
+                    key={person.id}
+                    person={person}
+                    cars={board[overnightContainerId(person.id)] ?? []}
+                    onMove={requestMove}
+                    onEditCheckoutDates={requestEditCheckoutDates}
+                  />
+                ))}
+              </div>
+            </section>
+
+            {visibleIntakeColumns.length > 0 && (
+              <section>
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                  Incoming · DX · Loaners
+                </h2>
+                <div className="flex gap-4 overflow-x-auto pb-1">
+                  {visibleIntakeColumns.map((column) => (
+                    <KanbanColumn
+                      key={column.id}
+                      column={column}
+                      cars={filteredBoard[column.id] ?? []}
+                      onMove={requestMove}
+                      onEditCheckoutDates={requestEditCheckoutDates}
+                      onRequestHalfDeal={setHalfDealCarId}
+                      onHalfDealWith={halfDealWith}
+                      onClearHalfDeal={clearHalfDeal}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         </div>
 
         <DragOverlay>
