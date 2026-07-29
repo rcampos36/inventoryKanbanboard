@@ -988,7 +988,12 @@ export function KanbanBoard({
                   {salespersonError}
                 </p>
               )}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              <div
+                className="grid gap-2"
+                style={{
+                  gridTemplateColumns: `repeat(${Math.max(rankedSalespeople.length, 1)}, minmax(0, 1fr))`,
+                }}
+              >
                 {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
                   <SalespersonColumn
                     key={person.id}

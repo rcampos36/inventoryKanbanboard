@@ -53,42 +53,42 @@ export function SalespersonColumn({
 
   return (
     <div className="flex min-w-0 w-full flex-col rounded-2xl bg-white ring-1 ring-slate-200">
-      <div className="flex items-center gap-2 px-2.5 pt-3 pb-2">
+      <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <div className="relative shrink-0">
           <span
-            className={`flex h-8 w-8 items-center justify-center rounded-full text-[10px] font-bold text-white ${color.accent}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold text-white ${color.accent}`}
           >
             {initials(salesperson.name)}
           </span>
           <span
-            className={`absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full px-1 text-[10px] font-bold ${rankBadgeClass(rank)}`}
+            className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-0.5 text-[9px] font-bold ${rankBadgeClass(rank)}`}
             title={`Rank #${rank}`}
           >
             #{rank}
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-xs font-semibold text-slate-800">
+          <h3 className="truncate text-[11px] font-semibold leading-tight text-slate-800">
             {salesperson.name}
           </h3>
-          <p className="truncate text-[11px] text-slate-500">
+          <p className="truncate text-[10px] leading-tight text-slate-500">
             {formatSaleCount(monthSoldCount)}{" "}
-            {monthSoldCount === 1 ? "sale" : "sales"} this month
+            {monthSoldCount === 1 ? "sale" : "sales"}
           </p>
         </div>
         {onDelete && (
           <button
             type="button"
             onClick={onDelete}
-            className="shrink-0 rounded-md px-1.5 py-1 text-[10px] font-semibold text-rose-600 hover:bg-rose-50"
+            className="shrink-0 rounded px-1 py-0.5 text-[9px] font-semibold text-rose-600 hover:bg-rose-50"
             title={`Remove ${salesperson.name}`}
           >
-            Delete
+            ×
           </button>
         )}
       </div>
 
-      <div className="flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-2 pb-2.5 pt-1">
+      <div className="flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-1.5 pb-2 pt-1">
         {cars.map((car) => (
           <CarCard
             key={
@@ -100,7 +100,7 @@ export function SalespersonColumn({
             draggable={false}
             onMove={onMove}
             onEditCheckoutDates={onEditCheckoutDates}
-              onEditExteriorColor={onEditExteriorColor}
+            onEditExteriorColor={onEditExteriorColor}
             onRequestHalfDeal={onRequestHalfDeal}
             onHalfDealWith={onHalfDealWith}
             onClearHalfDeal={onClearHalfDeal}
@@ -108,7 +108,7 @@ export function SalespersonColumn({
         ))}
 
         {cars.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-6 text-center text-xs text-slate-400">
+          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-1 py-6 text-center text-[10px] leading-snug text-slate-400">
             Closed-day sales appear here
           </div>
         )}
