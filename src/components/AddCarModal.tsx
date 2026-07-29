@@ -7,9 +7,8 @@ import {
   MAKE_SUGGESTIONS,
 } from "@/lib/data";
 import { suggestInventoryColumnId } from "@/lib/suggest-column";
-import { defaultChipColorId, type ChipColorId } from "@/lib/colors";
+import { EXTERIOR_COLOR_SUGGESTIONS } from "@/lib/colors";
 import type { Car, CarCondition, Column } from "@/lib/types";
-import { ChipColorPicker } from "./ChipColorPicker";
 
 interface AddCarModalProps {
   open: boolean;
@@ -26,14 +25,13 @@ const EMPTY_FORM = {
   trim: "",
   condition: "new" as CarCondition,
   columnId: "",
-  chipColor: "blue" as ChipColorId,
+  exteriorColor: "",
 };
 
 export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps) {
   const [form, setForm] = useState({
     ...EMPTY_FORM,
     columnId: columns[0]?.id ?? "",
-    chipColor: defaultChipColorId("", "new"),
   });
 
   useEffect(() => {
@@ -41,7 +39,6 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       setForm({
         ...EMPTY_FORM,
         columnId: suggestInventoryColumnId("", "", "new"),
-        chipColor: defaultChipColorId("", "new"),
       });
     }
   }, [open, columns]);
@@ -70,12 +67,11 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       const next = { ...prev, [key]: value };
 
       if (key === "make" || key === "model" || key === "condition") {
-        const make = key === "make" ? String(value) : next.make;
-        const model = key === "model" ? String(value) : next.model;
-        const condition =
-          key === "condition" ? (value as CarCondition) : next.condition;
-        next.columnId = suggestInventoryColumnId(make, model, condition);
-        next.chipColor = defaultChipColorId(model, condition);
+        next.columnId = suggestInventoryColumnId(
+          key === "make" ? String(value) : next.make,
+          key === "model" ? String(value) : next.model,
+          key === "condition" ? (value as CarCondition) : next.condition
+        );
       }
 
       return next;
@@ -96,7 +92,7 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       trim: form.trim.trim(),
       condition: form.condition,
       columnId,
-      chipColor: form.chipColor,
+      exteriorColor: form.exteriorColor.trim() || undefined,
     });
     onClose();
   }
@@ -219,6 +215,25 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
           </div>
 
           <div className="flex flex-col gap-1">
+            <label className={labelClass}>Color</label>
+            <input
+              className={inputClass}
+              list="exterior-color-suggestions"
+              value={form.exteriorColor}
+              onChange={(e) => update("exteriorColor", e.target.value)}
+              placeholder="Soul Red Crystal Metallic, Machine Gray…"
+            />
+            <datalist id="exterior-color-suggestions">
+              {EXTERIOR_COLOR_SUGGESTIONS.map((color) => (
+                <option key={color} value={color} />
+              ))}
+            </datalist>
+            <p className={hintClass}>
+              Exterior paint color of the vehicle — shown on the chip.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-1">
             <label className={labelClass}>Condition</label>
             <select
               className={inputClass}
@@ -230,18 +245,6 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
               <option value="new">New</option>
               <option value="used">Used</option>
             </select>
-          </div>
-
-          <div className="flex flex-col gap-1.5">
-            <label className={labelClass}>Chip color</label>
-            <ChipColorPicker
-              value={form.chipColor}
-              onChange={(chipColor) => update("chipColor", chipColor)}
-            />
-            <p className={hintClass}>
-              Defaults by model (used cars default to yellow). You can change it
-              anytime.
-            </p>
           </div>
 
           <div className="flex flex-col gap-1">

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { getCarColor, getModelColor, defaultChipColorId, type ChipColorId } from "@/lib/colors";
+import { getCarColor, getModelColor } from "@/lib/colors";
 import { INTAKE_COLUMNS, MANAGERS, MODEL_COLUMNS, SALESPEOPLE } from "@/lib/data";
 import { formatNewCarLabel } from "@/lib/format";
 import {
@@ -22,7 +22,6 @@ import {
   type Column,
 } from "@/lib/types";
 import { overnightDueStatus } from "@/lib/suggest-column";
-import { ChipColorPicker } from "./ChipColorPicker";
 
 interface CarCardProps {
   car: Car;
@@ -33,7 +32,6 @@ interface CarCardProps {
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onReviewOvernightDue?: (carId: string) => void;
-  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -46,15 +44,11 @@ export function CarCard({
   onMove,
   onEditCheckoutDates,
   onReviewOvernightDue,
-  onChangeChipColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
 }: CarCardProps) {
-  const color = getCarColor(car.model, car.condition, car.chipColor);
-  const selectedChipColor =
-    (car.chipColor as ChipColorId | undefined) ??
-    defaultChipColorId(car.model, car.condition);
+  const color = getCarColor(car.model, car.condition);
   const isNew = car.condition === "new";
   const isSold = isCarSold(car);
   const working = isWorkingDeal(car);
@@ -273,6 +267,12 @@ export function CarCard({
         </>
       )}
 
+      {car.exteriorColor && (
+        <div className="truncate text-[11px] font-medium text-slate-600">
+          {car.exteriorColor}
+        </div>
+      )}
+
       {halfDeal && primary && partner && (
         <div className="truncate rounded-lg bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-900">
           {primary.name} · {partner.name}
@@ -330,24 +330,6 @@ export function CarCard({
 
             <p className={menuLabelClass}>Incoming · DX · Loaners</p>
             {INTAKE_COLUMNS.map((column) => renderColumnOption(column))}
-
-            {onChangeChipColor && (
-              <>
-                <p className={menuLabelClass}>Chip color</p>
-                <div
-                  className="px-2 py-1.5"
-                  onPointerDown={(e) => e.stopPropagation()}
-                >
-                  <ChipColorPicker
-                    size="sm"
-                    value={selectedChipColor}
-                    onChange={(chipColor) => {
-                      onChangeChipColor(car.id, chipColor);
-                    }}
-                  />
-                </div>
-              </>
-            )}
 
             <p className={menuLabelClass}>Assign full deal</p>
             {SALESPEOPLE.filter(

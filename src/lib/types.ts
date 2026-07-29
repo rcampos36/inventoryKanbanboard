@@ -29,8 +29,8 @@ export interface Car {
   tagNumber?: string;
   /** Inventory column to restore when the overnight demo is returned. */
   homeColumnId?: string;
-  /** Optional chip accent color id from CHIP_COLOR_OPTIONS. */
-  chipColor?: string;
+  /** Exterior paint / body color name of the vehicle. */
+  exteriorColor?: string;
   price?: number;
 }
 

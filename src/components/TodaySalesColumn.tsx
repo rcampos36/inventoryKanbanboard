@@ -6,7 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CarCard } from "./CarCard";
-import { getModelColor, type ChipColorId } from "@/lib/colors";
+import { getModelColor } from "@/lib/colors";
 import {
   formatSaleCount,
   salespersonContainerId,
@@ -20,7 +20,6 @@ interface TodaySalesColumnProps {
   saleCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
-  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -42,7 +41,6 @@ export function TodaySalesColumn({
   saleCount,
   onMove,
   onEditCheckoutDates,
-  onChangeChipColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -96,7 +94,6 @@ export function TodaySalesColumn({
                 draggable={isPrimary}
                 onMove={onMove}
                 onEditCheckoutDates={onEditCheckoutDates}
-                onChangeChipColor={onChangeChipColor}
                 onRequestHalfDeal={onRequestHalfDeal}
                 onHalfDealWith={onHalfDealWith}
                 onClearHalfDeal={onClearHalfDeal}

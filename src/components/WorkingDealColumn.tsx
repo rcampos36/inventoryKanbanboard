@@ -6,7 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CarCard } from "./CarCard";
-import { getModelColor, type ChipColorId } from "@/lib/colors";
+import { getModelColor } from "@/lib/colors";
 import {
   workingDealContainerId,
   type Car,
@@ -18,7 +18,6 @@ interface WorkingDealColumnProps {
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
-  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
 }
 
 function initials(name: string): string {
@@ -36,7 +35,6 @@ export function WorkingDealColumn({
   cars,
   onMove,
   onEditCheckoutDates,
-  onChangeChipColor,
 }: WorkingDealColumnProps) {
   const containerId = workingDealContainerId(salesperson.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -81,7 +79,6 @@ export function WorkingDealColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
-              onChangeChipColor={onChangeChipColor}
             />
           ))}
         </SortableContext>

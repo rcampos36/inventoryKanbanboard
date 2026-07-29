@@ -13,35 +13,12 @@ export interface ModelColor {
   badgeText: string;
 }
 
-export type ChipColorId =
-  | "rose"
-  | "orange"
-  | "amber"
-  | "yellow"
-  | "lime"
-  | "emerald"
-  | "teal"
-  | "cyan"
-  | "sky"
-  | "blue"
-  | "indigo"
-  | "violet"
-  | "fuchsia"
-  | "pink";
-
-export interface ChipColorOption extends ModelColor {
-  id: ChipColorId;
-  label: string;
-}
-
 /**
  * A curated palette. Each entry uses fully static class strings so the
  * Tailwind JIT compiler can see them at build time.
  */
-export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
+const PALETTE: ModelColor[] = [
   {
-    id: "rose",
-    label: "Rose",
     accent: "bg-rose-500",
     bg: "bg-rose-50",
     border: "border-rose-200",
@@ -50,8 +27,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-rose-700",
   },
   {
-    id: "orange",
-    label: "Orange",
     accent: "bg-orange-500",
     bg: "bg-orange-50",
     border: "border-orange-200",
@@ -60,8 +35,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-orange-700",
   },
   {
-    id: "amber",
-    label: "Amber",
     accent: "bg-amber-500",
     bg: "bg-amber-50",
     border: "border-amber-200",
@@ -70,8 +43,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-amber-700",
   },
   {
-    id: "yellow",
-    label: "Yellow",
     accent: "bg-yellow-500",
     bg: "bg-yellow-50",
     border: "border-yellow-300",
@@ -80,8 +51,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-yellow-800",
   },
   {
-    id: "lime",
-    label: "Lime",
     accent: "bg-lime-500",
     bg: "bg-lime-50",
     border: "border-lime-200",
@@ -90,8 +59,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-lime-700",
   },
   {
-    id: "emerald",
-    label: "Emerald",
     accent: "bg-emerald-500",
     bg: "bg-emerald-50",
     border: "border-emerald-200",
@@ -100,8 +67,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-emerald-700",
   },
   {
-    id: "teal",
-    label: "Teal",
     accent: "bg-teal-500",
     bg: "bg-teal-50",
     border: "border-teal-200",
@@ -110,8 +75,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-teal-700",
   },
   {
-    id: "cyan",
-    label: "Cyan",
     accent: "bg-cyan-500",
     bg: "bg-cyan-50",
     border: "border-cyan-200",
@@ -120,8 +83,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-cyan-700",
   },
   {
-    id: "sky",
-    label: "Sky",
     accent: "bg-sky-500",
     bg: "bg-sky-50",
     border: "border-sky-200",
@@ -130,8 +91,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-sky-700",
   },
   {
-    id: "blue",
-    label: "Blue",
     accent: "bg-blue-500",
     bg: "bg-blue-50",
     border: "border-blue-200",
@@ -140,8 +99,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-blue-700",
   },
   {
-    id: "indigo",
-    label: "Indigo",
     accent: "bg-indigo-500",
     bg: "bg-indigo-50",
     border: "border-indigo-200",
@@ -150,8 +107,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-indigo-700",
   },
   {
-    id: "violet",
-    label: "Violet",
     accent: "bg-violet-500",
     bg: "bg-violet-50",
     border: "border-violet-200",
@@ -160,8 +115,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-violet-700",
   },
   {
-    id: "fuchsia",
-    label: "Fuchsia",
     accent: "bg-fuchsia-500",
     bg: "bg-fuchsia-50",
     border: "border-fuchsia-200",
@@ -170,8 +123,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-fuchsia-700",
   },
   {
-    id: "pink",
-    label: "Pink",
     accent: "bg-pink-500",
     bg: "bg-pink-50",
     border: "border-pink-200",
@@ -180,11 +131,6 @@ export const CHIP_COLOR_OPTIONS: ChipColorOption[] = [
     badgeText: "text-pink-700",
   },
 ];
-
-const CHIP_COLOR_BY_ID: Record<ChipColorId, ChipColorOption> =
-  Object.fromEntries(
-    CHIP_COLOR_OPTIONS.map((option) => [option.id, option])
-  ) as Record<ChipColorId, ChipColorOption>;
 
 /** Stable string hash so the same model always maps to the same color. */
 function hashString(value: string): number {
@@ -220,56 +166,49 @@ export function normalizeModelColorKey(model: string): string {
   return value;
 }
 
-/** Explicit colors for each new-car model family (variants share these). */
-const MODEL_FAMILY_COLOR_IDS: Record<string, ChipColorId> = {
-  "mazda3-sedan": "blue",
-  "mazda3-hatchback": "indigo",
-  mazda3: "blue",
-  "cx-30": "cyan",
-  "cx-5": "emerald",
-  "cx-50": "orange",
-  "cx-70": "violet",
-  "cx-90": "rose",
-  "mx-5-miata": "pink",
+/** Explicit chip accent colors for each new-car model family. */
+const MODEL_FAMILY_COLORS: Record<string, ModelColor> = {
+  "mazda3-sedan": PALETTE[9], // blue
+  "mazda3-hatchback": PALETTE[10], // indigo
+  mazda3: PALETTE[9],
+  "cx-30": PALETTE[7], // cyan
+  "cx-5": PALETTE[5], // emerald
+  "cx-50": PALETTE[1], // orange
+  "cx-70": PALETTE[11], // violet
+  "cx-90": PALETTE[0], // rose
+  "mx-5-miata": PALETTE[13], // pink
 };
 
-/** All used inventory chips share this yellow treatment by default. */
-export const USED_CAR_COLOR: ModelColor = CHIP_COLOR_BY_ID.yellow;
+/** All used inventory chips share this yellow treatment. */
+export const USED_CAR_COLOR: ModelColor = PALETTE[3];
 
-export function isChipColorId(value: string | undefined | null): value is ChipColorId {
-  return Boolean(value && value in CHIP_COLOR_BY_ID);
-}
-
-export function getChipColorOption(id: string | undefined | null): ChipColorOption | null {
-  if (!isChipColorId(id)) return null;
-  return CHIP_COLOR_BY_ID[id];
-}
+/** Common Mazda exterior paint names for Add Vehicle suggestions. */
+export const EXTERIOR_COLOR_SUGGESTIONS = [
+  "Soul Red Crystal Metallic",
+  "Machine Gray Metallic",
+  "Polymetal Gray Metallic",
+  "Jet Black Mica",
+  "Snowflake White Pearl Mica",
+  "Platinum Quartz Metallic",
+  "Deep Crystal Blue Mica",
+  "Ceramic Metallic",
+  "Zircon Sand Metallic",
+  "Rhodium White Premium Metallic",
+  "Artisan Red Premium Metallic",
+  "Sonic Silver Metallic",
+];
 
 export function getModelColor(model: string): ModelColor {
   const key = normalizeModelColorKey(model);
-  const familyId = MODEL_FAMILY_COLOR_IDS[key];
-  if (familyId) return CHIP_COLOR_BY_ID[familyId];
-  const index = hashString(key) % CHIP_COLOR_OPTIONS.length;
-  return CHIP_COLOR_OPTIONS[index];
-}
-
-/** Default chip color id for a new/used car before an explicit pick. */
-export function defaultChipColorId(
-  model: string,
-  condition: "new" | "used"
-): ChipColorId {
-  if (condition === "used") return "yellow";
-  const key = normalizeModelColorKey(model);
-  return MODEL_FAMILY_COLOR_IDS[key] ?? CHIP_COLOR_OPTIONS[hashString(key) % CHIP_COLOR_OPTIONS.length].id;
+  if (MODEL_FAMILY_COLORS[key]) return MODEL_FAMILY_COLORS[key];
+  const index = hashString(key) % PALETTE.length;
+  return PALETTE[index];
 }
 
 export function getCarColor(
   model: string,
-  condition: "new" | "used",
-  chipColor?: string | null
+  condition: "new" | "used"
 ): ModelColor {
-  const override = getChipColorOption(chipColor);
-  if (override) return override;
   if (condition === "used") return USED_CAR_COLOR;
   return getModelColor(model);
 }
