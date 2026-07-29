@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireAdmin, ensureBootstrapAdmin } from "@/lib/auth";
 import {
@@ -64,63 +65,101 @@ export async function logoutAction() {
   redirect("/login");
 }
 
+function actionErrorMessage(error: unknown, fallback: string): string {
+  // Never swallow Next.js redirect()/notFound() control-flow errors.
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "digest" in error &&
+    typeof (error as { digest?: unknown }).digest === "string" &&
+    String((error as { digest: string }).digest).startsWith("NEXT_")
+  ) {
+    throw error;
+  }
+  return error instanceof Error ? error.message : fallback;
+}
+
 export async function createUserAction(
   _prev: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
   await requireAdmin();
 
-  const name = String(formData.get("name") ?? "").trim();
-  const email = String(formData.get("email") ?? "")
-    .trim()
-    .toLowerCase();
-  const password = String(formData.get("password") ?? "");
-  const roleRaw = String(formData.get("role") ?? "USER");
-  const role = roleRaw === "ADMIN" ? "ADMIN" : "USER";
+  try {
+    const name = String(formData.get("name") ?? "").trim();
+    const email = String(formData.get("email") ?? "")
+      .trim()
+      .toLowerCase();
+    const password = String(formData.get("password") ?? "");
+    const roleRaw = String(formData.get("role") ?? "USER");
+    const role = roleRaw === "ADMIN" ? "ADMIN" : "USER";
 
-  if (!name || !email || !password) {
-    return { error: "Name, email, and password are required." };
-  }
-  if (!email.includes("@")) {
-    return { error: "Enter a valid email address." };
-  }
-  if (password.length < 8) {
-    return { error: "Password must be at least 8 characters." };
-  }
+    if (!name || !email || !password) {
+      return { error: "Name, email, and password are required." };
+    }
+    if (!email.includes("@")) {
+      return { error: "Enter a valid email address." };
+    }
+    if (password.length < 8) {
+      return { error: "Password must be at least 8 characters." };
+    }
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) {
-    return { error: "A user with this email already exists." };
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return { error: "A user with this email already exists." };
+    }
+
+    const passwordHash = await bcrypt.hash(password, 12);
+    await prisma.user.create({
+      data: { name, email, passwordHash, role },
+    });
+
+    revalidatePath("/admin");
+    return { success: `Access granted for ${email}.` };
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not create the user."),
+    };
   }
-
-  const passwordHash = await bcrypt.hash(password, 12);
-  await prisma.user.create({
-    data: { name, email, passwordHash, role },
-  });
-
-  return { success: `Access granted for ${email}.` };
 }
 
-export async function deleteUserAction(userId: string): Promise<AuthFormState> {
+export async function deleteUserAction(
+  _prev: AuthFormState,
+  formData: FormData
+): Promise<AuthFormState> {
   const admin = await requireAdmin();
-  if (admin.id === userId) {
-    return { error: "You cannot remove your own admin account." };
-  }
 
-  const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) {
-    return { error: "User not found." };
-  }
+  try {
+    const userId = String(formData.get("userId") ?? "").trim();
 
-  if (target.role === "ADMIN") {
-    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-    if (adminCount <= 1) {
-      return { error: "You cannot remove the last administrator." };
+    if (!userId) {
+      return { error: "Missing user id." };
     }
-  }
 
-  await prisma.user.delete({ where: { id: userId } });
-  return { success: `Removed access for ${target.email}.` };
+    if (admin.id === userId) {
+      return { error: "You cannot remove your own admin account." };
+    }
+
+    const target = await prisma.user.findUnique({ where: { id: userId } });
+    if (!target) {
+      return { error: "User not found." };
+    }
+
+    if (target.role === "ADMIN") {
+      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+      if (adminCount <= 1) {
+        return { error: "You cannot remove the last administrator." };
+      }
+    }
+
+    await prisma.user.delete({ where: { id: userId } });
+    revalidatePath("/admin");
+    return { success: `Removed access for ${target.email}.` };
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not remove the user."),
+    };
+  }
 }
 
 export async function listUsersAction() {

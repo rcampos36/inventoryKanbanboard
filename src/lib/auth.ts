@@ -8,8 +8,9 @@ export type { SessionUser };
 
 /**
  * Ensures an administrator exists from ADMIN_EMAIL / ADMIN_PASSWORD.
- * - Creates the admin if that email is missing
- * - Updates the password if env password no longer matches (so Vercel env resets work)
+ * - Creates the admin only when no admin accounts exist (first setup / recovery)
+ * - Updates the password/name/role if that env admin still exists
+ * - Does NOT recreate an intentionally deleted env admin while other admins remain
  */
 export async function ensureBootstrapAdmin() {
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
@@ -33,6 +34,11 @@ export async function ensureBootstrapAdmin() {
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (!existing) {
+    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+    // Only create the env admin for first setup or when every admin was removed.
+    if (adminCount > 0) {
+      return;
+    }
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.create({
       data: {

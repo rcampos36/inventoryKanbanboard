@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   createUserAction,
   deleteUserAction,
@@ -28,23 +29,29 @@ export function AdminUsersPanel({
   users: ManagedUser[];
   currentUserId: string;
 }) {
+  const router = useRouter();
   const [createState, createAction, creating] = useActionState(
     createUserAction,
     initialState
   );
   const [deleteState, deleteFormAction, deleting] = useActionState(
-    async (_prev: AuthFormState, formData: FormData) => {
-      const userId = String(formData.get("userId") ?? "");
-      return deleteUserAction(userId);
-    },
+    deleteUserAction,
     initialState
   );
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     if (createState.success || deleteState.success) {
-      window.location.reload();
+      setPendingDeleteId(null);
+      router.refresh();
     }
-  }, [createState.success, deleteState.success]);
+  }, [createState.success, deleteState.success, router]);
+
+  useEffect(() => {
+    if (deleteState.error) {
+      setPendingDeleteId(null);
+    }
+  }, [deleteState.error]);
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-6">
@@ -95,20 +102,25 @@ export function AdminUsersPanel({
             <label className={labelClass} htmlFor="role">
               Role
             </label>
-            <select id="role" name="role" defaultValue="USER" className={inputClass}>
+            <select
+              id="role"
+              name="role"
+              defaultValue="USER"
+              className={inputClass}
+            >
               <option value="USER">User</option>
               <option value="ADMIN">Admin</option>
             </select>
           </div>
           <div className="sm:col-span-2">
-            {(createState.error || deleteState.error) && (
+            {createState.error && (
               <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-                {createState.error || deleteState.error}
+                {createState.error}
               </p>
             )}
-            {(createState.success || deleteState.success) && (
+            {createState.success && (
               <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
-                {createState.success || deleteState.success}
+                {createState.success}
               </p>
             )}
             <button
@@ -126,6 +138,16 @@ export function AdminUsersPanel({
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           People with access ({users.length})
         </h2>
+        {deleteState.error && (
+          <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+            {deleteState.error}
+          </p>
+        )}
+        {deleteState.success && (
+          <p className="mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-700">
+            {deleteState.success}
+          </p>
+        )}
         <ul className="divide-y divide-slate-100">
           {users.map((user) => (
             <li
@@ -141,17 +163,24 @@ export function AdminUsersPanel({
                 </p>
                 <p className="text-xs text-slate-500">{user.email}</p>
               </div>
-              {user.id !== currentUserId && (
-                <form action={deleteFormAction}>
+              {user.id !== currentUserId ? (
+                <form
+                  action={deleteFormAction}
+                  onSubmit={() => setPendingDeleteId(user.id)}
+                >
                   <input type="hidden" name="userId" value={user.id} />
                   <button
                     type="submit"
                     disabled={deleting}
                     className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
                   >
-                    Remove
+                    {deleting && pendingDeleteId === user.id
+                      ? "Removing…"
+                      : "Remove"}
                   </button>
                 </form>
+              ) : (
+                <span className="text-xs font-medium text-slate-400">You</span>
               )}
             </li>
           ))}
