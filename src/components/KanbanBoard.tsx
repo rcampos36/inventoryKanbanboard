@@ -63,6 +63,7 @@ import { OvernightColumn } from "./OvernightColumn";
 import { CarCard } from "./CarCard";
 import { AddCarModal } from "./AddCarModal";
 import { CheckoutDatesModal } from "./CheckoutDatesModal";
+import { ExteriorColorModal } from "./ExteriorColorModal";
 import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
@@ -138,6 +139,9 @@ export function KanbanBoard({
     mode: "assign" | "edit";
   } | null>(null);
   const [overnightDueCarId, setOvernightDueCarId] = useState<string | null>(
+    null
+  );
+  const [exteriorColorCarId, setExteriorColorCarId] = useState<string | null>(
     null
   );
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(
@@ -489,6 +493,22 @@ export function KanbanBoard({
     persistCar(updated);
   }
 
+  function saveExteriorColor(carId: string, exteriorColor: string) {
+    const found = findCar(carId);
+    if (!found) return;
+    const updated: Car = {
+      ...found.car,
+      exteriorColor: exteriorColor || undefined,
+    };
+    setBoard((prev) => ({
+      ...prev,
+      [found.containerId]: prev[found.containerId].map((c) =>
+        c.id === carId ? updated : c
+      ),
+    }));
+    persistCar(updated);
+    setExteriorColorCarId(null);
+  }
 
   function requestEditCheckoutDates(carId: string) {
     const found = findCar(carId);
@@ -739,6 +759,7 @@ export function KanbanBoard({
                     className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                     cars={filteredBoard[column.id] ?? []}
                     onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                     onEditCheckoutDates={requestEditCheckoutDates}
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
@@ -788,6 +809,7 @@ export function KanbanBoard({
                     rank={rank}
                     monthSoldCount={count}
                     onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
                     onClearHalfDeal={clearHalfDeal}
@@ -849,6 +871,7 @@ export function KanbanBoard({
                         cars={todayCars}
                         saleCount={saleCount}
                         onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                         onRequestHalfDeal={setHalfDealCarId}
                         onHalfDealWith={halfDealWith}
                         onClearHalfDeal={clearHalfDeal}
@@ -877,6 +900,7 @@ export function KanbanBoard({
                       salesperson={person}
                       cars={board[workingDealContainerId(person.id)] ?? []}
                       onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                     />
                   ))}
                 </div>
@@ -895,6 +919,7 @@ export function KanbanBoard({
                     manager={manager}
                     cars={board[managerContainerId(manager.id)] ?? []}
                     onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                   />
                 ))}
               </div>
@@ -949,6 +974,7 @@ export function KanbanBoard({
                     person={person}
                     cars={board[overnightContainerId(person.id)] ?? []}
                     onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                     onEditCheckoutDates={requestEditCheckoutDates}
                     onReviewOvernightDue={setOvernightDueCarId}
                   />
@@ -970,6 +996,7 @@ export function KanbanBoard({
                       className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
+                    onEditExteriorColor={setExteriorColorCarId}
                       onEditCheckoutDates={requestEditCheckoutDates}
                       onRequestHalfDeal={setHalfDealCarId}
                       onHalfDealWith={halfDealWith}
@@ -1019,6 +1046,25 @@ export function KanbanBoard({
             dates
           );
           setCheckoutPrompt(null);
+        }}
+      />
+
+      <ExteriorColorModal
+        open={Boolean(exteriorColorCarId)}
+        stockNumber={
+          exteriorColorCarId
+            ? findCar(exteriorColorCarId)?.car.stockNumber
+            : undefined
+        }
+        initialColor={
+          exteriorColorCarId
+            ? findCar(exteriorColorCarId)?.car.exteriorColor
+            : undefined
+        }
+        onClose={() => setExteriorColorCarId(null)}
+        onConfirm={(exteriorColor) => {
+          if (!exteriorColorCarId) return;
+          saveExteriorColor(exteriorColorCarId, exteriorColor);
         }}
       />
 

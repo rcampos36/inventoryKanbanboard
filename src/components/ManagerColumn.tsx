@@ -14,6 +14,7 @@ interface ManagerColumnProps {
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onEditExteriorColor?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -31,6 +32,7 @@ export function ManagerColumn({
   cars,
   onMove,
   onEditCheckoutDates,
+  onEditExteriorColor,
 }: ManagerColumnProps) {
   const containerId = managerContainerId(manager.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -75,6 +77,7 @@ export function ManagerColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
+              onEditExteriorColor={onEditExteriorColor}
             />
           ))}
         </SortableContext>

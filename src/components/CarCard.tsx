@@ -31,6 +31,7 @@ interface CarCardProps {
   draggable?: boolean;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onEditExteriorColor?: (carId: string) => void;
   onReviewOvernightDue?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
@@ -43,6 +44,7 @@ export function CarCard({
   draggable = true,
   onMove,
   onEditCheckoutDates,
+  onEditExteriorColor,
   onReviewOvernightDue,
   onRequestHalfDeal,
   onHalfDealWith,
@@ -267,11 +269,32 @@ export function CarCard({
         </>
       )}
 
-      {car.exteriorColor && (
-        <div className="truncate text-[11px] font-medium text-slate-600">
+      {car.exteriorColor ? (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditExteriorColor?.(car.id);
+          }}
+          className="truncate text-left text-[11px] font-medium text-slate-600 hover:text-slate-900"
+          title="Edit paint color"
+        >
           {car.exteriorColor}
-        </div>
-      )}
+        </button>
+      ) : onEditExteriorColor ? (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditExteriorColor(car.id);
+          }}
+          className="text-left text-[11px] font-medium text-slate-400 hover:text-slate-700"
+        >
+          Add paint color…
+        </button>
+      ) : null}
 
       {halfDeal && primary && partner && (
         <div className="truncate rounded-lg bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-900">
@@ -474,6 +497,22 @@ export function CarCard({
                 </button>
               );
             })}
+
+            {onEditExteriorColor && (
+              <>
+                <p className={menuLabelClass}>Paint color</p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuOpen(false);
+                    onEditExteriorColor(car.id);
+                  }}
+                  className={menuItemClass}
+                >
+                  {car.exteriorColor ? "Edit paint color…" : "Add paint color…"}
+                </button>
+              </>
+            )}
 
             {isCheckout && onEditCheckoutDates && (
               <>

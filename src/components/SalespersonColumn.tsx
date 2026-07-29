@@ -11,6 +11,7 @@ interface SalespersonColumnProps {
   monthSoldCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onEditExteriorColor?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -41,6 +42,7 @@ export function SalespersonColumn({
   monthSoldCount,
   onMove,
   onEditCheckoutDates,
+  onEditExteriorColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -86,6 +88,7 @@ export function SalespersonColumn({
             draggable={false}
             onMove={onMove}
             onEditCheckoutDates={onEditCheckoutDates}
+              onEditExteriorColor={onEditExteriorColor}
             onRequestHalfDeal={onRequestHalfDeal}
             onHalfDealWith={onHalfDealWith}
             onClearHalfDeal={onClearHalfDeal}

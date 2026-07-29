@@ -14,6 +14,7 @@ interface KanbanColumnProps {
   className?: string;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onEditExteriorColor?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -25,6 +26,7 @@ export function KanbanColumn({
   className,
   onMove,
   onEditCheckoutDates,
+  onEditExteriorColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -66,6 +68,7 @@ export function KanbanColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
+              onEditExteriorColor={onEditExteriorColor}
               onRequestHalfDeal={onRequestHalfDeal}
               onHalfDealWith={onHalfDealWith}
               onClearHalfDeal={onClearHalfDeal}

@@ -18,6 +18,7 @@ interface OvernightColumnProps {
   cars: Car[];
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onEditExteriorColor?: (carId: string) => void;
   onReviewOvernightDue?: (carId: string) => void;
 }
 
@@ -36,6 +37,7 @@ export function OvernightColumn({
   cars,
   onMove,
   onEditCheckoutDates,
+  onEditExteriorColor,
   onReviewOvernightDue,
 }: OvernightColumnProps) {
   const containerId = overnightContainerId(person.id);
@@ -81,6 +83,7 @@ export function OvernightColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
+              onEditExteriorColor={onEditExteriorColor}
               onReviewOvernightDue={onReviewOvernightDue}
             />
           ))}
