@@ -15,13 +15,15 @@ const prisma = new PrismaClient({
 });
 
 async function main() {
-  const count = await prisma.car.count();
-  if (count > 0) {
-    console.log(`Database already has ${count} cars — skipping seed.`);
-    return;
-  }
+  const existing = await prisma.car.findMany({
+    select: { stockNumber: true },
+  });
+  const usedStocks = new Set(existing.map((row) => row.stockNumber));
 
+  let created = 0;
   for (const [index, car] of INITIAL_CARS.entries()) {
+    if (usedStocks.has(car.stockNumber)) continue;
+
     await prisma.car.create({
       data: {
         id: car.id,
@@ -32,21 +34,22 @@ async function main() {
         trim: car.trim,
         condition: car.condition,
         columnId: car.columnId,
-        salespersonId: car.salespersonId ?? null,
-        coSalespersonId: car.coSalespersonId ?? null,
-        soldAt: car.soldAt ?? null,
-        managerId: car.managerId ?? null,
-        overnightId: car.overnightId ?? null,
-        outDate: car.outDate ?? null,
-        returnDate: car.returnDate ?? null,
-        tagNumber: car.tagNumber ?? null,
+        exteriorColor: car.exteriorColor ?? null,
         price: car.price ?? null,
         position: index,
       },
     });
+    created += 1;
   }
 
-  console.log(`Seeded ${INITIAL_CARS.length} cars.`);
+  if (created === 0) {
+    console.log(
+      `No new inventory samples added (${existing.length} cars already present).`
+    );
+    return;
+  }
+
+  console.log(`Seeded ${created} inventory sample cars.`);
 }
 
 main()
