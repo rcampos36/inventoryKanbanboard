@@ -64,6 +64,13 @@ import { CheckoutDatesModal } from "./CheckoutDatesModal";
 import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
+import {
+  DEFAULT_SECTION_VISIBILITY,
+  loadSectionVisibility,
+  saveSectionVisibility,
+  SectionVisibilityMenu,
+  type SectionVisibility,
+} from "./SectionVisibilityMenu";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -130,11 +137,20 @@ export function KanbanBoard({
   const [overnightDueCarId, setOvernightDueCarId] = useState<string | null>(
     null
   );
+  const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(
+    DEFAULT_SECTION_VISIBILITY
+  );
   const dragSourceRef = useRef<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
+    setSectionVisibility(loadSectionVisibility());
   }, []);
+
+  function updateSectionVisibility(next: SectionVisibility) {
+    setSectionVisibility(next);
+    saveSectionVisibility(next);
+  }
 
   // Overnight (or anytime the calendar date changes): roll the sales day forward.
   useEffect(() => {
@@ -647,6 +663,11 @@ export function KanbanBoard({
               ))}
             </div>
 
+            <SectionVisibilityMenu
+              visibility={sectionVisibility}
+              onChange={updateSectionVisibility}
+            />
+
             <button
               type="button"
               onClick={() => setClearConfirmOpen(true)}
@@ -689,8 +710,19 @@ export function KanbanBoard({
         onDragEnd={handleDragEnd}
       >
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          {visibleModelColumns.length > 0 && (
-            <aside className="min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-4 lg:w-[min(42rem,45%)] lg:border-b-0 lg:border-r">
+          {sectionVisibility.inventory && visibleModelColumns.length > 0 && (
+            <aside
+              className={[
+                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r",
+                sectionVisibility.sales ||
+                sectionVisibility.dailySales ||
+                sectionVisibility.managers ||
+                sectionVisibility.overnight ||
+                sectionVisibility.intake
+                  ? "lg:w-[min(42rem,45%)]"
+                  : "lg:flex-1",
+              ].join(" ")}
+            >
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Inventory by Model
               </h2>
@@ -712,8 +744,16 @@ export function KanbanBoard({
             </aside>
           )}
 
+          {(sectionVisibility.sales ||
+            sectionVisibility.dailySales ||
+            sectionVisibility.managers ||
+            sectionVisibility.overnight ||
+            sectionVisibility.intake) && (
           <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
+            {(sectionVisibility.sales || sectionVisibility.dailySales) && (
             <section>
+              {sectionVisibility.sales && (
+                <>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                   Sales Team · Sold by
@@ -748,8 +788,11 @@ export function KanbanBoard({
                   />
                 ))}
               </div>
+                </>
+              )}
 
-              <div className="mt-5">
+              {sectionVisibility.dailySales && (
+              <div className={sectionVisibility.sales ? "mt-5" : undefined}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
                     Daily Sales · {formatShortDate(salesDay)}
@@ -808,8 +851,11 @@ export function KanbanBoard({
                   )}
                 </div>
               </div>
+              )}
             </section>
+            )}
 
+            {sectionVisibility.managers && (
             <section>
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Manager Demos
@@ -825,7 +871,9 @@ export function KanbanBoard({
                 ))}
               </div>
             </section>
+            )}
 
+            {sectionVisibility.overnight && (
             <section>
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Team Overnight Demos
@@ -879,8 +927,9 @@ export function KanbanBoard({
                 ))}
               </div>
             </section>
+            )}
 
-            {visibleIntakeColumns.length > 0 && (
+            {sectionVisibility.intake && visibleIntakeColumns.length > 0 && (
               <section>
                 <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                   Incoming · DX · Loaners
@@ -903,6 +952,7 @@ export function KanbanBoard({
               </section>
             )}
           </div>
+          )}
         </div>
 
         <DragOverlay>
