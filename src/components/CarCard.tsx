@@ -5,7 +5,7 @@ import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getCarColor, getModelColor } from "@/lib/colors";
-import { COLUMNS, MANAGERS, SALESPEOPLE } from "@/lib/data";
+import { INTAKE_COLUMNS, MANAGERS, MODEL_COLUMNS, SALESPEOPLE } from "@/lib/data";
 import { formatNewCarLabel } from "@/lib/format";
 import {
   carContainerId,
@@ -19,6 +19,7 @@ import {
   salespersonContainerId,
   workingDealContainerId,
   type Car,
+  type Column,
 } from "@/lib/types";
 import { overnightDueStatus } from "@/lib/suggest-column";
 
@@ -108,20 +109,25 @@ export function CarCard({
   function openMenu() {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const width = 240;
+    const width = 260;
     const left = Math.max(
       8,
       Math.min(rect.right - width, window.innerWidth - width - 8)
     );
     const spaceBelow = window.innerHeight - rect.bottom;
-    const openUp = spaceBelow < 280;
-    const next: React.CSSProperties = { position: "fixed", left, width };
+    const spaceAbove = rect.top;
+    const openUp = spaceBelow < 320 && spaceAbove > spaceBelow;
+    const next: React.CSSProperties = {
+      position: "fixed",
+      left,
+      width,
+      // Keep the menu roomy so model options (incl. PHEV/Hybrid) stay reachable.
+      maxHeight: Math.max(240, (openUp ? spaceAbove : spaceBelow) - 16),
+    };
     if (openUp) {
       next.bottom = window.innerHeight - rect.top + 6;
-      next.maxHeight = rect.top - 16;
     } else {
       next.top = rect.bottom + 6;
-      next.maxHeight = spaceBelow - 16;
     }
     setMenuStyle(next);
     setMenuOpen(true);
@@ -130,6 +136,22 @@ export function CarCard({
   function handleSelect(targetContainerId: string) {
     onMove?.(car.id, targetContainerId);
     setMenuOpen(false);
+  }
+
+  function renderColumnOption(column: Column) {
+    if (column.id === currentContainer) return null;
+    const cColor = getModelColor(column.title);
+    return (
+      <button
+        key={column.id}
+        type="button"
+        onClick={() => handleSelect(column.id)}
+        className={menuItemClass}
+      >
+        <span className={`h-2 w-2 shrink-0 rounded-full ${cColor.accent}`} />
+        <span className="min-w-0 flex-1 text-left">{column.title}</span>
+      </button>
+    );
   }
 
   const menuItemClass =
@@ -283,23 +305,15 @@ export function CarCard({
           <div
             ref={menuRef}
             style={menuStyle}
-            className="z-50 overflow-y-auto rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
+            className="z-50 overflow-y-auto overscroll-contain rounded-xl border border-slate-200 bg-white p-1 shadow-xl"
+            onWheel={(e) => e.stopPropagation()}
+            onPointerDown={(e) => e.stopPropagation()}
           >
-            <p className={menuLabelClass}>Move to column</p>
-            {COLUMNS.filter((c) => c.id !== currentContainer).map((c) => {
-              const cColor = getModelColor(c.title);
-              return (
-                <button
-                  key={c.id}
-                  type="button"
-                  onClick={() => handleSelect(c.id)}
-                  className={menuItemClass}
-                >
-                  <span className={`h-2 w-2 rounded-full ${cColor.accent}`} />
-                  {c.title}
-                </button>
-              );
-            })}
+            <p className={menuLabelClass}>Move to inventory</p>
+            {MODEL_COLUMNS.map((column) => renderColumnOption(column))}
+
+            <p className={menuLabelClass}>Incoming · DX · Loaners</p>
+            {INTAKE_COLUMNS.map((column) => renderColumnOption(column))}
 
             <p className={menuLabelClass}>Assign full deal</p>
             {SALESPEOPLE.filter(
