@@ -134,6 +134,43 @@ function hashString(value: string): number {
   return Math.abs(hash);
 }
 
+/**
+ * Collapse powertrain variants onto one color family.
+ * CX-50 / CX-50 Hybrid, CX-70 / CX-70 PHEV, CX-90 / CX-90 PHEV, etc.
+ */
+export function normalizeModelColorKey(model: string): string {
+  const value = model.trim().toLowerCase().replace(/\s+/g, " ");
+
+  if (value.startsWith("cx-50")) return "cx-50";
+  if (value.startsWith("cx-70")) return "cx-70";
+  if (value.startsWith("cx-90")) return "cx-90";
+  if (value.startsWith("cx-30")) return "cx-30";
+  if (value.startsWith("cx-5")) return "cx-5";
+  if (value.startsWith("mx-5")) return "mx-5-miata";
+  if (value.startsWith("mazda3 sedan") || value === "mazda3-sedan") {
+    return "mazda3-sedan";
+  }
+  if (value.startsWith("mazda3 hatchback") || value === "mazda3-hatchback") {
+    return "mazda3-hatchback";
+  }
+  if (value.startsWith("mazda3")) return "mazda3";
+
+  return value;
+}
+
+/** Explicit colors for each new-car model family (variants share these). */
+const MODEL_FAMILY_COLORS: Record<string, ModelColor> = {
+  "mazda3-sedan": PALETTE[8], // blue
+  "mazda3-hatchback": PALETTE[9], // indigo
+  mazda3: PALETTE[8],
+  "cx-30": PALETTE[6], // cyan
+  "cx-5": PALETTE[4], // emerald
+  "cx-50": PALETTE[1], // orange
+  "cx-70": PALETTE[10], // violet
+  "cx-90": PALETTE[0], // rose
+  "mx-5-miata": PALETTE[12], // pink
+};
+
 /** All used inventory chips share this yellow treatment. */
 export const USED_CAR_COLOR: ModelColor = {
   accent: "bg-yellow-500",
@@ -145,7 +182,9 @@ export const USED_CAR_COLOR: ModelColor = {
 };
 
 export function getModelColor(model: string): ModelColor {
-  const index = hashString(model.trim().toLowerCase()) % PALETTE.length;
+  const key = normalizeModelColorKey(model);
+  if (MODEL_FAMILY_COLORS[key]) return MODEL_FAMILY_COLORS[key];
+  const index = hashString(key) % PALETTE.length;
   return PALETTE[index];
 }
 
