@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { getModelColor } from "@/lib/colors";
+import { getCarColor, getModelColor } from "@/lib/colors";
 import { COLUMNS, MANAGERS, SALESPEOPLE } from "@/lib/data";
 import { formatNewCarLabel } from "@/lib/format";
 import {
@@ -45,7 +45,7 @@ export function CarCard({
   onHalfDealWith,
   onClearHalfDeal,
 }: CarCardProps) {
-  const color = getModelColor(car.model);
+  const color = getCarColor(car.model, car.condition);
   const isNew = car.condition === "new";
   const isSold = isCarSold(car);
   const halfDeal = isHalfDeal(car);

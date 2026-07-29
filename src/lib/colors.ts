@@ -134,7 +134,25 @@ function hashString(value: string): number {
   return Math.abs(hash);
 }
 
+/** All used inventory chips share this yellow treatment. */
+export const USED_CAR_COLOR: ModelColor = {
+  accent: "bg-yellow-500",
+  bg: "bg-yellow-50",
+  border: "border-yellow-300",
+  text: "text-yellow-800",
+  badgeBg: "bg-yellow-100",
+  badgeText: "text-yellow-800",
+};
+
 export function getModelColor(model: string): ModelColor {
   const index = hashString(model.trim().toLowerCase()) % PALETTE.length;
   return PALETTE[index];
+}
+
+export function getCarColor(
+  model: string,
+  condition: "new" | "used"
+): ModelColor {
+  if (condition === "used") return USED_CAR_COLOR;
+  return getModelColor(model);
 }
