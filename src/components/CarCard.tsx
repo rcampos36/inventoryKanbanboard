@@ -180,22 +180,18 @@ export function CarCard({
       {...attributes}
       {...listeners}
       className={[
-        "group relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border bg-white p-2.5 pl-3.5 shadow-sm",
+        "group relative flex min-w-0 flex-col gap-1.5 overflow-hidden rounded-xl border p-2.5 shadow-sm",
         "select-none",
         canDrag ? "cursor-grab active:cursor-grabbing" : "",
+        color.bg,
         color.border,
+        color.text,
         overlay ? "shadow-lg ring-2 ring-slate-900/10 rotate-2" : "",
         isDragging ? "opacity-40" : "hover:shadow-md",
       ].join(" ")}
     >
-      {/* Color accent bar (color-coded by model) */}
-      <span
-        className={`absolute inset-y-0 left-0 w-1.5 ${color.accent}`}
-        aria-hidden
-      />
-
       <div className="flex min-w-0 items-start justify-between gap-1.5">
-        <span className="truncate font-mono text-[11px] font-semibold tracking-wide text-slate-500">
+        <span className="truncate font-mono text-[11px] font-bold tracking-wide text-black">
           #{car.stockNumber}
         </span>
         <div className="flex shrink-0 items-center gap-1.5">
@@ -204,13 +200,11 @@ export function CarCard({
               "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
               isSold
                 ? halfDeal
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-rose-100 text-rose-700"
+                  ? "bg-white/80 text-black"
+                  : "bg-white/80 text-black"
                 : working
-                  ? "bg-sky-100 text-sky-800"
-                  : isNew
-                    ? "bg-emerald-100 text-emerald-700"
-                    : "bg-slate-200 text-slate-600",
+                  ? "bg-white/80 text-black"
+                  : "bg-white/70 text-black",
             ].join(" ")}
           >
             {isSold
@@ -235,7 +229,7 @@ export function CarCard({
                 if (menuOpen) setMenuOpen(false);
                 else openMenu();
               }}
-              className="-mr-1 flex h-6 w-6 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              className="-mr-1 flex h-6 w-6 items-center justify-center rounded-md text-black/60 hover:bg-white/50 hover:text-black"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="5" r="1.6" />
@@ -248,23 +242,24 @@ export function CarCard({
       </div>
 
       {isNew ? (
-        <div className="truncate text-xs font-semibold leading-snug text-slate-900">
+        <div className="truncate text-xs font-bold leading-snug text-black">
           {formatNewCarLabel(car)}
         </div>
       ) : (
         <>
           <div className="min-w-0 flex flex-col">
-            <span className="truncate text-xs font-semibold text-slate-900">
+            <span className="truncate text-xs font-bold text-black">
               {car.year} {car.make} {car.model}
             </span>
-            <span className="truncate text-[11px] text-slate-500">{car.trim}</span>
+            <span className="truncate text-[11px] font-medium text-black/80">
+              {car.trim}
+            </span>
           </div>
 
           <div className="flex min-w-0 items-center gap-2 pt-0.5">
             <span
-              className={`inline-flex max-w-full items-center gap-1.5 truncate rounded-md px-2 py-0.5 text-[11px] font-semibold ${color.badgeBg} ${color.badgeText}`}
+              className={`inline-flex max-w-full items-center gap-1.5 truncate rounded-md px-2 py-0.5 text-[11px] font-bold ${color.badgeBg} ${color.badgeText}`}
             >
-              <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${color.accent}`} />
               <span className="truncate">{car.model}</span>
             </span>
           </div>
@@ -279,7 +274,7 @@ export function CarCard({
             e.stopPropagation();
             onEditExteriorColor?.(car.id);
           }}
-          className="truncate text-left text-[11px] font-medium text-slate-600 hover:text-slate-900"
+          className="truncate text-left text-[11px] font-semibold text-black/80 hover:text-black"
           title="Edit paint color"
         >
           {car.exteriorColor}
@@ -292,14 +287,14 @@ export function CarCard({
             e.stopPropagation();
             onEditExteriorColor(car.id);
           }}
-          className="text-left text-[11px] font-medium text-slate-400 hover:text-slate-700"
+          className="text-left text-[11px] font-semibold text-black/60 hover:text-black"
         >
           Add paint color…
         </button>
       ) : null}
 
       {halfDeal && primary && partner && (
-        <div className="truncate rounded-lg bg-violet-50 px-2 py-1.5 text-[11px] font-semibold text-violet-900">
+        <div className="truncate rounded-lg bg-white/70 px-2 py-1.5 text-[11px] font-bold text-black">
           {primary.name} · {partner.name}
         </div>
       )}
