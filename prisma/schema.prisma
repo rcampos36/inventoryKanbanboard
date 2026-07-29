@@ -29,6 +29,8 @@ model Car {
   tagNumber       String?
   /** Inventory column to restore when an overnight demo is returned. */
   homeColumnId    String?
+  /** Optional chip accent color id (rose, yellow, blue, …). */
+  chipColor       String?
   price           Int?
   position        Int      @default(0)
   createdAt       DateTime @default(now())

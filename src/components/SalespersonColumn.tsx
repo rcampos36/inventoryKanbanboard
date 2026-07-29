@@ -1,7 +1,7 @@
 "use client";
 
 import { CarCard } from "./CarCard";
-import { getModelColor } from "@/lib/colors";
+import { getModelColor, type ChipColorId } from "@/lib/colors";
 import { formatSaleCount, type Car, type Salesperson } from "@/lib/types";
 
 interface SalespersonColumnProps {
@@ -11,6 +11,7 @@ interface SalespersonColumnProps {
   monthSoldCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -41,6 +42,7 @@ export function SalespersonColumn({
   monthSoldCount,
   onMove,
   onEditCheckoutDates,
+  onChangeChipColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -86,6 +88,7 @@ export function SalespersonColumn({
             draggable={false}
             onMove={onMove}
             onEditCheckoutDates={onEditCheckoutDates}
+            onChangeChipColor={onChangeChipColor}
             onRequestHalfDeal={onRequestHalfDeal}
             onHalfDealWith={onHalfDealWith}
             onClearHalfDeal={onClearHalfDeal}

@@ -47,6 +47,7 @@ import {
   overnightDueStatus,
   resolveOvernightHomeColumnId,
 } from "@/lib/suggest-column";
+import type { ChipColorId } from "@/lib/colors";
 import {
   clearAllCarsAction,
   createCarAction,
@@ -489,6 +490,19 @@ export function KanbanBoard({
     persistCar(updated);
   }
 
+  function changeChipColor(carId: string, chipColor: ChipColorId) {
+    const found = findCar(carId);
+    if (!found) return;
+    const updated: Car = { ...found.car, chipColor };
+    setBoard((prev) => ({
+      ...prev,
+      [found.containerId]: prev[found.containerId].map((c) =>
+        c.id === carId ? updated : c
+      ),
+    }));
+    persistCar(updated);
+  }
+
   function requestEditCheckoutDates(carId: string) {
     const found = findCar(carId);
     if (!found || !isCheckoutAssignment(found.car)) return;
@@ -738,6 +752,7 @@ export function KanbanBoard({
                     className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                     cars={filteredBoard[column.id] ?? []}
                     onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                     onEditCheckoutDates={requestEditCheckoutDates}
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
@@ -787,6 +802,7 @@ export function KanbanBoard({
                     rank={rank}
                     monthSoldCount={count}
                     onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                     onRequestHalfDeal={setHalfDealCarId}
                     onHalfDealWith={halfDealWith}
                     onClearHalfDeal={clearHalfDeal}
@@ -848,6 +864,7 @@ export function KanbanBoard({
                         cars={todayCars}
                         saleCount={saleCount}
                         onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                         onRequestHalfDeal={setHalfDealCarId}
                         onHalfDealWith={halfDealWith}
                         onClearHalfDeal={clearHalfDeal}
@@ -876,6 +893,7 @@ export function KanbanBoard({
                       salesperson={person}
                       cars={board[workingDealContainerId(person.id)] ?? []}
                       onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                     />
                   ))}
                 </div>
@@ -894,6 +912,7 @@ export function KanbanBoard({
                     manager={manager}
                     cars={board[managerContainerId(manager.id)] ?? []}
                     onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                   />
                 ))}
               </div>
@@ -948,6 +967,7 @@ export function KanbanBoard({
                     person={person}
                     cars={board[overnightContainerId(person.id)] ?? []}
                     onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                     onEditCheckoutDates={requestEditCheckoutDates}
                     onReviewOvernightDue={setOvernightDueCarId}
                   />
@@ -969,6 +989,7 @@ export function KanbanBoard({
                       className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
+                    onChangeChipColor={changeChipColor}
                       onEditCheckoutDates={requestEditCheckoutDates}
                       onRequestHalfDeal={setHalfDealCarId}
                       onHalfDealWith={halfDealWith}

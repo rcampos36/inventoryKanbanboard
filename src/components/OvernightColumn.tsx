@@ -6,7 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CarCard } from "./CarCard";
-import { getModelColor } from "@/lib/colors";
+import { getModelColor, type ChipColorId } from "@/lib/colors";
 import {
   overnightContainerId,
   type Car,
@@ -19,6 +19,7 @@ interface OvernightColumnProps {
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onReviewOvernightDue?: (carId: string) => void;
+  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
 }
 
 function initials(name: string): string {
@@ -37,6 +38,7 @@ export function OvernightColumn({
   onMove,
   onEditCheckoutDates,
   onReviewOvernightDue,
+  onChangeChipColor,
 }: OvernightColumnProps) {
   const containerId = overnightContainerId(person.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -82,6 +84,7 @@ export function OvernightColumn({
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
               onReviewOvernightDue={onReviewOvernightDue}
+              onChangeChipColor={onChangeChipColor}
             />
           ))}
         </SortableContext>

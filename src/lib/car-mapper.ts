@@ -21,6 +21,7 @@ export function toAppCar(row: DbCar): Car {
     returnDate: row.returnDate ?? undefined,
     tagNumber: row.tagNumber ?? undefined,
     homeColumnId: row.homeColumnId ?? undefined,
+    chipColor: row.chipColor ?? undefined,
     price: row.price ?? undefined,
   };
 }
@@ -44,6 +45,7 @@ export function toDbCarData(car: Car) {
     returnDate: car.returnDate ?? null,
     tagNumber: car.tagNumber ?? null,
     homeColumnId: car.homeColumnId ?? null,
+    chipColor: car.chipColor ?? null,
     price: car.price ?? null,
   };
 }

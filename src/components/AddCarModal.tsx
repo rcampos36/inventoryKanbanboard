@@ -2,13 +2,14 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  COLUMNS,
   getModelsForMake,
   getTrimsForMake,
   MAKE_SUGGESTIONS,
 } from "@/lib/data";
 import { suggestInventoryColumnId } from "@/lib/suggest-column";
+import { defaultChipColorId, type ChipColorId } from "@/lib/colors";
 import type { Car, CarCondition, Column } from "@/lib/types";
+import { ChipColorPicker } from "./ChipColorPicker";
 
 interface AddCarModalProps {
   open: boolean;
@@ -24,14 +25,15 @@ const EMPTY_FORM = {
   model: "",
   trim: "",
   condition: "new" as CarCondition,
-  price: "",
   columnId: "",
+  chipColor: "blue" as ChipColorId,
 };
 
 export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps) {
   const [form, setForm] = useState({
     ...EMPTY_FORM,
     columnId: columns[0]?.id ?? "",
+    chipColor: defaultChipColorId("", "new"),
   });
 
   useEffect(() => {
@@ -39,6 +41,7 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       setForm({
         ...EMPTY_FORM,
         columnId: suggestInventoryColumnId("", "", "new"),
+        chipColor: defaultChipColorId("", "new"),
       });
     }
   }, [open, columns]);
@@ -67,11 +70,12 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       const next = { ...prev, [key]: value };
 
       if (key === "make" || key === "model" || key === "condition") {
-        next.columnId = suggestInventoryColumnId(
-          key === "make" ? String(value) : next.make,
-          key === "model" ? String(value) : next.model,
-          key === "condition" ? (value as CarCondition) : next.condition
-        );
+        const make = key === "make" ? String(value) : next.make;
+        const model = key === "model" ? String(value) : next.model;
+        const condition =
+          key === "condition" ? (value as CarCondition) : next.condition;
+        next.columnId = suggestInventoryColumnId(make, model, condition);
+        next.chipColor = defaultChipColorId(model, condition);
       }
 
       return next;
@@ -92,7 +96,7 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
       trim: form.trim.trim(),
       condition: form.condition,
       columnId,
-      price: form.price ? Number(form.price) : undefined,
+      chipColor: form.chipColor,
     });
     onClose();
   }
@@ -214,30 +218,30 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
             </datalist>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Condition</label>
-              <select
-                className={inputClass}
-                value={form.condition}
-                onChange={(e) =>
-                  update("condition", e.target.value as CarCondition)
-                }
-              >
-                <option value="new">New</option>
-                <option value="used">Used</option>
-              </select>
-            </div>
-            <div className="flex flex-col gap-1">
-              <label className={labelClass}>Price (USD)</label>
-              <input
-                className={inputClass}
-                type="number"
-                value={form.price}
-                onChange={(e) => update("price", e.target.value)}
-                placeholder="34995"
-              />
-            </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass}>Condition</label>
+            <select
+              className={inputClass}
+              value={form.condition}
+              onChange={(e) =>
+                update("condition", e.target.value as CarCondition)
+              }
+            >
+              <option value="new">New</option>
+              <option value="used">Used</option>
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label className={labelClass}>Chip color</label>
+            <ChipColorPicker
+              value={form.chipColor}
+              onChange={(chipColor) => update("chipColor", chipColor)}
+            />
+            <p className={hintClass}>
+              Defaults by model (used cars default to yellow). You can change it
+              anytime.
+            </p>
           </div>
 
           <div className="flex flex-col gap-1">

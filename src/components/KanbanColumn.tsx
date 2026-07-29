@@ -6,6 +6,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CarCard } from "./CarCard";
+import type { ChipColorId } from "@/lib/colors";
 import type { Car, Column } from "@/lib/types";
 
 interface KanbanColumnProps {
@@ -14,6 +15,7 @@ interface KanbanColumnProps {
   className?: string;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
+  onChangeChipColor?: (carId: string, chipColor: ChipColorId) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
   onClearHalfDeal?: (carId: string) => void;
@@ -25,6 +27,7 @@ export function KanbanColumn({
   className,
   onMove,
   onEditCheckoutDates,
+  onChangeChipColor,
   onRequestHalfDeal,
   onHalfDealWith,
   onClearHalfDeal,
@@ -66,6 +69,7 @@ export function KanbanColumn({
               car={car}
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
+              onChangeChipColor={onChangeChipColor}
               onRequestHalfDeal={onRequestHalfDeal}
               onHalfDealWith={onHalfDealWith}
               onClearHalfDeal={onClearHalfDeal}
