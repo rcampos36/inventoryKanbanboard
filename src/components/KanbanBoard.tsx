@@ -746,7 +746,7 @@ export function KanbanBoard({
 
   if (!mounted) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-brand/45">
+      <div className="flex h-full items-center justify-center text-sm text-sand/60">
         Loading board…
       </div>
     );
@@ -948,7 +948,7 @@ export function KanbanBoard({
           {showInventoryPane && (
             <aside
               className={[
-                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-peach/40 bg-sand/80 p-3 sm:p-4 lg:border-b-0 lg:border-r lg:border-peach/40 lg:p-4",
+                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-peach/25 bg-brand p-3 sm:p-4 lg:border-b-0 lg:border-r lg:border-peach/25 lg:p-4",
                 mobilePane === "inventory" || !showFloorPane
                   ? "flex flex-col"
                   : "hidden lg:flex lg:flex-col",
@@ -957,7 +957,7 @@ export function KanbanBoard({
                   : "flex-1",
               ].join(" ")}
             >
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
                 Inventory by Model
               </h2>
               <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
@@ -982,7 +982,7 @@ export function KanbanBoard({
           {showFloorPane && (
           <div
             className={[
-              "min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden bg-sand/50 p-3 sm:p-4 lg:bg-transparent lg:p-6",
+              "min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden bg-brand p-3 sm:p-4 lg:p-6",
               mobilePane === "floor" || !showInventoryPane
                 ? "flex"
                 : "hidden lg:flex",
@@ -993,7 +993,7 @@ export function KanbanBoard({
               {sectionVisibility.sales && (
                 <>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-brand/45">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-peach">
                   Sales Team · Sold by
                 </h2>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1065,7 +1065,7 @@ export function KanbanBoard({
               {sectionVisibility.dailySales && (
               <div className={sectionVisibility.sales ? "mt-5" : undefined}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand/45">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-peach">
                     Daily Sales · {formatShortDate(salesDay)}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2">
@@ -1101,7 +1101,7 @@ export function KanbanBoard({
                     </button>
                   </div>
                 </div>
-                <p className="mb-3 text-xs text-brand/60">
+                <p className="mb-3 text-xs text-sand/70">
                   Drop sales here for this date. End day (or overnight) moves
                   them into the monthly columns above.
                 </p>
@@ -1132,10 +1132,10 @@ export function KanbanBoard({
 
             {sectionVisibility.workingDeals && (
               <section>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
                   Working Deals
                 </h2>
-                <p className="mb-3 text-xs text-brand/60">
+                <p className="mb-3 text-xs text-sand/70">
                   Deals in progress — not closed yet. Move to Daily Sales when
                   the deal is done.
                 </p>
@@ -1158,7 +1158,7 @@ export function KanbanBoard({
 
             {sectionVisibility.managers && (
             <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
                 Manager Demos
               </h2>
               <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
@@ -1177,7 +1177,7 @@ export function KanbanBoard({
 
             {sectionVisibility.overnight && (
             <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
                 Team Overnight Demos
               </h2>
               {dueOvernightDemos.length > 0 && (
@@ -1237,7 +1237,7 @@ export function KanbanBoard({
 
             {sectionVisibility.intake && visibleIntakeColumns.length > 0 && (
               <section>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
                   Incoming · DX · Loaners
                 </h2>
                 <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:grid-cols-4">
