@@ -1056,7 +1056,12 @@ export function KanbanBoard({
                   Drop sales here for this date. End day (or overnight) moves
                   them into the monthly columns above.
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div
+                  className="grid gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.max(todaySalesByPerson.length, 1)}, minmax(0, 1fr))`,
+                  }}
+                >
                   {todaySalesByPerson.map(
                     ({ person, todayCars, saleCount }) => (
                       <TodaySalesColumn
@@ -1065,7 +1070,7 @@ export function KanbanBoard({
                         cars={todayCars}
                         saleCount={saleCount}
                         onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
+                        onEditExteriorColor={setExteriorColorCarId}
                         onRequestHalfDeal={setHalfDealCarId}
                         onHalfDealWith={halfDealWith}
                         onClearHalfDeal={clearHalfDeal}
@@ -1087,14 +1092,19 @@ export function KanbanBoard({
                   Deals in progress — not closed yet. Move to Daily Sales when
                   the deal is done.
                 </p>
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <div
+                  className="grid gap-2"
+                  style={{
+                    gridTemplateColumns: `repeat(${Math.max(salespeople.length, 1)}, minmax(0, 1fr))`,
+                  }}
+                >
                   {salespeople.map((person) => (
                     <WorkingDealColumn
                       key={person.id}
                       salesperson={person}
                       cars={board[workingDealContainerId(person.id)] ?? []}
                       onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
+                      onEditExteriorColor={setExteriorColorCarId}
                     />
                   ))}
                 </div>

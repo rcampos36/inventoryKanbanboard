@@ -56,19 +56,19 @@ export function TodaySalesColumn({
 
   return (
     <div className="flex min-w-0 w-full flex-col rounded-2xl bg-white ring-1 ring-slate-200">
-      <div className="flex items-center gap-2 px-2.5 pt-3 pb-2">
+      <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <span
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[10px] font-bold text-white ${color.accent}`}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${color.accent}`}
         >
           {initials(salesperson.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-xs font-semibold text-slate-800">
+          <h3 className="truncate text-[11px] font-semibold leading-tight text-slate-800">
             {salesperson.name}
           </h3>
-          <p className="truncate text-[11px] text-slate-500">
+          <p className="truncate text-[10px] leading-tight text-slate-500">
             {formatSaleCount(saleCount)}{" "}
-            {saleCount === 1 ? "sale" : "sales"} this day
+            {saleCount === 1 ? "sale" : "sales"}
           </p>
         </div>
       </div>
@@ -76,7 +76,7 @@ export function TodaySalesColumn({
       <div
         ref={setNodeRef}
         className={[
-          "flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-2 pb-2.5 pt-1",
+          "flex min-h-32 flex-1 flex-col gap-2 rounded-b-2xl px-1.5 pb-2 pt-1",
           "transition-colors",
           isOver ? "bg-emerald-50" : "",
         ].join(" ")}
@@ -96,7 +96,7 @@ export function TodaySalesColumn({
                 draggable={isPrimary}
                 onMove={onMove}
                 onEditCheckoutDates={onEditCheckoutDates}
-              onEditExteriorColor={onEditExteriorColor}
+                onEditExteriorColor={onEditExteriorColor}
                 onRequestHalfDeal={onRequestHalfDeal}
                 onHalfDealWith={onHalfDealWith}
                 onClearHalfDeal={onClearHalfDeal}
@@ -106,7 +106,7 @@ export function TodaySalesColumn({
         </SortableContext>
 
         {cars.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 py-6 text-center text-xs text-slate-400">
+          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-1 py-6 text-center text-[10px] leading-snug text-slate-400">
             Drop a sold car here
           </div>
         )}
