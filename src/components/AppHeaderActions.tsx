@@ -1,10 +1,17 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
+import { boardPath } from "@/lib/paths";
 import type { SessionUser } from "@/lib/session-types";
 
 export function AppHeaderActions({ user }: { user: SessionUser }) {
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
+      <Link
+        href={`${boardPath(user.organizationSlug)}/reports`}
+        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
+      >
+        Reports
+      </Link>
       {user.role === "ADMIN" && (
         <Link
           href="/admin"

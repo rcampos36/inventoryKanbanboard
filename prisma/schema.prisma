@@ -23,6 +23,7 @@ model Organization {
   cars        Car[]
   salespeople Salesperson[]
   managers    Manager[]
+  events      BoardEvent[]
   settings    AppSettings?
 }
 
@@ -126,4 +127,37 @@ model Manager {
 
   @@id([organizationId, id])
   @@index([organizationId])
+}
+
+/**
+ * Durable history for reports (sales + inventory movement).
+ * Events are append-only so unselling a car does not erase past sales.
+ */
+model BoardEvent {
+  id              String   @id @default(cuid())
+  organizationId  String
+  /** sale | sale_reversed | inventory_added | inventory_moved */
+  type            String
+  /** YYYY-MM-DD when the event happened. */
+  occurredAt      String
+  /** YYYY-MM for fast monthly filters. */
+  monthKey        String
+  carId           String?
+  stockNumber     String?
+  make            String?
+  model           String?
+  trim            String?
+  condition       String?
+  fromColumnId    String?
+  toColumnId      String?
+  salespersonId   String?
+  coSalespersonId String?
+  price           Int?
+  createdAt       DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, monthKey])
+  @@index([organizationId, type, monthKey])
+  @@index([organizationId, carId])
 }

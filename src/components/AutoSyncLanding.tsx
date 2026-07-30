@@ -40,15 +40,21 @@ export function AutoSyncLanding({
 
   return (
     <div className="min-h-screen bg-sand text-brand">
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 px-6 pb-3 pt-[max(1.25rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:pb-4 sm:pt-5 md:px-10 md:pt-6">
+      <header className="fixed inset-x-0 top-0 z-50 flex items-center justify-between gap-3 border-b border-peach/25 bg-brand/95 px-6 pb-3 pt-[max(1.25rem,env(safe-area-inset-top))] shadow-[0_8px_24px_-16px_rgba(2,52,65,0.65)] backdrop-blur-md sm:gap-4 sm:px-6 sm:pb-4 sm:pt-5 md:px-10 md:pt-6">
         <p className="shrink-0 font-[family-name:var(--font-syne)] text-base font-extrabold tracking-tight text-sand sm:text-lg md:text-xl">
           AutoSync
         </p>
-        <nav className="flex shrink-0 items-center gap-2.5 sm:gap-3">
+        <nav className="flex shrink-0 items-center gap-1.5 sm:gap-3">
+          <a
+            href="#features"
+            className="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
+          >
+            Features
+          </a>
           {!isSignedIn && (
             <Link
               href={secondaryHref}
-              className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
+              className="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
             >
               {secondaryLabel}
             </Link>
@@ -137,7 +143,7 @@ export function AutoSyncLanding({
 
       <section
         id="features"
-        className="border-b border-peach/40 bg-sand px-6 py-20 md:px-10"
+        className="scroll-mt-28 border-b border-peach/40 bg-sand px-6 py-20 md:px-10"
       >
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand/70">

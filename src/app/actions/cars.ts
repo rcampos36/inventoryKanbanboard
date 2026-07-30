@@ -5,6 +5,11 @@ import { prisma } from "@/lib/db";
 import { toAppCar, toDbCarData } from "@/lib/car-mapper";
 import { requireUser } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
+import {
+  eventsFromCarChange,
+  recordBoardEvents,
+  recordInventoryAdded,
+} from "@/lib/board-events";
 import type { Car } from "@/lib/types";
 
 export async function getCars(): Promise<Car[]> {
@@ -37,6 +42,7 @@ export async function createCarAction(
     },
   });
 
+  await recordInventoryAdded(user.organizationId, row);
   revalidatePath(boardPath(user.organizationSlug));
   return toAppCar(row);
 }
@@ -50,10 +56,12 @@ export async function updateCarAction(car: Car): Promise<Car> {
     throw new Error("Vehicle not found.");
   }
 
+  const events = eventsFromCarChange(user.organizationId, owned, car);
   const row = await prisma.car.update({
     where: { id: car.id },
     data: toDbCarData(car),
   });
+  await recordBoardEvents(events);
   revalidatePath(boardPath(user.organizationSlug));
   return toAppCar(row);
 }
@@ -66,12 +74,17 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
       organizationId: user.organizationId,
       id: { in: ids },
     },
-    select: { id: true },
   });
-  const ownedIds = new Set(owned.map((row) => row.id));
-  if (ownedIds.size !== ids.length) {
+  const ownedById = new Map(owned.map((row) => [row.id, row]));
+  if (ownedById.size !== ids.length) {
     throw new Error("One or more vehicles were not found.");
   }
+
+  const events = cars.flatMap((car) => {
+    const previous = ownedById.get(car.id);
+    if (!previous) return [];
+    return eventsFromCarChange(user.organizationId, previous, car);
+  });
 
   await prisma.$transaction(
     cars.map((car, index) =>
@@ -84,6 +97,7 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
       })
     )
   );
+  await recordBoardEvents(events);
   revalidatePath(boardPath(user.organizationSlug));
 }
 
