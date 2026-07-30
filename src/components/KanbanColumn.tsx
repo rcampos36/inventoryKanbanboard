@@ -40,14 +40,14 @@ export function KanbanColumn({
     <div
       className={
         className ??
-        "flex w-full min-w-0 flex-col rounded-2xl bg-slate-100/80 sm:w-72 sm:shrink-0"
+        "flex w-full min-w-0 flex-col rounded-2xl bg-[var(--autosync-surface)]/90 sm:w-72 sm:shrink-0"
       }
     >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h2 className="text-base font-bold leading-snug text-slate-800">
+        <h2 className="text-base font-bold leading-snug text-brand">
           {column.title}
         </h2>
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
+        <span className="rounded-full bg-peach/70 px-2 py-0.5 text-xs font-bold text-brand">
           {cars.length}
         </span>
       </div>
@@ -57,7 +57,7 @@ export function KanbanColumn({
         className={[
           "flex flex-1 flex-col gap-2.5 rounded-b-2xl px-3 pb-3 pt-1",
           "min-h-32 transition-colors",
-          isOver ? "bg-slate-200/70" : "",
+          isOver ? "bg-peach/70/70" : "",
         ].join(" ")}
       >
         <SortableContext
@@ -79,7 +79,7 @@ export function KanbanColumn({
         </SortableContext>
 
         {cars.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-300 py-6 text-xs text-slate-400">
+          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-peach/55 py-6 text-xs text-brand/45">
             Drop cars here
           </div>
         )}

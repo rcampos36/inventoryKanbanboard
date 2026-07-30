@@ -8,19 +8,19 @@ export function AppHeaderActions({ user }: { user: SessionUser }) {
       {user.role === "ADMIN" && (
         <Link
           href="/admin"
-          className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:px-3"
+          className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
         >
           <span className="sm:hidden">Users</span>
           <span className="hidden sm:inline">Manage users</span>
         </Link>
       )}
-      <span className="hidden max-w-36 truncate text-sm font-medium text-slate-600 md:inline">
+      <span className="hidden max-w-36 truncate text-sm font-medium text-brand/70 md:inline">
         {user.name}
       </span>
       <form action={logoutAction}>
         <button
           type="submit"
-          className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:px-3"
+          className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
         >
           Sign out
         </button>

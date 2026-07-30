@@ -16,7 +16,7 @@ export default async function DashboardPage() {
   ]);
 
   return (
-    <main className="h-dvh bg-slate-50">
+    <main className="h-dvh bg-sand">
       <KanbanBoard
         initialCars={cars}
         initialSalespeople={salespeople}

@@ -10,25 +10,25 @@ export default async function AdminPage() {
   const users = await listUsersAction();
 
   return (
-    <main className="min-h-screen bg-slate-50">
-      <header className="flex flex-col gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+    <main className="min-h-screen bg-sand">
+      <header className="flex flex-col gap-3 border-b border-peach/50 bg-[var(--autosync-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-400">
+          <p className="text-xs font-bold uppercase tracking-wider text-brand/50">
             Administrator
           </p>
-          <h1 className="text-lg font-bold text-slate-900">User access</h1>
+          <h1 className="text-lg font-bold text-brand">User access</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/dashboard"
-            className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+            className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
           >
             Back to board
           </Link>
           <form action={logoutAction}>
             <button
               type="submit"
-              className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
             >
               Sign out
             </button>

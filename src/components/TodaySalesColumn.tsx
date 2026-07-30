@@ -55,7 +55,7 @@ export function TodaySalesColumn({
   const color = getModelColor(salesperson.name);
 
   return (
-    <div className="flex min-w-0 w-full flex-col rounded-2xl bg-white ring-1 ring-slate-200">
+    <div className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/55">
       <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <span
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${color.accent}`}
@@ -63,10 +63,10 @@ export function TodaySalesColumn({
           {initials(salesperson.name)}
         </span>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-sm font-bold leading-tight text-slate-900">
+          <h3 className="truncate text-sm font-bold leading-tight text-brand">
             {salesperson.name}
           </h3>
-          <p className="truncate text-[10px] leading-tight text-slate-500">
+          <p className="truncate text-[10px] leading-tight text-brand/60">
             {formatSaleCount(saleCount)}{" "}
             {saleCount === 1 ? "sale" : "sales"}
           </p>
@@ -106,7 +106,7 @@ export function TodaySalesColumn({
         </SortableContext>
 
         {cars.length === 0 && (
-          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-slate-200 px-1 py-6 text-center text-[10px] leading-snug text-slate-400">
+          <div className="flex flex-1 items-center justify-center rounded-xl border-2 border-dashed border-peach/50 px-1 py-6 text-center text-[10px] leading-snug text-brand/45">
             Drop a sold car here
           </div>
         )}

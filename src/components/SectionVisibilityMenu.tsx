@@ -96,13 +96,13 @@ export function SectionVisibilityMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
         aria-expanded={open}
         aria-haspopup="menu"
       >
         Sections
         {hiddenCount > 0 ? (
-          <span className="ml-1.5 rounded-full bg-slate-200 px-1.5 py-0.5 text-[10px] font-bold text-slate-600">
+          <span className="ml-1.5 rounded-full bg-peach/70 px-1.5 py-0.5 text-[10px] font-bold text-brand/70">
             {hiddenCount} hidden
           </span>
         ) : null}
@@ -111,15 +111,15 @@ export function SectionVisibilityMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+          className="absolute right-0 z-40 mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-peach/60 bg-[var(--autosync-surface)] p-2 shadow-xl"
         >
-          <p className="px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
+          <p className="px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-brand/45">
             Show on board
           </p>
           <ul className="flex flex-col gap-0.5">
             {BOARD_SECTIONS.map((section) => (
               <li key={section}>
-                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-slate-800 hover:bg-slate-50">
+                <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-brand hover:bg-peach/30">
                   <input
                     type="checkbox"
                     checked={visibility[section]}
@@ -135,7 +135,7 @@ export function SectionVisibilityMenu({
             <button
               type="button"
               onClick={() => onChange({ ...DEFAULT_SECTION_VISIBILITY })}
-              className="mt-1 w-full rounded-lg px-2 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+              className="mt-1 w-full rounded-lg px-2 py-1.5 text-xs font-semibold text-brand/70 hover:bg-slate-50"
             >
               Show all
             </button>

@@ -1,19 +1,29 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f2f5f8;
-  --foreground: #0e1a24;
-  --autosync-ink: #0e1a24;
-  --autosync-muted: #5a6b7a;
-  --autosync-teal: #0f766e;
-  --autosync-teal-bright: #14b8a6;
-  --autosync-surface: #ffffff;
-  --autosync-line: #d5dee7;
+  /* Brand palette */
+  --brand: #023441;
+  --peach: #efbb92;
+  --sand: #ffe0c0;
+
+  --background: #ffe0c0;
+  --foreground: #023441;
+  --autosync-ink: #023441;
+  --autosync-muted: #3a5c66;
+  --autosync-peach: #efbb92;
+  --autosync-sand: #ffe0c0;
+  --autosync-surface: #fff8ef;
+  --autosync-line: color-mix(in srgb, #efbb92 55%, #023441 10%);
+  --autosync-teal: #023441;
+  --autosync-teal-bright: #efbb92;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-brand: #023441;
+  --color-peach: #efbb92;
+  --color-sand: #ffe0c0;
   --font-sans: var(--font-figtree);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-syne);

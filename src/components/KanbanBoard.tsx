@@ -746,7 +746,7 @@ export function KanbanBoard({
 
   if (!mounted) {
     return (
-      <div className="flex h-full items-center justify-center text-sm text-slate-400">
+      <div className="flex h-full items-center justify-center text-sm text-brand/45">
         Loading board…
       </div>
     );
@@ -765,7 +765,7 @@ export function KanbanBoard({
   return (
     <SalespeopleProvider salespeople={salespeople}>
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
+      <header className="flex shrink-0 flex-col gap-3 border-b border-peach/50 bg-[var(--autosync-surface)] px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1 basis-full sm:basis-auto">
             {editingTitle ? (
@@ -781,13 +781,13 @@ export function KanbanBoard({
                   onChange={(e) => setTitleDraft(e.target.value)}
                   disabled={savingTitle}
                   autoFocus
-                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-lg font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 sm:text-xl"
+                  className="min-w-0 flex-1 rounded-lg border border-peach/70 px-3 py-1.5 text-lg font-bold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:text-xl"
                   aria-label="Board title"
                 />
                 <button
                   type="submit"
                   disabled={savingTitle}
-                  className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                  className="rounded-lg bg-brand px-3 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
                 >
                   {savingTitle ? "Saving…" : "Save"}
                 </button>
@@ -798,27 +798,27 @@ export function KanbanBoard({
                     setEditingTitle(false);
                     setTitleDraft(boardTitle);
                   }}
-                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 disabled:opacity-60"
+                  className="rounded-lg px-3 py-1.5 text-xs font-semibold text-brand/70 hover:bg-peach/35 disabled:opacity-60"
                 >
                   Cancel
                 </button>
               </form>
             ) : (
               <div className="flex min-w-0 items-center gap-2">
-                <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl">
+                <h1 className="truncate text-lg font-bold text-brand sm:text-xl">
                   {boardTitle}
                 </h1>
                 <button
                   type="button"
                   onClick={startEditingTitle}
-                  className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-brand/60 hover:bg-peach/35 hover:text-brand"
                   title="Rename board"
                 >
                   Edit
                 </button>
               </div>
             )}
-            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-0.5 text-xs text-brand/60 sm:text-sm">
               {totalCount} vehicles · {salespeople.length} salespeople
               <span className="hidden sm:inline">
                 {" "}
@@ -830,7 +830,7 @@ export function KanbanBoard({
           <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
             <div className="relative min-w-0 flex-1 basis-full sm:basis-auto sm:flex-none">
               <svg
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-brand/45"
                 width="16"
                 height="16"
                 viewBox="0 0 24 24"
@@ -846,11 +846,11 @@ export function KanbanBoard({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search stock #, make, model…"
-                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:w-64"
+                className="w-full rounded-lg border border-peach/70 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 sm:w-64"
               />
             </div>
 
-            <div className="flex overflow-hidden rounded-lg border border-slate-300">
+            <div className="flex overflow-hidden rounded-lg border border-peach/70">
               {(["all", "new", "used"] as const).map((option) => (
                 <button
                   key={option}
@@ -858,8 +858,8 @@ export function KanbanBoard({
                   className={[
                     "px-2.5 py-2 text-xs font-semibold capitalize transition-colors sm:px-3",
                     conditionFilter === option
-                      ? "bg-slate-900 text-white"
-                      : "bg-white text-slate-600 hover:bg-slate-100",
+                      ? "bg-brand text-sand"
+                      : "bg-[var(--autosync-surface)] text-brand/70 hover:bg-peach/40",
                   ].join(" ")}
                 >
                   {option}
@@ -876,7 +876,7 @@ export function KanbanBoard({
               type="button"
               onClick={() => setClearConfirmOpen(true)}
               disabled={totalCount === 0}
-              className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-rose-300/80 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
               title="Remove every vehicle from the board"
             >
               <span className="sm:hidden">Reset</span>
@@ -885,7 +885,7 @@ export function KanbanBoard({
 
             <button
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 sm:px-4"
+              className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-sand hover:bg-[#034a5c] sm:px-4"
             >
               <svg
                 width="16"
@@ -907,15 +907,15 @@ export function KanbanBoard({
         </div>
 
         {showInventoryPane && showFloorPane && (
-          <div className="flex rounded-lg border border-slate-300 p-0.5 lg:hidden">
+          <div className="flex rounded-lg border border-peach/70 p-0.5 lg:hidden">
             <button
               type="button"
               onClick={() => setMobilePane("inventory")}
               className={[
                 "flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors",
                 mobilePane === "inventory"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100",
+                  ? "bg-brand text-sand"
+                  : "text-brand/70 hover:bg-peach/35",
               ].join(" ")}
             >
               Inventory
@@ -926,8 +926,8 @@ export function KanbanBoard({
               className={[
                 "flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors",
                 mobilePane === "floor"
-                  ? "bg-slate-900 text-white"
-                  : "text-slate-600 hover:bg-slate-100",
+                  ? "bg-brand text-sand"
+                  : "text-brand/70 hover:bg-peach/35",
               ].join(" ")}
             >
               Sales floor
@@ -948,7 +948,7 @@ export function KanbanBoard({
           {showInventoryPane && (
             <aside
               className={[
-                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-3 sm:p-4 lg:border-b-0 lg:border-r lg:p-4",
+                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-peach/40 bg-sand/80 p-3 sm:p-4 lg:border-b-0 lg:border-r lg:border-peach/40 lg:p-4",
                 mobilePane === "inventory" || !showFloorPane
                   ? "flex flex-col"
                   : "hidden lg:flex lg:flex-col",
@@ -957,7 +957,7 @@ export function KanbanBoard({
                   : "flex-1",
               ].join(" ")}
             >
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
                 Inventory by Model
               </h2>
               <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
@@ -965,7 +965,7 @@ export function KanbanBoard({
                   <KanbanColumn
                     key={column.id}
                     column={column}
-                    className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
+                    className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
                     cars={filteredBoard[column.id] ?? []}
                     onMove={requestMove}
                     onEditExteriorColor={setExteriorColorCarId}
@@ -982,7 +982,7 @@ export function KanbanBoard({
           {showFloorPane && (
           <div
             className={[
-              "min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6",
+              "min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden bg-sand/50 p-3 sm:p-4 lg:bg-transparent lg:p-6",
               mobilePane === "floor" || !showInventoryPane
                 ? "flex"
                 : "hidden lg:flex",
@@ -993,7 +993,7 @@ export function KanbanBoard({
               {sectionVisibility.sales && (
                 <>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                <h2 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-brand/45">
                   Sales Team · Sold by
                 </h2>
                 <div className="flex flex-wrap items-center gap-2">
@@ -1006,22 +1006,22 @@ export function KanbanBoard({
                       onChange={(e) => setNewSalespersonName(e.target.value)}
                       placeholder="New salesperson"
                       disabled={savingSalesperson}
-                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 sm:w-40 sm:max-w-none"
+                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
                     />
                     <button
                       type="submit"
                       disabled={savingSalesperson || !newSalespersonName.trim()}
-                      className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                      className="rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
                     >
                       {savingSalesperson ? "Adding…" : "Add"}
                     </button>
                   </form>
-                  <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                  <label className="flex items-center gap-2 text-xs font-semibold text-brand/70">
                     Month
                     <select
                       value={salesMonth}
                       onChange={(e) => setSalesMonth(e.target.value)}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                      className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
                     >
                       {salesMonthOptions.map((key) => (
                         <option key={key} value={key}>
@@ -1065,11 +1065,11 @@ export function KanbanBoard({
               {sectionVisibility.dailySales && (
               <div className={sectionVisibility.sales ? "mt-5" : undefined}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-brand/45">
                     Daily Sales · {formatShortDate(salesDay)}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-2 text-xs font-semibold text-slate-600">
+                    <label className="flex items-center gap-2 text-xs font-semibold text-brand/70">
                       Date
                       <input
                         type="date"
@@ -1079,14 +1079,14 @@ export function KanbanBoard({
                           if (e.target.value)
                             void persistSalesDay(e.target.value);
                         }}
-                        className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60"
                       />
                     </label>
                     <button
                       type="button"
                       disabled={savingSalesDay}
                       onClick={() => void persistSalesDay(todayIsoDate())}
-                      className="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-60"
+                      className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand/80 hover:bg-peach/30 disabled:opacity-60"
                     >
                       Today
                     </button>
@@ -1094,14 +1094,14 @@ export function KanbanBoard({
                       type="button"
                       disabled={savingSalesDay}
                       onClick={endSalesDay}
-                      className="rounded-lg bg-slate-900 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+                      className="rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
                       title="Close this sales day and move these sales into each team member's monthly column"
                     >
                       {savingSalesDay ? "Saving…" : "End day"}
                     </button>
                   </div>
                 </div>
-                <p className="mb-3 text-xs text-slate-500">
+                <p className="mb-3 text-xs text-brand/60">
                   Drop sales here for this date. End day (or overnight) moves
                   them into the monthly columns above.
                 </p>
@@ -1132,10 +1132,10 @@ export function KanbanBoard({
 
             {sectionVisibility.workingDeals && (
               <section>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
                   Working Deals
                 </h2>
-                <p className="mb-3 text-xs text-slate-500">
+                <p className="mb-3 text-xs text-brand/60">
                   Deals in progress — not closed yet. Move to Daily Sales when
                   the deal is done.
                 </p>
@@ -1158,7 +1158,7 @@ export function KanbanBoard({
 
             {sectionVisibility.managers && (
             <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
                 Manager Demos
               </h2>
               <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
@@ -1177,7 +1177,7 @@ export function KanbanBoard({
 
             {sectionVisibility.overnight && (
             <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
                 Team Overnight Demos
               </h2>
               {dueOvernightDemos.length > 0 && (
@@ -1192,7 +1192,7 @@ export function KanbanBoard({
                         <button
                           type="button"
                           onClick={() => setOvernightDueCarId(car.id)}
-                          className="flex w-full items-center justify-between gap-2 rounded-lg bg-white/80 px-2.5 py-1.5 text-left text-xs font-semibold text-slate-800 ring-1 ring-amber-200/80 hover:bg-white"
+                          className="flex w-full items-center justify-between gap-2 rounded-lg bg-[var(--autosync-surface)]/90 px-2.5 py-1.5 text-left text-xs font-semibold text-brand ring-1 ring-amber-200/80 hover:bg-[var(--autosync-surface)]"
                         >
                           <span className="min-w-0 truncate">
                             #{car.stockNumber}
@@ -1237,7 +1237,7 @@ export function KanbanBoard({
 
             {sectionVisibility.intake && visibleIntakeColumns.length > 0 && (
               <section>
-                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
+                <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand/45">
                   Incoming · DX · Loaners
                 </h2>
                 <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:grid-cols-4">
@@ -1245,7 +1245,7 @@ export function KanbanBoard({
                     <KanbanColumn
                       key={column.id}
                       column={column}
-                      className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
+                      className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
                       onEditExteriorColor={setExteriorColorCarId}

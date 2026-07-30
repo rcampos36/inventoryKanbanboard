@@ -6,8 +6,8 @@ import { loginAction, type AuthFormState } from "@/app/actions/auth";
 const initialState: AuthFormState = {};
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
-const labelClass = "text-xs font-semibold text-slate-600";
+  "w-full rounded-lg border border-peach/70 px-3 py-2.5 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
+const labelClass = "text-xs font-semibold text-brand/70";
 
 export function LoginForm({ setupError }: { setupError?: string }) {
   const [state, formAction, pending] = useActionState(loginAction, initialState);
@@ -15,8 +15,8 @@ export function LoginForm({ setupError }: { setupError?: string }) {
   return (
     <div className="flex w-full max-w-md flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Sign in</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <h1 className="text-2xl font-bold text-brand">Sign in</h1>
+        <p className="mt-1 text-sm text-brand/60">
           Restricted access for dealership managers. Use the account provided by
           your administrator.
         </p>
@@ -59,7 +59,7 @@ export function LoginForm({ setupError }: { setupError?: string }) {
         <button
           type="submit"
           disabled={pending || Boolean(setupError)}
-          className="mt-1 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+          className="mt-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
         >
           {pending ? "Signing in…" : "Sign in"}
         </button>

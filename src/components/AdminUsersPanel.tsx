@@ -19,8 +19,8 @@ type ManagedUser = {
 const initialState: AuthFormState = {};
 
 const inputClass =
-  "w-full rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10";
-const labelClass = "text-xs font-semibold text-slate-600";
+  "w-full rounded-lg border border-peach/70 px-3 py-2 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
+const labelClass = "text-xs font-semibold text-brand/70";
 
 export function AdminUsersPanel({
   users,
@@ -56,13 +56,13 @@ export function AdminUsersPanel({
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 p-6">
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Manage access</h1>
+        <h1 className="text-2xl font-bold text-brand">Manage access</h1>
         <p className="mt-1 text-sm text-slate-500">
           Add people who can sign in to the inventory board.
         </p>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-peach/60 bg-[var(--autosync-surface)] p-5 shadow-sm">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           Grant access
         </h2>
@@ -126,7 +126,7 @@ export function AdminUsersPanel({
             <button
               type="submit"
               disabled={creating}
-              className="rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700 disabled:opacity-60"
+              className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
             >
               {creating ? "Adding…" : "Add user"}
             </button>
@@ -134,7 +134,7 @@ export function AdminUsersPanel({
         </form>
       </section>
 
-      <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <section className="rounded-2xl border border-peach/60 bg-[var(--autosync-surface)] p-5 shadow-sm">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           People with access ({users.length})
         </h2>
@@ -155,9 +155,9 @@ export function AdminUsersPanel({
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
               <div>
-                <p className="text-sm font-semibold text-slate-900">
+                <p className="text-sm font-semibold text-brand">
                   {user.name}{" "}
-                  <span className="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                  <span className="ml-1 rounded-full bg-peach/50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand/70">
                     {user.role}
                   </span>
                 </p>
