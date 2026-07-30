@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction, type AuthFormState } from "@/app/actions/auth";
 
@@ -17,8 +18,8 @@ export function LoginForm({ setupError }: { setupError?: string }) {
       <div>
         <h1 className="text-2xl font-bold text-brand">Sign in</h1>
         <p className="mt-1 text-sm text-brand/60">
-          Restricted access for dealership managers. Use the account provided by
-          your administrator.
+          Restricted access for dealership managers. Each login opens that
+          store&apos;s board only.
         </p>
       </div>
 
@@ -64,6 +65,13 @@ export function LoginForm({ setupError }: { setupError?: string }) {
           {pending ? "Signing in…" : "Sign in"}
         </button>
       </form>
+
+      <p className="text-center text-sm text-brand/65">
+        New dealership?{" "}
+        <Link href="/register" className="font-semibold text-brand hover:underline">
+          Register here
+        </Link>
+      </p>
     </div>
   );
 }

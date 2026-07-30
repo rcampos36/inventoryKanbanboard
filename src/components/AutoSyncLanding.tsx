@@ -29,8 +29,10 @@ export function AutoSyncLanding({
 }: {
   isSignedIn?: boolean;
 }) {
-  const primaryHref = isSignedIn ? "/dashboard" : "/login";
-  const primaryLabel = isSignedIn ? "Open dashboard" : "Login";
+  const primaryHref = isSignedIn ? "/dashboard" : "/register";
+  const primaryLabel = isSignedIn ? "Open dashboard" : "Register dealership";
+  const secondaryHref = isSignedIn ? "/dashboard" : "/login";
+  const secondaryLabel = isSignedIn ? "Open dashboard" : "Sign in";
 
   return (
     <div className="min-h-screen bg-sand text-brand">
@@ -38,12 +40,22 @@ export function AutoSyncLanding({
         <p className="font-[family-name:var(--font-syne)] text-lg font-extrabold tracking-tight text-sand md:text-xl">
           AutoSync
         </p>
-        <Link
-          href={primaryHref}
-          className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]"
-        >
-          {primaryLabel}
-        </Link>
+        <div className="flex items-center gap-2">
+          {!isSignedIn && (
+            <Link
+              href={secondaryHref}
+              className="rounded-full px-4 py-2 text-sm font-bold text-sand/90 transition hover:text-sand"
+            >
+              {secondaryLabel}
+            </Link>
+          )}
+          <Link
+            href={primaryHref}
+            className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]"
+          >
+            {primaryLabel}
+          </Link>
+        </div>
       </header>
 
       <section className="relative isolate min-h-[100svh] overflow-hidden">
@@ -77,12 +89,14 @@ export function AutoSyncLanding({
             >
               {primaryLabel}
             </Link>
-            <a
-              href="#features"
-              className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
-            >
-              See what it does
-            </a>
+            {!isSignedIn && (
+              <Link
+                href={secondaryHref}
+                className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
+              >
+                {secondaryLabel}
+              </Link>
+            )}
           </div>
         </div>
       </section>
@@ -197,7 +211,7 @@ export function AutoSyncLanding({
               href={primaryHref}
               className="inline-flex rounded-full bg-brand px-7 py-3 text-sm font-bold text-sand transition hover:bg-[#034a5c]"
             >
-              {isSignedIn ? "Go to your dashboard" : "Login to AutoSync"}
+              {isSignedIn ? "Go to your dashboard" : "Register your dealership"}
             </Link>
           </div>
         </div>

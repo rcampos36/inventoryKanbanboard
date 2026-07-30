@@ -15,6 +15,7 @@ interface ManagerColumnProps {
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onEditExteriorColor?: (carId: string) => void;
+  onDelete?: () => void;
 }
 
 function initials(name: string): string {
@@ -33,6 +34,7 @@ export function ManagerColumn({
   onMove,
   onEditCheckoutDates,
   onEditExteriorColor,
+  onDelete,
 }: ManagerColumnProps) {
   const containerId = managerContainerId(manager.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -57,6 +59,16 @@ export function ManagerColumn({
             {cars.length} {cars.length === 1 ? "demo" : "demos"}
           </p>
         </div>
+        {onDelete && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="rounded-md px-1.5 py-1 text-[10px] font-semibold text-brand/50 hover:bg-rose-50 hover:text-rose-700"
+            title={`Remove ${manager.name}`}
+          >
+            Remove
+          </button>
+        )}
       </div>
 
       <div

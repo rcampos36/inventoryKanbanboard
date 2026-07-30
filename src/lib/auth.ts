@@ -3,16 +3,17 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { readSessionUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-types";
+import { ensureOrganizations, PEARSON_ORG } from "@/lib/tenant";
 
 export type { SessionUser };
 
 /**
- * Ensures an administrator exists from ADMIN_EMAIL / ADMIN_PASSWORD.
- * - Creates the admin only when no admin accounts exist (first setup / recovery)
- * - Updates the password/name/role if that env admin still exists
- * - Does NOT recreate an intentionally deleted env admin while other admins remain
+ * Ensures an administrator exists from ADMIN_EMAIL / ADMIN_PASSWORD
+ * on the default Pearson Mazda organization.
  */
 export async function ensureBootstrapAdmin() {
+  await ensureOrganizations();
+
   const email = process.env.ADMIN_EMAIL?.trim().toLowerCase();
   const password = process.env.ADMIN_PASSWORD;
   const name = process.env.ADMIN_NAME?.trim() || "Administrator";
@@ -34,8 +35,9 @@ export async function ensureBootstrapAdmin() {
   const existing = await prisma.user.findUnique({ where: { email } });
 
   if (!existing) {
-    const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
-    // Only create the env admin for first setup or when every admin was removed.
+    const adminCount = await prisma.user.count({
+      where: { organizationId: PEARSON_ORG.id, role: "ADMIN" },
+    });
     if (adminCount > 0) {
       return;
     }
@@ -46,13 +48,19 @@ export async function ensureBootstrapAdmin() {
         name,
         passwordHash,
         role: "ADMIN",
+        organizationId: PEARSON_ORG.id,
       },
     });
     return;
   }
 
   const passwordMatches = await bcrypt.compare(password, existing.passwordHash);
-  if (!passwordMatches || existing.role !== "ADMIN" || existing.name !== name) {
+  if (
+    !passwordMatches ||
+    existing.role !== "ADMIN" ||
+    existing.name !== name ||
+    existing.organizationId !== PEARSON_ORG.id
+  ) {
     await prisma.user.update({
       where: { email },
       data: {
@@ -61,9 +69,30 @@ export async function ensureBootstrapAdmin() {
           : await bcrypt.hash(password, 12),
         role: "ADMIN",
         name,
+        organizationId: PEARSON_ORG.id,
       },
     });
   }
+}
+
+/** Creates the Sunrise Honda demo admin if missing. */
+export async function ensureSunriseDemoAdmin() {
+  await ensureOrganizations();
+
+  const email = "admin@sunrise.local";
+  const existing = await prisma.user.findUnique({ where: { email } });
+  if (existing) return;
+
+  const passwordHash = await bcrypt.hash("sunrise123", 12);
+  await prisma.user.create({
+    data: {
+      email,
+      name: "Sunrise Admin",
+      passwordHash,
+      role: "ADMIN",
+      organizationId: "org_sunrise_honda",
+    },
+  });
 }
 
 export async function requireUser(): Promise<SessionUser> {

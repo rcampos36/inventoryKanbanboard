@@ -164,6 +164,20 @@ export function normalizeModelColorKey(model: string): string {
   }
   if (value.startsWith("mazda3")) return "mazda3";
 
+  if (value.startsWith("civic sedan") || value === "civic-sedan") return "civic-sedan";
+  if (value.startsWith("civic hatch") || value === "civic-hatchback") {
+    return "civic-hatchback";
+  }
+  if (value === "civic") return "civic-sedan";
+  if (value.startsWith("cr-v hybrid") || value === "cr-v-hybrid") return "cr-v-hybrid";
+  if (value.startsWith("cr-v") || value === "cr-v") return "cr-v";
+  if (value.startsWith("hr-v") || value === "hr-v") return "hr-v";
+  if (value.startsWith("accord")) return "accord";
+  if (value.startsWith("pilot")) return "pilot";
+  if (value.startsWith("passport")) return "passport";
+  if (value.startsWith("ridgeline")) return "ridgeline";
+  if (value.startsWith("odyssey")) return "odyssey";
+
   return value;
 }
 
@@ -178,6 +192,16 @@ const MODEL_FAMILY_COLORS: Record<string, ModelColor> = {
   "cx-70": PALETTE[11], // violet
   "cx-90": PALETTE[0], // rose
   "mx-5-miata": PALETTE[13], // pink
+  "civic-sedan": PALETTE[9],
+  "civic-hatchback": PALETTE[10],
+  accord: PALETTE[5],
+  "hr-v": PALETTE[7],
+  "cr-v": PALETTE[1],
+  "cr-v-hybrid": PALETTE[1],
+  pilot: PALETTE[11],
+  passport: PALETTE[0],
+  ridgeline: PALETTE[2],
+  odyssey: PALETTE[8],
 };
 
 /** All used inventory chips share this yellow treatment. */

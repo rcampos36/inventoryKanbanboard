@@ -13,6 +13,7 @@ import {
   resolveOvernightHomeColumnId,
 } from "@/lib/suggest-column";
 import { formatNewCarLabel } from "@/lib/format";
+import { useBoardConfig } from "./BoardConfigContext";
 
 interface OvernightDueModalProps {
   open: boolean;
@@ -29,6 +30,7 @@ export function OvernightDueModal({
   onExtend,
   onMarkReturned,
 }: OvernightDueModalProps) {
+  const { brand } = useBoardConfig();
   const [returnDate, setReturnDate] = useState(todayIsoDate());
 
   useEffect(() => {
@@ -50,8 +52,8 @@ export function OvernightDueModal({
   if (!open || !car) return null;
 
   const status = overnightDueStatus(car.returnDate);
-  const homeId = resolveOvernightHomeColumnId(car);
-  const homeLabel = columnTitle(homeId);
+  const homeId = resolveOvernightHomeColumnId(car, brand);
+  const homeLabel = columnTitle(homeId, brand);
   const label =
     car.condition === "new"
       ? formatNewCarLabel(car)

@@ -6,22 +6,20 @@ import { requireUser } from "@/lib/auth";
 import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import { todayIsoDate } from "@/lib/types";
 
-const SETTINGS_ID = "default";
-
 export type BoardSettings = {
   openSalesDay: string;
   boardTitle: string;
 };
 
-async function ensureSettings() {
+async function ensureSettings(organizationId: string) {
   const existing = await prisma.appSettings.findUnique({
-    where: { id: SETTINGS_ID },
+    where: { organizationId },
   });
   if (existing) return existing;
 
   return prisma.appSettings.create({
     data: {
-      id: SETTINGS_ID,
+      organizationId,
       openSalesDay: todayIsoDate(),
       boardTitle: DEFAULT_BOARD_TITLE,
     },
@@ -29,8 +27,8 @@ async function ensureSettings() {
 }
 
 export async function getBoardSettings(): Promise<BoardSettings> {
-  await requireUser();
-  const row = await ensureSettings();
+  const user = await requireUser();
+  const row = await ensureSettings(user.organizationId);
   return {
     openSalesDay: row.openSalesDay,
     boardTitle: row.boardTitle?.trim() || DEFAULT_BOARD_TITLE,
@@ -45,11 +43,11 @@ export async function getOpenSalesDay(): Promise<string> {
 export async function setOpenSalesDayAction(
   openSalesDay: string
 ): Promise<string> {
-  await requireUser();
+  const user = await requireUser();
   const row = await prisma.appSettings.upsert({
-    where: { id: SETTINGS_ID },
+    where: { organizationId: user.organizationId },
     create: {
-      id: SETTINGS_ID,
+      organizationId: user.organizationId,
       openSalesDay,
       boardTitle: DEFAULT_BOARD_TITLE,
     },
@@ -60,11 +58,11 @@ export async function setOpenSalesDayAction(
 }
 
 export async function setBoardTitleAction(boardTitle: string): Promise<string> {
-  await requireUser();
+  const user = await requireUser();
   const title = boardTitle.trim() || DEFAULT_BOARD_TITLE;
-  const existing = await ensureSettings();
+  await ensureSettings(user.organizationId);
   const row = await prisma.appSettings.update({
-    where: { id: existing.id },
+    where: { organizationId: user.organizationId },
     data: { boardTitle: title },
   });
   revalidatePath("/dashboard");

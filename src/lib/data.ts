@@ -1,7 +1,23 @@
 import type { Car, Column, Manager, Salesperson } from "./types";
 
-/** New/used inventory grouped by model (and used buckets). */
-export const MODEL_COLUMNS: Column[] = [
+/** Shared used inventory buckets (titles adapt to franchise brand). */
+export const USED_COLUMN_IDS = {
+  franchise: "used-franchise",
+  /** Legacy Mazda used lane — kept so existing Pearson stock stays mapped. */
+  mazda: "used-mazda",
+  other: "used-other",
+} as const;
+
+/** Intake / logistics workflow columns. */
+export const INTAKE_COLUMNS: Column[] = [
+  { id: "incoming-used", title: "Incoming Used" },
+  { id: "dx-in", title: "DX In" },
+  { id: "dx-out", title: "DX Out" },
+  { id: "incoming-loaners", title: "Incoming Loaners" },
+];
+
+/** New Mazda model lanes. */
+export const MAZDA_NEW_COLUMNS: Column[] = [
   { id: "mazda3-sedan", title: "Mazda3 Sedan" },
   { id: "mazda3-hatchback", title: "Mazda3 Hatchback" },
   { id: "cx-30", title: "CX-30" },
@@ -13,20 +29,109 @@ export const MODEL_COLUMNS: Column[] = [
   { id: "cx-90", title: "CX-90" },
   { id: "cx-90-phev", title: "CX-90 PHEV" },
   { id: "mx-5-miata", title: "MX-5 Miata" },
-  { id: "used-mazda", title: "Used Mazda" },
-  { id: "used-other", title: "Used – Other Brands" },
 ];
 
-/** Intake / logistics workflow columns. */
-export const INTAKE_COLUMNS: Column[] = [
-  { id: "incoming-used", title: "Incoming Used" },
-  { id: "dx-in", title: "DX In" },
-  { id: "dx-out", title: "DX Out" },
-  { id: "incoming-loaners", title: "Incoming Loaners" },
+/** New Honda model lanes. */
+export const HONDA_NEW_COLUMNS: Column[] = [
+  { id: "civic-sedan", title: "Civic Sedan" },
+  { id: "civic-hatchback", title: "Civic Hatchback" },
+  { id: "accord", title: "Accord" },
+  { id: "hr-v", title: "HR-V" },
+  { id: "cr-v", title: "CR-V" },
+  { id: "cr-v-hybrid", title: "CR-V Hybrid" },
+  { id: "pilot", title: "Pilot" },
+  { id: "passport", title: "Passport" },
+  { id: "ridgeline", title: "Ridgeline" },
+  { id: "odyssey", title: "Odyssey" },
 ];
 
-/** All moveable inventory columns (model lanes + intake lanes). */
-export const COLUMNS: Column[] = [...MODEL_COLUMNS, ...INTAKE_COLUMNS];
+const NEW_COLUMNS_BY_BRAND: Record<string, Column[]> = {
+  Mazda: MAZDA_NEW_COLUMNS,
+  Honda: HONDA_NEW_COLUMNS,
+};
+
+function slugifyModelTitle(title: string): string {
+  return (
+    title
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "") || "model"
+  );
+}
+
+export function normalizeFranchiseBrand(brand: string | undefined | null): string {
+  const value = (brand ?? "Mazda").trim();
+  if (!value) return "Mazda";
+  return value[0].toUpperCase() + value.slice(1).toLowerCase();
+}
+
+/** Resolved after VEHICLE_CATALOG is defined (avoids module init TDZ). */
+let resolveCatalogBrand: (brand: string) => {
+  key: string;
+  models: string[];
+} | null = () => null;
+
+/** Canonical franchise key (catalog spelling when known). */
+export function resolveFranchiseBrandKey(brand: string | undefined | null): string {
+  const hit = resolveCatalogBrand(brand ?? "Mazda");
+  if (hit) return hit.key;
+  return normalizeFranchiseBrand(brand);
+}
+
+/** New-car model lanes for a franchise brand. */
+export function getNewModelColumns(brand: string): Column[] {
+  const lower = (brand ?? "Mazda").trim().toLowerCase();
+  for (const [name, cols] of Object.entries(NEW_COLUMNS_BY_BRAND)) {
+    if (name.toLowerCase() === lower) return cols;
+  }
+  const hit = resolveCatalogBrand(brand);
+  if (hit?.models.length) {
+    return hit.models.map((title) => ({
+      id: slugifyModelTitle(title),
+      title,
+    }));
+  }
+  return MAZDA_NEW_COLUMNS;
+}
+
+/** Used lanes: franchise used + other brands (plus legacy used-mazda for Mazda). */
+export function getUsedColumns(brand: string): Column[] {
+  const key = resolveFranchiseBrandKey(brand);
+  if (key.toLowerCase() === "mazda") {
+    return [
+      { id: USED_COLUMN_IDS.mazda, title: "Used Mazda" },
+      { id: USED_COLUMN_IDS.other, title: "Used – Other Brands" },
+    ];
+  }
+  return [
+    {
+      id: `used-${key.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+      title: `Used ${key}`,
+    },
+    { id: USED_COLUMN_IDS.other, title: "Used – Other Brands" },
+  ];
+}
+
+/** Inventory model grid: brand new lanes + used buckets. */
+export function getModelColumns(brand: string): Column[] {
+  return [...getNewModelColumns(brand), ...getUsedColumns(brand)];
+}
+
+/** All inventory drop targets for a brand (models + intake). */
+export function getColumns(brand: string): Column[] {
+  return [...getModelColumns(brand), ...INTAKE_COLUMNS];
+}
+
+/**
+ * @deprecated Prefer getModelColumns(brand). Defaults to Mazda.
+ */
+export const MODEL_COLUMNS: Column[] = getModelColumns("Mazda");
+
+/**
+ * @deprecated Prefer getColumns(brand). Defaults to Mazda.
+ */
+export const COLUMNS: Column[] = getColumns("Mazda");
 
 export const DEFAULT_SALESPEOPLE: Salesperson[] = [
   { id: "avery", name: "Avery Johnson" },
@@ -45,6 +150,9 @@ export const MANAGERS: Manager[] = [
   { id: "mia", name: "Mia Chen" },
   { id: "noah", name: "Noah Brooks" },
 ];
+
+/** @deprecated Prefer managers loaded from the database. */
+export const DEFAULT_MANAGERS: Manager[] = MANAGERS;
 
 /** Autocomplete suggestions for the Add Vehicle form (free text still allowed). */
 /**
@@ -123,6 +231,19 @@ export const MAZDA_TRIMS_BY_MODEL: Record<string, string[]> = {
   "MX-5 Miata RF": ["Club", "Grand Touring"],
 };
 
+export const HONDA_TRIMS_BY_MODEL: Record<string, string[]> = {
+  "Civic Sedan": ["LX", "Sport", "Sport Hybrid", "Touring Hybrid"],
+  "Civic Hatchback": ["Sport", "Sport Touring Hybrid"],
+  Accord: ["Sport", "EX-L", "Sport-L Hybrid", "Touring Hybrid"],
+  "HR-V": ["LX", "Sport", "EX-L"],
+  "CR-V": ["LX", "Sport", "EX-L", "Touring"],
+  "CR-V Hybrid": ["Sport", "Sport-L", "Sport Touring"],
+  Pilot: ["Sport", "EX-L", "TrailSport", "Touring", "Elite"],
+  Passport: ["Sport", "EX-L", "TrailSport", "TrailSport Elite", "Black Edition"],
+  Ridgeline: ["Sport", "RTL", "TrailSport", "Black Edition"],
+  Odyssey: ["Sport", "EX-L", "Touring", "Elite"],
+};
+
 /** Free-text friendly catalog: suggestions by make, but any typed value is allowed. */
 export const VEHICLE_CATALOG: Record<
   string,
@@ -139,8 +260,8 @@ export const VEHICLE_CATALOG: Record<
     trims: ["LE", "SE", "XLE", "XSE", "Limited", "Platinum", "TRD Sport", "TRD Off-Road"],
   },
   Honda: {
-    models: ["Civic", "Accord", "CR-V", "HR-V", "Pilot", "Passport", "Ridgeline"],
-    trims: ["LX", "Sport", "EX", "EX-L", "Touring", "Sport Touring", "TrailSport"],
+    models: Object.keys(HONDA_TRIMS_BY_MODEL),
+    trims: Array.from(new Set(Object.values(HONDA_TRIMS_BY_MODEL).flat())),
   },
   Ford: {
     models: ["F-150", "Escape", "Explorer", "Bronco", "Mustang", "Edge", "Maverick"],
@@ -214,6 +335,47 @@ export const VEHICLE_CATALOG: Record<
 
 export const MAKE_SUGGESTIONS: string[] = Object.keys(VEHICLE_CATALOG);
 
+resolveCatalogBrand = (brand: string) => {
+  const raw = brand.trim();
+  if (!raw) return null;
+  const key = Object.keys(VEHICLE_CATALOG).find(
+    (entry) => entry.toLowerCase() === raw.toLowerCase()
+  );
+  if (!key) return null;
+  return { key, models: VEHICLE_CATALOG[key].models };
+};
+
+/** Brands dealers can pick at registration (drives new-car model lanes). */
+export function getFranchiseBrandOptions(): string[] {
+  const preferred = [
+    "Mazda",
+    "Honda",
+    "Toyota",
+    "Ford",
+    "Chevrolet",
+    "Nissan",
+    "Hyundai",
+    "Kia",
+    "Subaru",
+    "Volkswagen",
+    "BMW",
+    "Mercedes-Benz",
+    "Audi",
+    "Lexus",
+    "Acura",
+    "GMC",
+    "Ram",
+    "Jeep",
+  ];
+  const preferredAvailable = preferred.filter(
+    (key) => key in VEHICLE_CATALOG || key in NEW_COLUMNS_BY_BRAND
+  );
+  const rest = Object.keys(VEHICLE_CATALOG).filter(
+    (key) => !preferredAvailable.includes(key)
+  );
+  return [...preferredAvailable, ...rest];
+}
+
 export const MODEL_SUGGESTIONS: string[] = Array.from(
   new Set(Object.values(VEHICLE_CATALOG).flatMap((entry) => entry.models))
 );
@@ -234,6 +396,11 @@ export function getTrimsForMake(make: string, model?: string): string[] {
   if (normalizedMake.toLowerCase() === "mazda" && normalizedModel) {
     const mazdaTrims = MAZDA_TRIMS_BY_MODEL[normalizedModel];
     if (mazdaTrims) return mazdaTrims;
+  }
+
+  if (normalizedMake.toLowerCase() === "honda" && normalizedModel) {
+    const hondaTrims = HONDA_TRIMS_BY_MODEL[normalizedModel];
+    if (hondaTrims) return hondaTrims;
   }
 
   const entry = VEHICLE_CATALOG[normalizedMake];

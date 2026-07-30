@@ -13,6 +13,7 @@ import type { Car, CarCondition, Column } from "@/lib/types";
 interface AddCarModalProps {
   open: boolean;
   columns: Column[];
+  brand?: string;
   onClose: () => void;
   onAdd: (car: Omit<Car, "id">) => void;
 }
@@ -28,7 +29,13 @@ const EMPTY_FORM = {
   exteriorColor: "",
 };
 
-export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps) {
+export function AddCarModal({
+  open,
+  columns,
+  brand = "Mazda",
+  onClose,
+  onAdd,
+}: AddCarModalProps) {
   const [form, setForm] = useState({
     ...EMPTY_FORM,
     columnId: columns[0]?.id ?? "",
@@ -38,10 +45,10 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
     if (open) {
       setForm({
         ...EMPTY_FORM,
-        columnId: suggestInventoryColumnId("", "", "new"),
+        columnId: suggestInventoryColumnId("", "", "new", brand),
       });
     }
-  }, [open, columns]);
+  }, [open, columns, brand]);
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -70,7 +77,8 @@ export function AddCarModal({ open, columns, onClose, onAdd }: AddCarModalProps)
         next.columnId = suggestInventoryColumnId(
           key === "make" ? String(value) : next.make,
           key === "model" ? String(value) : next.model,
-          key === "condition" ? (value as CarCondition) : next.condition
+          key === "condition" ? (value as CarCondition) : next.condition,
+          brand
         );
       }
 

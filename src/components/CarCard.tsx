@@ -5,7 +5,6 @@ import { createPortal } from "react-dom";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { getCarColor, getModelColor } from "@/lib/colors";
-import { INTAKE_COLUMNS, MANAGERS, MODEL_COLUMNS } from "@/lib/data";
 import { formatNewCarLabel } from "@/lib/format";
 import {
   carContainerId,
@@ -22,6 +21,8 @@ import {
   type Column,
 } from "@/lib/types";
 import { overnightDueStatus } from "@/lib/suggest-column";
+import { useBoardConfig } from "./BoardConfigContext";
+import { useManagers } from "./ManagersContext";
 import { useSalespeople } from "./SalespeopleContext";
 
 interface CarCardProps {
@@ -52,6 +53,8 @@ export function CarCard({
   onClearHalfDeal,
 }: CarCardProps) {
   const salespeople = useSalespeople();
+  const managers = useManagers();
+  const { modelColumns, intakeColumns } = useBoardConfig();
   const color = getCarColor(car.model, car.condition);
   const isNew = car.condition === "new";
   const isSold = isCarSold(car);
@@ -346,10 +349,10 @@ export function CarCard({
             onPointerDown={(e) => e.stopPropagation()}
           >
             <p className={menuLabelClass}>Move to inventory</p>
-            {MODEL_COLUMNS.map((column) => renderColumnOption(column))}
+            {modelColumns.map((column) => renderColumnOption(column))}
 
             <p className={menuLabelClass}>Incoming · DX · Loaners</p>
-            {INTAKE_COLUMNS.map((column) => renderColumnOption(column))}
+            {intakeColumns.map((column) => renderColumnOption(column))}
 
             <p className={menuLabelClass}>Assign full deal</p>
             {salespeople.filter(
@@ -452,7 +455,7 @@ export function CarCard({
             )}
 
             <p className={menuLabelClass}>Assign to manager demo</p>
-            {MANAGERS.filter(
+            {managers.filter(
               (m) => managerContainerId(m.id) !== currentContainer
             ).map((m) => {
               const mColor = getModelColor(m.name);

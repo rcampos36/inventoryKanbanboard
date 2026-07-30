@@ -3,6 +3,9 @@ export type SessionUser = {
   email: string;
   name: string;
   role: "ADMIN" | "USER";
+  organizationId: string;
+  organizationName: string;
+  organizationBrand: string;
 };
 
 export const SESSION_COOKIE = "ikb_session";

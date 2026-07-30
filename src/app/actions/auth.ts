@@ -4,7 +4,11 @@ import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { requireAdmin, ensureBootstrapAdmin } from "@/lib/auth";
+import {
+  requireAdmin,
+  ensureBootstrapAdmin,
+  ensureSunriseDemoAdmin,
+} from "@/lib/auth";
 import {
   clearSessionCookie,
   createSessionToken,
@@ -22,6 +26,7 @@ export async function loginAction(
 ): Promise<AuthFormState> {
   try {
     await ensureBootstrapAdmin();
+    await ensureSunriseDemoAdmin();
   } catch (error) {
     return {
       error:
@@ -40,7 +45,10 @@ export async function loginAction(
     return { error: "Email and password are required." };
   }
 
-  const user = await prisma.user.findUnique({ where: { email } });
+  const user = await prisma.user.findUnique({
+    where: { email },
+    include: { organization: true },
+  });
   if (!user) {
     return { error: "Invalid email or password." };
   }
@@ -55,6 +63,9 @@ export async function loginAction(
     email: user.email,
     name: user.name,
     role: user.role,
+    organizationId: user.organizationId,
+    organizationName: user.organization.name,
+    organizationBrand: user.organization.brand || "Mazda",
   });
   await setSessionCookie(token);
   redirect("/dashboard");
@@ -66,7 +77,6 @@ export async function logoutAction() {
 }
 
 function actionErrorMessage(error: unknown, fallback: string): string {
-  // Never swallow Next.js redirect()/notFound() control-flow errors.
   if (
     typeof error === "object" &&
     error !== null &&
@@ -83,7 +93,7 @@ export async function createUserAction(
   _prev: AuthFormState,
   formData: FormData
 ): Promise<AuthFormState> {
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   try {
     const name = String(formData.get("name") ?? "").trim();
@@ -111,7 +121,13 @@ export async function createUserAction(
 
     const passwordHash = await bcrypt.hash(password, 12);
     await prisma.user.create({
-      data: { name, email, passwordHash, role },
+      data: {
+        name,
+        email,
+        passwordHash,
+        role,
+        organizationId: admin.organizationId,
+      },
     });
 
     revalidatePath("/admin");
@@ -140,19 +156,29 @@ export async function deleteUserAction(
       return { error: "You cannot remove your own admin account." };
     }
 
-    const target = await prisma.user.findUnique({ where: { id: userId } });
+    const target = await prisma.user.findFirst({
+      where: {
+        id: userId,
+        organizationId: admin.organizationId,
+      },
+    });
     if (!target) {
       return { error: "User not found." };
     }
 
     if (target.role === "ADMIN") {
-      const adminCount = await prisma.user.count({ where: { role: "ADMIN" } });
+      const adminCount = await prisma.user.count({
+        where: {
+          organizationId: admin.organizationId,
+          role: "ADMIN",
+        },
+      });
       if (adminCount <= 1) {
         return { error: "You cannot remove the last administrator." };
       }
     }
 
-    await prisma.user.delete({ where: { id: userId } });
+    await prisma.user.delete({ where: { id: target.id } });
     revalidatePath("/admin");
     return { success: `Removed access for ${target.email}.` };
   } catch (error) {
@@ -163,8 +189,9 @@ export async function deleteUserAction(
 }
 
 export async function listUsersAction() {
-  await requireAdmin();
+  const admin = await requireAdmin();
   return prisma.user.findMany({
+    where: { organizationId: admin.organizationId },
     orderBy: [{ role: "asc" }, { createdAt: "asc" }],
     select: {
       id: true,

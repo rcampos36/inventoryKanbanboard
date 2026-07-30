@@ -9,8 +9,26 @@ datasource db {
   provider = "postgresql"
 }
 
+/** A dealership / customer tenant on the shared AutoSync database. */
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  /** Franchise brand for new-car model lanes (e.g. Mazda, Honda). */
+  brand     String   @default("Mazda")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  cars        Car[]
+  salespeople Salesperson[]
+  managers    Manager[]
+  settings    AppSettings?
+}
+
 model Car {
   id              String   @id @default(cuid())
+  organizationId  String
   stockNumber     String
   year            Int
   make            String
@@ -36,6 +54,10 @@ model Car {
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, stockNumber])
+  @@index([organizationId])
   @@index([columnId])
   @@index([salespersonId])
   @@index([coSalespersonId])
@@ -45,12 +67,15 @@ model Car {
   @@index([soldAt])
 }
 
-/** Singleton row (id = "default") for board-wide settings. */
+/** One settings row per dealership. */
 model AppSettings {
-  id           String   @id @default("default")
-  openSalesDay String
-  boardTitle   String   @default("Pearson Mazda Inventory and Sales Board")
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  openSalesDay   String
+  boardTitle     String   @default("Pearson Mazda Inventory and Sales Board")
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 }
 
 enum UserRole {
@@ -59,20 +84,46 @@ enum UserRole {
 }
 
 model User {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  name         String
-  passwordHash String
-  role         UserRole @default(USER)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id             String   @id @default(cuid())
+  organizationId String
+  email          String   @unique
+  name           String
+  passwordHash   String
+  role           UserRole @default(USER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }
 
 /** Dealership sales team members shown on the board. */
 model Salesperson {
-  id        String   @id
-  name      String
-  position  Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  organizationId String
+  id             String
+  name           String
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, id])
+  @@index([organizationId])
+}
+
+/** Dealership managers shown on the manager-demo lanes. */
+model Manager {
+  organizationId String
+  id             String
+  name           String
+  position       Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@id([organizationId, id])
+  @@index([organizationId])
 }

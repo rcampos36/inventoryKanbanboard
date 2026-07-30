@@ -15,11 +15,11 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import {
-  COLUMNS,
   INTAKE_COLUMNS,
-  MANAGERS,
-  MODEL_COLUMNS,
+  getColumns,
+  getModelColumns,
 } from "@/lib/data";
+import { BoardConfigProvider } from "./BoardConfigContext";
 import {
   applyContainerLocation,
   applyHalfDeal,
@@ -42,6 +42,7 @@ import {
   type Car,
   type CheckoutDates,
   type Salesperson,
+  type Manager,
 } from "@/lib/types";
 import {
   overnightDueStatus,
@@ -62,6 +63,10 @@ import {
   createSalespersonAction,
   deleteSalespersonAction,
 } from "@/app/actions/salespeople";
+import {
+  createManagerAction,
+  deleteManagerAction,
+} from "@/app/actions/managers";
 import { KanbanColumn } from "./KanbanColumn";
 import { SalespersonColumn } from "./SalespersonColumn";
 import { TodaySalesColumn } from "./TodaySalesColumn";
@@ -76,6 +81,7 @@ import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
 import { SalespeopleProvider } from "./SalespeopleContext";
+import { ManagersProvider } from "./ManagersContext";
 import { TeamLaneItem, TeamLaneScroll } from "./TeamLaneScroll";
 import {
   DEFAULT_SECTION_VISIBILITY,
@@ -89,19 +95,28 @@ type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
 type MobilePane = "inventory" | "floor";
 
-function containerIdsFor(salespeople: Salesperson[]): string[] {
+function containerIdsFor(
+  salespeople: Salesperson[],
+  managers: Manager[],
+  brand: string
+): string[] {
   return [
-    ...COLUMNS.map((c) => c.id),
+    ...getColumns(brand).map((c) => c.id),
     ...salespeople.map((s) => salespersonContainerId(s.id)),
     ...salespeople.map((s) => workingDealContainerId(s.id)),
-    ...MANAGERS.map((m) => managerContainerId(m.id)),
+    ...managers.map((m) => managerContainerId(m.id)),
     ...salespeople.map((s) => overnightContainerId(s.id)),
   ];
 }
 
-function groupCars(cars: Car[], salespeople: Salesperson[]): Board {
+function groupCars(
+  cars: Car[],
+  salespeople: Salesperson[],
+  managers: Manager[],
+  brand: string
+): Board {
   const board: Board = {};
-  for (const id of containerIdsFor(salespeople)) board[id] = [];
+  for (const id of containerIdsFor(salespeople, managers, brand)) board[id] = [];
   for (const car of cars) {
     (board[carContainerId(car)] ??= []).push(car);
   }
@@ -133,6 +148,9 @@ interface KanbanBoardProps {
   initialSalesDay: string;
   initialBoardTitle?: string;
   initialSalespeople: Salesperson[];
+  initialManagers: Manager[];
+  organizationName?: string;
+  organizationBrand?: string;
   headerActions?: React.ReactNode;
 }
 
@@ -141,12 +159,19 @@ export function KanbanBoard({
   initialSalesDay,
   initialBoardTitle = DEFAULT_BOARD_TITLE,
   initialSalespeople,
+  initialManagers,
+  organizationName,
+  organizationBrand = "Mazda",
   headerActions,
 }: KanbanBoardProps) {
+  const brand = organizationBrand;
+  const modelColumns = useMemo(() => getModelColumns(brand), [brand]);
+  const inventoryColumns = useMemo(() => getColumns(brand), [brand]);
   const [salespeople, setSalespeople] =
     useState<Salesperson[]>(initialSalespeople);
+  const [managers, setManagers] = useState<Manager[]>(initialManagers);
   const [board, setBoard] = useState<Board>(() =>
-    groupCars(initialCars, initialSalespeople)
+    groupCars(initialCars, initialSalespeople, initialManagers, brand)
   );
   const [activeCar, setActiveCar] = useState<Car | null>(null);
   const [query, setQuery] = useState("");
@@ -165,6 +190,9 @@ export function KanbanBoard({
   const [newSalespersonName, setNewSalespersonName] = useState("");
   const [savingSalesperson, setSavingSalesperson] = useState(false);
   const [salespersonError, setSalespersonError] = useState<string | null>(null);
+  const [newManagerName, setNewManagerName] = useState("");
+  const [savingManager, setSavingManager] = useState(false);
+  const [managerError, setManagerError] = useState<string | null>(null);
   const [halfDealCarId, setHalfDealCarId] = useState<string | null>(null);
   const [checkoutPrompt, setCheckoutPrompt] = useState<{
     carId: string;
@@ -263,8 +291,8 @@ export function KanbanBoard({
   );
 
   const containerIds = useMemo(
-    () => containerIdsFor(salespeople),
-    [salespeople]
+    () => containerIdsFor(salespeople, managers, brand),
+    [salespeople, managers, brand]
   );
 
   const filteredBoard = useMemo<Board>(() => {
@@ -291,7 +319,7 @@ export function KanbanBoard({
 
   const isFiltering = conditionFilter !== "all" || query.trim() !== "";
 
-  const visibleModelColumns = MODEL_COLUMNS.filter(
+  const visibleModelColumns = modelColumns.filter(
     (column) => !isFiltering || (filteredBoard[column.id]?.length ?? 0) > 0
   );
   const visibleIntakeColumns = INTAKE_COLUMNS.filter(
@@ -629,6 +657,55 @@ export function KanbanBoard({
     }
   }
 
+  async function handleAddManager(e: React.FormEvent) {
+    e.preventDefault();
+    const name = newManagerName.trim();
+    if (!name || savingManager) return;
+    setSavingManager(true);
+    setManagerError(null);
+    try {
+      const result = await createManagerAction(name);
+      if (!result.ok) {
+        setManagerError(result.error);
+        return;
+      }
+      setManagers((prev) => [...prev, result.manager]);
+      setBoard((prev) => ({
+        ...prev,
+        [managerContainerId(result.manager.id)]: [],
+      }));
+      setNewManagerName("");
+    } catch (error) {
+      console.error("Failed to add manager", error);
+      setManagerError("Could not add manager.");
+    } finally {
+      setSavingManager(false);
+    }
+  }
+
+  async function handleDeleteManager(managerId: string) {
+    const manager = managers.find((m) => m.id === managerId);
+    if (!manager) return;
+    if (!window.confirm(`Remove ${manager.name} from managers?`)) return;
+    setManagerError(null);
+    try {
+      const result = await deleteManagerAction(managerId);
+      if (!result.ok) {
+        setManagerError(result.error);
+        return;
+      }
+      setManagers((prev) => prev.filter((m) => m.id !== managerId));
+      setBoard((prev) => {
+        const next = { ...prev };
+        delete next[managerContainerId(managerId)];
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to delete manager", error);
+      setManagerError("Could not remove manager.");
+    }
+  }
+
   function requestEditCheckoutDates(carId: string) {
     const found = findCar(carId);
     if (!found || !isCheckoutAssignment(found.car)) return;
@@ -664,7 +741,7 @@ export function KanbanBoard({
   function markOvernightReturned(carId: string) {
     const found = findCar(carId);
     if (!found || !isCheckoutAssignment(found.car)) return;
-    const homeColumnId = resolveOvernightHomeColumnId(found.car);
+    const homeColumnId = resolveOvernightHomeColumnId(found.car, brand);
     moveCar(carId, homeColumnId);
     setOvernightDueCarId(null);
   }
@@ -735,7 +812,7 @@ export function KanbanBoard({
     setClearingBoard(true);
     try {
       await clearAllCarsAction();
-      setBoard(groupCars([], salespeople));
+      setBoard(groupCars([], salespeople, managers, brand));
       setClearConfirmOpen(false);
     } catch (error) {
       console.error("Failed to clear board", error);
@@ -763,7 +840,9 @@ export function KanbanBoard({
     sectionVisibility.intake;
 
   return (
+    <BoardConfigProvider brand={brand}>
     <SalespeopleProvider salespeople={salespeople}>
+    <ManagersProvider managers={managers}>
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex shrink-0 flex-col gap-3 border-b border-peach/50 bg-[var(--autosync-surface)] px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex justify-center">
@@ -824,10 +903,11 @@ export function KanbanBoard({
               </div>
             )}
             <p className="mt-0.5 text-xs text-brand/60 sm:text-sm">
+              {organizationName ? `${organizationName} · ` : ""}
               {totalCount} vehicles · {salespeople.length} salespeople
               <span className="hidden sm:inline">
                 {" "}
-                · {COLUMNS.length} columns · {MANAGERS.length} managers
+                · {inventoryColumns.length} columns · {managers.length} managers
               </span>
             </p>
           </div>
@@ -1163,20 +1243,53 @@ export function KanbanBoard({
 
             {sectionVisibility.managers && (
             <section>
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
-                Manager Demos
-              </h2>
-              <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
-                {MANAGERS.map((manager) => (
-                  <ManagerColumn
-                    key={manager.id}
-                    manager={manager}
-                    cars={board[managerContainerId(manager.id)] ?? []}
-                    onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+                <h2 className="text-xs font-bold uppercase tracking-wider text-peach">
+                  Manager Demos
+                </h2>
+                <form
+                  onSubmit={(e) => void handleAddManager(e)}
+                  className="flex items-center gap-1.5"
+                >
+                  <input
+                    value={newManagerName}
+                    onChange={(e) => setNewManagerName(e.target.value)}
+                    placeholder="New manager"
+                    disabled={savingManager}
+                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
                   />
-                ))}
+                  <button
+                    type="submit"
+                    disabled={savingManager || !newManagerName.trim()}
+                    className="rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
+                  >
+                    {savingManager ? "Adding…" : "Add"}
+                  </button>
+                </form>
               </div>
+              {managerError && (
+                <p className="mb-3 rounded-lg bg-rose-50 px-3 py-2 text-xs font-medium text-rose-700">
+                  {managerError}
+                </p>
+              )}
+              {managers.length === 0 ? (
+                <p className="rounded-xl border border-dashed border-peach/50 bg-brand/20 px-3 py-6 text-center text-xs text-sand/70">
+                  No managers yet. Add a manager to track demo vehicles.
+                </p>
+              ) : (
+                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
+                  {managers.map((manager) => (
+                    <ManagerColumn
+                      key={manager.id}
+                      manager={manager}
+                      cars={board[managerContainerId(manager.id)] ?? []}
+                      onMove={requestMove}
+                      onEditExteriorColor={setExteriorColorCarId}
+                      onDelete={() => void handleDeleteManager(manager.id)}
+                    />
+                  ))}
+                </div>
+              )}
             </section>
             )}
 
@@ -1274,7 +1387,8 @@ export function KanbanBoard({
 
       <AddCarModal
         open={modalOpen}
-        columns={COLUMNS}
+        columns={inventoryColumns}
+        brand={brand}
         onClose={() => setModalOpen(false)}
         onAdd={handleAddCar}
       />
@@ -1357,6 +1471,8 @@ export function KanbanBoard({
         }}
       />
     </div>
+    </ManagersProvider>
     </SalespeopleProvider>
+    </BoardConfigProvider>
   );
 }

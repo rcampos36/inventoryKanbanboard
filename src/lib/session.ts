@@ -21,6 +21,9 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     email: user.email,
     name: user.name,
     role: user.role,
+    organizationId: user.organizationId,
+    organizationName: user.organizationName,
+    organizationBrand: user.organizationBrand,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -39,9 +42,39 @@ export async function readSessionUser(): Promise<SessionUser | null> {
     const id = typeof payload.sub === "string" ? payload.sub : null;
     const email = typeof payload.email === "string" ? payload.email : null;
     const name = typeof payload.name === "string" ? payload.name : null;
-    const role = payload.role === "ADMIN" || payload.role === "USER" ? payload.role : null;
-    if (!id || !email || !name || !role) return null;
-    return { id, email, name, role };
+    const role =
+      payload.role === "ADMIN" || payload.role === "USER" ? payload.role : null;
+    const organizationId =
+      typeof payload.organizationId === "string"
+        ? payload.organizationId
+        : null;
+    const organizationName =
+      typeof payload.organizationName === "string"
+        ? payload.organizationName
+        : null;
+    const organizationBrand =
+      typeof payload.organizationBrand === "string"
+        ? payload.organizationBrand
+        : "Mazda";
+    if (
+      !id ||
+      !email ||
+      !name ||
+      !role ||
+      !organizationId ||
+      !organizationName
+    ) {
+      return null;
+    }
+    return {
+      id,
+      email,
+      name,
+      role,
+      organizationId,
+      organizationName,
+      organizationBrand,
+    };
   } catch {
     return null;
   }

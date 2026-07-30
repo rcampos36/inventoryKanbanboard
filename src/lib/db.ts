@@ -1,8 +1,12 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
+/** Bump when adding/removing Prisma models/fields so hot reload drops a stale client. */
+const PRISMA_CLIENT_VERSION = 5;
+
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  prismaClientVersion?: number;
 };
 
 /** Neon/Vercel URLs sometimes include channel_binding, which breaks node-pg. */
@@ -40,11 +44,35 @@ function createPrismaClient() {
   return new PrismaClient({ adapter });
 }
 
-export function getPrisma(): PrismaClient {
-  if (!globalForPrisma.prisma) {
-    globalForPrisma.prisma = createPrismaClient();
+function organizationHasBrandField(client: PrismaClient): boolean {
+  const models = (
+    client as {
+      _runtimeDataModel?: {
+        models?: Record<string, { fields?: Array<{ name: string }> }>;
+      };
+    }
+  )._runtimeDataModel?.models;
+  const fields = models?.Organization?.fields;
+  if (!Array.isArray(fields)) return true;
+  return fields.some((field) => field.name === "brand");
+}
+
+function isStaleClient(client: PrismaClient | undefined): boolean {
+  if (!client) return true;
+  if (globalForPrisma.prismaClientVersion !== PRISMA_CLIENT_VERSION) return true;
+  // Hot reload can keep an old client that predates new models/fields.
+  if (typeof (client as { organization?: unknown }).organization === "undefined") {
+    return true;
   }
-  return globalForPrisma.prisma;
+  return !organizationHasBrandField(client);
+}
+
+export function getPrisma(): PrismaClient {
+  if (isStaleClient(globalForPrisma.prisma)) {
+    globalForPrisma.prisma = createPrismaClient();
+    globalForPrisma.prismaClientVersion = PRISMA_CLIENT_VERSION;
+  }
+  return globalForPrisma.prisma!;
 }
 
 /** Prefer getPrisma() for lazy init. Kept for existing imports. */

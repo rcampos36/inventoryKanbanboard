@@ -1,45 +1,76 @@
-import { MODEL_COLUMNS, COLUMNS } from "@/lib/data";
+import {
+  getColumns,
+  getModelColumns,
+  getNewModelColumns,
+  getUsedColumns,
+  normalizeFranchiseBrand,
+  USED_COLUMN_IDS,
+} from "@/lib/data";
 import {
   todayIsoDate,
   type Car,
   type CarCondition,
 } from "@/lib/types";
 
-/** Pick inventory column from make + model + condition (new by model, used by brand). */
+/** Pick inventory column from make + model + condition for a franchise brand. */
 export function suggestInventoryColumnId(
   make: string,
   model: string,
-  condition: CarCondition
+  condition: CarCondition,
+  franchiseBrand: string = "Mazda"
 ): string {
+  const brand = normalizeFranchiseBrand(franchiseBrand);
   const normalizedMake = make.trim().toLowerCase();
   const normalizedModel = model.trim().toLowerCase();
+  const newColumns = getNewModelColumns(brand);
+  const usedColumns = getUsedColumns(brand);
+  const franchiseUsedId =
+    usedColumns.find((col) => col.id !== USED_COLUMN_IDS.other)?.id ??
+    USED_COLUMN_IDS.other;
 
-  if (normalizedMake === "mazda" && condition === "new") {
-    // Soft-top and RF share the MX-5 Miata board column.
-    if (normalizedModel.startsWith("mx-5 miata")) return "mx-5-miata";
+  if (condition === "new" && normalizedMake === brand.toLowerCase()) {
+    if (brand === "Mazda" && normalizedModel.startsWith("mx-5 miata")) {
+      return "mx-5-miata";
+    }
+    if (brand === "Honda") {
+      if (normalizedModel === "civic" || normalizedModel.startsWith("civic sedan")) {
+        return "civic-sedan";
+      }
+      if (normalizedModel.startsWith("civic hatch")) return "civic-hatchback";
+      if (normalizedModel === "cr-v hybrid" || normalizedModel.startsWith("cr-v hybrid")) {
+        return "cr-v-hybrid";
+      }
+    }
 
-    const match = MODEL_COLUMNS.find(
-      (col) =>
-        !col.id.startsWith("used-") &&
-        col.title.toLowerCase() === normalizedModel
+    const match = newColumns.find(
+      (col) => col.title.toLowerCase() === normalizedModel
     );
     if (match) return match.id;
-    return "cx-5";
+    return newColumns[0]?.id ?? franchiseUsedId;
   }
 
-  if (normalizedMake === "mazda") return "used-mazda";
-  return "used-other";
+  if (normalizedMake === brand.toLowerCase()) return franchiseUsedId;
+  return USED_COLUMN_IDS.other;
 }
 
 /** Home inventory lane for returning an overnight demo. */
-export function resolveOvernightHomeColumnId(car: Car): string {
+export function resolveOvernightHomeColumnId(
+  car: Car,
+  franchiseBrand: string = "Mazda"
+): string {
+  const columns = getColumns(franchiseBrand);
   if (
     car.homeColumnId &&
-    COLUMNS.some((column) => column.id === car.homeColumnId)
+    columns.some((column) => column.id === car.homeColumnId)
   ) {
     return car.homeColumnId;
   }
-  return suggestInventoryColumnId(car.make, car.model, car.condition);
+  return suggestInventoryColumnId(
+    car.make,
+    car.model,
+    car.condition,
+    franchiseBrand
+  );
 }
 
 export type OvernightDueStatus = "ok" | "due" | "overdue";
@@ -54,6 +85,14 @@ export function overnightDueStatus(
   return "ok";
 }
 
-export function columnTitle(columnId: string): string {
-  return COLUMNS.find((column) => column.id === columnId)?.title ?? columnId;
+export function columnTitle(
+  columnId: string,
+  franchiseBrand: string = "Mazda"
+): string {
+  return (
+    getColumns(franchiseBrand).find((column) => column.id === columnId)?.title ??
+    getModelColumns(franchiseBrand).find((column) => column.id === columnId)
+      ?.title ??
+    columnId
+  );
 }
