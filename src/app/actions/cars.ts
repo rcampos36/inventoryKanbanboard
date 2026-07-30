@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { toAppCar, toDbCarData } from "@/lib/car-mapper";
 import { requireUser } from "@/lib/auth";
+import { boardPath } from "@/lib/paths";
 import type { Car } from "@/lib/types";
 
 export async function getCars(): Promise<Car[]> {
@@ -36,7 +37,7 @@ export async function createCarAction(
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return toAppCar(row);
 }
 
@@ -53,7 +54,7 @@ export async function updateCarAction(car: Car): Promise<Car> {
     where: { id: car.id },
     data: toDbCarData(car),
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return toAppCar(row);
 }
 
@@ -83,7 +84,7 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
       })
     )
   );
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
 }
 
 export async function clearAllCarsAction(): Promise<number> {
@@ -91,6 +92,6 @@ export async function clearAllCarsAction(): Promise<number> {
   const result = await prisma.car.deleteMany({
     where: { organizationId: user.organizationId },
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return result.count;
 }

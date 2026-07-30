@@ -2,12 +2,13 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { RegisterForm } from "@/components/RegisterForm";
 import { getFranchiseBrandOptions } from "@/lib/data";
+import { boardPath } from "@/lib/paths";
 import { readSessionUser } from "@/lib/session";
 
 export default async function RegisterPage() {
   const user = await readSessionUser();
   if (user) {
-    redirect("/dashboard");
+    redirect(boardPath(user.organizationSlug));
   }
 
   return (

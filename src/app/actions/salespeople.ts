@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { boardPath } from "@/lib/paths";
 import { uniqueSlug } from "@/lib/slug";
 import type { Salesperson } from "@/lib/types";
 
@@ -45,7 +46,7 @@ export async function createSalespersonAction(
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return { ok: true, person: { id: person.id, name: person.name } };
 }
 
@@ -93,6 +94,6 @@ export async function deleteSalespersonAction(
       },
     },
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return { ok: true };
 }

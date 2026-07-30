@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { boardPath } from "@/lib/paths";
 
 const FEATURES = [
   {
@@ -26,12 +27,15 @@ const FEATURES = [
 
 export function AutoSyncLanding({
   isSignedIn = false,
+  organizationSlug = "",
 }: {
   isSignedIn?: boolean;
+  organizationSlug?: string;
 }) {
-  const primaryHref = isSignedIn ? "/dashboard" : "/register";
+  const boardHref = organizationSlug ? boardPath(organizationSlug) : "/dashboard";
+  const primaryHref = isSignedIn ? boardHref : "/register";
   const primaryLabel = isSignedIn ? "Open dashboard" : "Register dealership";
-  const secondaryHref = isSignedIn ? "/dashboard" : "/login";
+  const secondaryHref = isSignedIn ? boardHref : "/login";
   const secondaryLabel = isSignedIn ? "Open dashboard" : "Sign in";
 
   return (

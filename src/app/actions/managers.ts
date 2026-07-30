@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { boardPath } from "@/lib/paths";
 import { uniqueSlug } from "@/lib/slug";
 import type { Manager } from "@/lib/types";
 
@@ -45,7 +46,7 @@ export async function createManagerAction(
     },
   });
 
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return { ok: true, manager: { id: manager.id, name: manager.name } };
 }
 
@@ -88,6 +89,6 @@ export async function deleteManagerAction(
       },
     },
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return { ok: true };
 }

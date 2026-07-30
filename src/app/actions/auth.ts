@@ -14,6 +14,7 @@ import {
   createSessionToken,
   setSessionCookie,
 } from "@/lib/session";
+import { boardPath } from "@/lib/paths";
 
 export type AuthFormState = {
   error?: string;
@@ -65,10 +66,11 @@ export async function loginAction(
     role: user.role,
     organizationId: user.organizationId,
     organizationName: user.organization.name,
+    organizationSlug: user.organization.slug,
     organizationBrand: user.organization.brand || "Mazda",
   });
   await setSessionCookie(token);
-  redirect("/dashboard");
+  redirect(boardPath(user.organization.slug));
 }
 
 export async function logoutAction() {

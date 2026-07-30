@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import { readSessionUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-types";
 import { ensureOrganizations, PEARSON_ORG } from "@/lib/tenant";
+import { boardPath } from "@/lib/paths";
 
 export type { SessionUser };
 
@@ -107,7 +108,7 @@ export async function requireUser(): Promise<SessionUser> {
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireUser();
   if (user.role !== "ADMIN") {
-    redirect("/dashboard");
+    redirect(boardPath(user.organizationSlug));
   }
   return user;
 }

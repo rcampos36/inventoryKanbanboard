@@ -23,6 +23,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     role: user.role,
     organizationId: user.organizationId,
     organizationName: user.organizationName,
+    organizationSlug: user.organizationSlug,
     organizationBrand: user.organizationBrand,
   })
     .setProtectedHeader({ alg: "HS256" })
@@ -52,6 +53,10 @@ export async function readSessionUser(): Promise<SessionUser | null> {
       typeof payload.organizationName === "string"
         ? payload.organizationName
         : null;
+    const organizationSlug =
+      typeof payload.organizationSlug === "string"
+        ? payload.organizationSlug
+        : null;
     const organizationBrand =
       typeof payload.organizationBrand === "string"
         ? payload.organizationBrand
@@ -62,7 +67,8 @@ export async function readSessionUser(): Promise<SessionUser | null> {
       !name ||
       !role ||
       !organizationId ||
-      !organizationName
+      !organizationName ||
+      !organizationSlug
     ) {
       return null;
     }
@@ -73,6 +79,7 @@ export async function readSessionUser(): Promise<SessionUser | null> {
       role,
       organizationId,
       organizationName,
+      organizationSlug,
       organizationBrand,
     };
   } catch {

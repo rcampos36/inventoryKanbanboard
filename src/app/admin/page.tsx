@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction, listUsersAction } from "@/app/actions/auth";
 import { requireAdmin } from "@/lib/auth";
+import { boardPath } from "@/lib/paths";
 import { AdminUsersPanel } from "@/components/AdminUsersPanel";
 
 export const dynamic = "force-dynamic";
@@ -20,7 +21,7 @@ export default async function AdminPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/dashboard"
+            href={boardPath(admin.organizationSlug)}
             className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
           >
             Back to board

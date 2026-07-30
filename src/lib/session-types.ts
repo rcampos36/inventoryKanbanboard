@@ -5,6 +5,7 @@ export type SessionUser = {
   role: "ADMIN" | "USER";
   organizationId: string;
   organizationName: string;
+  organizationSlug: string;
   organizationBrand: string;
 };
 

@@ -12,6 +12,7 @@ import {
   setSessionCookie,
 } from "@/lib/session";
 import { uniqueSlug } from "@/lib/slug";
+import { boardPath, isReservedPathSlug } from "@/lib/paths";
 import { todayIsoDate } from "@/lib/types";
 import type { AuthFormState } from "@/app/actions/auth";
 
@@ -79,12 +80,19 @@ export async function registerDealerAction(
     select: { slug: true },
   });
   const usedSlugs = new Set(existingSlugs.map((row) => row.slug));
-  const slug = uniqueSlug(dealershipName, usedSlugs, "dealership");
+  for (const reserved of ["login", "register", "admin", "dashboard", "api"]) {
+    usedSlugs.add(reserved);
+  }
+  let slug = uniqueSlug(dealershipName, usedSlugs, "dealership");
+  if (isReservedPathSlug(slug)) {
+    usedSlugs.add(slug);
+    slug = uniqueSlug(`${dealershipName}-motors`, usedSlugs, "dealership");
+  }
 
   const passwordHash = await bcrypt.hash(password, 12);
 
   let organization: {
-    org: { id: string; name: string; brand: string };
+    org: { id: string; name: string; slug: string; brand: string };
     admin: {
       id: string;
       email: string;
@@ -168,8 +176,9 @@ export async function registerDealerAction(
     role: organization.admin.role,
     organizationId: organization.org.id,
     organizationName: organization.org.name,
+    organizationSlug: organization.org.slug,
     organizationBrand: organization.org.brand,
   });
   await setSessionCookie(token);
-  redirect("/dashboard");
+  redirect(boardPath(organization.org.slug));
 }

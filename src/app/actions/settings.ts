@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { boardPath } from "@/lib/paths";
 import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import { todayIsoDate } from "@/lib/types";
 
@@ -53,7 +54,7 @@ export async function setOpenSalesDayAction(
     },
     update: { openSalesDay },
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return row.openSalesDay;
 }
 
@@ -65,6 +66,6 @@ export async function setBoardTitleAction(boardTitle: string): Promise<string> {
     where: { organizationId: user.organizationId },
     data: { boardTitle: title },
   });
-  revalidatePath("/dashboard");
+  revalidatePath(boardPath(user.organizationSlug));
   return row.boardTitle;
 }
