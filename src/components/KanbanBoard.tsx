@@ -766,6 +766,11 @@ export function KanbanBoard({
     <SalespeopleProvider salespeople={salespeople}>
     <div className="flex h-full min-h-0 flex-col">
       <header className="flex shrink-0 flex-col gap-3 border-b border-peach/50 bg-[var(--autosync-surface)] px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
+        <div className="flex justify-center">
+          <span className="font-[family-name:var(--font-syne)] text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
+            AutoSync
+          </span>
+        </div>
         <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1 basis-full sm:basis-auto">
             {editingTitle ? (
