@@ -111,7 +111,7 @@ export function SectionVisibilityMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
+          className="absolute right-0 z-40 mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-slate-200 bg-white p-2 shadow-xl"
         >
           <p className="px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-slate-400">
             Show on board

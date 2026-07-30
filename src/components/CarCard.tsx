@@ -113,7 +113,7 @@ export function CarCard({
   function openMenu() {
     const rect = buttonRef.current?.getBoundingClientRect();
     if (!rect) return;
-    const width = 260;
+    const width = Math.min(260, window.innerWidth - 16);
     const left = Math.max(
       8,
       Math.min(rect.right - width, window.innerWidth - width - 8)
@@ -229,7 +229,7 @@ export function CarCard({
                 if (menuOpen) setMenuOpen(false);
                 else openMenu();
               }}
-              className="-mr-1 flex h-6 w-6 items-center justify-center rounded-md text-black/60 hover:bg-white/50 hover:text-black"
+              className="-mr-1 flex h-8 w-8 items-center justify-center rounded-md text-black/60 hover:bg-white/50 hover:text-black"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <circle cx="12" cy="5" r="1.6" />

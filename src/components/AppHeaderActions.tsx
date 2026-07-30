@@ -4,22 +4,23 @@ import type { SessionUser } from "@/lib/session-types";
 
 export function AppHeaderActions({ user }: { user: SessionUser }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5 sm:gap-2">
       {user.role === "ADMIN" && (
         <Link
           href="/admin"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:px-3"
         >
-          Manage users
+          <span className="sm:hidden">Users</span>
+          <span className="hidden sm:inline">Manage users</span>
         </Link>
       )}
-      <span className="hidden max-w-36 truncate text-sm font-medium text-slate-600 sm:inline">
+      <span className="hidden max-w-36 truncate text-sm font-medium text-slate-600 md:inline">
         {user.name}
       </span>
       <form action={logoutAction}>
         <button
           type="submit"
-          className="rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+          className="rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:px-3"
         >
           Sign out
         </button>

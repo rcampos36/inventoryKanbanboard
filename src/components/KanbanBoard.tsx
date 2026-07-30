@@ -76,6 +76,7 @@ import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
 import { SalespeopleProvider } from "./SalespeopleContext";
+import { TeamLaneItem, TeamLaneScroll } from "./TeamLaneScroll";
 import {
   DEFAULT_SECTION_VISIBILITY,
   loadSectionVisibility,
@@ -86,6 +87,7 @@ import {
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
+type MobilePane = "inventory" | "floor";
 
 function containerIdsFor(salespeople: Salesperson[]): string[] {
   return [
@@ -181,6 +183,7 @@ export function KanbanBoard({
   const [sectionVisibility, setSectionVisibility] = useState<SectionVisibility>(
     DEFAULT_SECTION_VISIBILITY
   );
+  const [mobilePane, setMobilePane] = useState<MobilePane>("inventory");
   const dragSourceRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -749,12 +752,22 @@ export function KanbanBoard({
     );
   }
 
+  const showInventoryPane =
+    sectionVisibility.inventory && visibleModelColumns.length > 0;
+  const showFloorPane =
+    sectionVisibility.sales ||
+    sectionVisibility.dailySales ||
+    sectionVisibility.workingDeals ||
+    sectionVisibility.managers ||
+    sectionVisibility.overnight ||
+    sectionVisibility.intake;
+
   return (
     <SalespeopleProvider salespeople={salespeople}>
-    <div className="flex h-full flex-col">
-      <header className="flex flex-col gap-4 border-b border-slate-200 bg-white px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="min-w-0 flex-1">
+    <div className="flex h-full min-h-0 flex-col">
+      <header className="flex shrink-0 flex-col gap-3 border-b border-slate-200 bg-white px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
+        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
+          <div className="min-w-0 flex-1 basis-full sm:basis-auto">
             {editingTitle ? (
               <form
                 className="flex max-w-xl flex-wrap items-center gap-2"
@@ -768,7 +781,7 @@ export function KanbanBoard({
                   onChange={(e) => setTitleDraft(e.target.value)}
                   disabled={savingTitle}
                   autoFocus
-                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-xl font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-1.5 text-lg font-bold text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 sm:text-xl"
                   aria-label="Board title"
                 />
                 <button
@@ -791,26 +804,31 @@ export function KanbanBoard({
                 </button>
               </form>
             ) : (
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl font-bold text-slate-900">{boardTitle}</h1>
+              <div className="flex min-w-0 items-center gap-2">
+                <h1 className="truncate text-lg font-bold text-slate-900 sm:text-xl">
+                  {boardTitle}
+                </h1>
                 <button
                   type="button"
                   onClick={startEditingTitle}
-                  className="rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800"
+                  className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800"
                   title="Rename board"
                 >
                   Edit
                 </button>
               </div>
             )}
-            <p className="text-sm text-slate-500">
-              {totalCount} vehicles · {COLUMNS.length} columns ·{" "}
-              {salespeople.length} salespeople · {MANAGERS.length} managers
+            <p className="mt-0.5 text-xs text-slate-500 sm:text-sm">
+              {totalCount} vehicles · {salespeople.length} salespeople
+              <span className="hidden sm:inline">
+                {" "}
+                · {COLUMNS.length} columns · {MANAGERS.length} managers
+              </span>
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:gap-3">
+            <div className="relative min-w-0 flex-1 basis-full sm:basis-auto sm:flex-none">
               <svg
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
                 width="16"
@@ -828,7 +846,7 @@ export function KanbanBoard({
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search stock #, make, model…"
-                className="w-64 rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10"
+                className="w-full rounded-lg border border-slate-300 py-2 pl-9 pr-3 text-sm text-slate-900 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 sm:w-64"
               />
             </div>
 
@@ -838,7 +856,7 @@ export function KanbanBoard({
                   key={option}
                   onClick={() => setConditionFilter(option)}
                   className={[
-                    "px-3 py-2 text-xs font-semibold capitalize transition-colors",
+                    "px-2.5 py-2 text-xs font-semibold capitalize transition-colors sm:px-3",
                     conditionFilter === option
                       ? "bg-slate-900 text-white"
                       : "bg-white text-slate-600 hover:bg-slate-100",
@@ -861,12 +879,13 @@ export function KanbanBoard({
               className="rounded-lg border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-700 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
               title="Remove every vehicle from the board"
             >
-              Start from zero
+              <span className="sm:hidden">Reset</span>
+              <span className="hidden sm:inline">Start from zero</span>
             </button>
 
             <button
               onClick={() => setModalOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-700"
+              className="flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white hover:bg-slate-700 sm:px-4"
             >
               <svg
                 width="16"
@@ -879,12 +898,42 @@ export function KanbanBoard({
               >
                 <path d="M12 5v14M5 12h14" />
               </svg>
-              Add Vehicle
+              <span className="sm:hidden">Add</span>
+              <span className="hidden sm:inline">Add Vehicle</span>
             </button>
 
             {headerActions}
           </div>
         </div>
+
+        {showInventoryPane && showFloorPane && (
+          <div className="flex rounded-lg border border-slate-300 p-0.5 lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobilePane("inventory")}
+              className={[
+                "flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors",
+                mobilePane === "inventory"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100",
+              ].join(" ")}
+            >
+              Inventory
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobilePane("floor")}
+              className={[
+                "flex-1 rounded-md px-3 py-2 text-xs font-semibold transition-colors",
+                mobilePane === "floor"
+                  ? "bg-slate-900 text-white"
+                  : "text-slate-600 hover:bg-slate-100",
+              ].join(" ")}
+            >
+              Sales floor
+            </button>
+          </div>
+        )}
       </header>
 
       <DndContext
@@ -896,24 +945,22 @@ export function KanbanBoard({
         onDragEnd={handleDragEnd}
       >
         <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-          {sectionVisibility.inventory && visibleModelColumns.length > 0 && (
+          {showInventoryPane && (
             <aside
               className={[
-                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-4 lg:border-b-0 lg:border-r",
-                sectionVisibility.sales ||
-                sectionVisibility.dailySales ||
-                sectionVisibility.workingDeals ||
-                sectionVisibility.managers ||
-                sectionVisibility.overnight ||
-                sectionVisibility.intake
-                  ? "lg:w-[min(42rem,45%)]"
-                  : "lg:flex-1",
+                "min-h-0 w-full shrink-0 overflow-y-auto border-b border-slate-200 bg-slate-50/60 p-3 sm:p-4 lg:border-b-0 lg:border-r lg:p-4",
+                mobilePane === "inventory" || !showFloorPane
+                  ? "flex flex-col"
+                  : "hidden lg:flex lg:flex-col",
+                showFloorPane
+                  ? "flex-1 lg:w-[min(42rem,45%)] lg:flex-none"
+                  : "flex-1",
               ].join(" ")}
             >
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Inventory by Model
               </h2>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
                 {visibleModelColumns.map((column) => (
                   <KanbanColumn
                     key={column.id}
@@ -932,13 +979,15 @@ export function KanbanBoard({
             </aside>
           )}
 
-          {(sectionVisibility.sales ||
-            sectionVisibility.dailySales ||
-            sectionVisibility.workingDeals ||
-            sectionVisibility.managers ||
-            sectionVisibility.overnight ||
-            sectionVisibility.intake) && (
-          <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-4 lg:p-6">
+          {showFloorPane && (
+          <div
+            className={[
+              "min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-y-auto overflow-x-hidden p-3 sm:p-4 lg:p-6",
+              mobilePane === "floor" || !showInventoryPane
+                ? "flex"
+                : "hidden lg:flex",
+            ].join(" ")}
+          >
             {(sectionVisibility.sales || sectionVisibility.dailySales) && (
             <section>
               {sectionVisibility.sales && (
@@ -957,7 +1006,7 @@ export function KanbanBoard({
                       onChange={(e) => setNewSalespersonName(e.target.value)}
                       placeholder="New salesperson"
                       disabled={savingSalesperson}
-                      className="w-40 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 sm:w-40 sm:max-w-none"
                     />
                     <button
                       type="submit"
@@ -988,27 +1037,27 @@ export function KanbanBoard({
                   {salespersonError}
                 </p>
               )}
-              <div
-                className="grid gap-2"
-                style={{
-                  gridTemplateColumns: `repeat(${Math.max(rankedSalespeople.length, 1)}, minmax(0, 1fr))`,
-                }}
-              >
-                {rankedSalespeople.map(({ person, monthCars, count, rank }) => (
-                  <SalespersonColumn
-                    key={person.id}
-                    salesperson={person}
-                    cars={monthCars}
-                    rank={rank}
-                    monthSoldCount={count}
-                    onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
-                    onRequestHalfDeal={setHalfDealCarId}
-                    onHalfDealWith={halfDealWith}
-                    onClearHalfDeal={clearHalfDeal}
-                    onDelete={() => void handleDeleteSalesperson(person.id)}
-                  />
-                ))}
+              <div>
+                <TeamLaneScroll count={rankedSalespeople.length}>
+                  {rankedSalespeople.map(
+                    ({ person, monthCars, count, rank }) => (
+                      <TeamLaneItem key={person.id}>
+                        <SalespersonColumn
+                          salesperson={person}
+                          cars={monthCars}
+                          rank={rank}
+                          monthSoldCount={count}
+                          onMove={requestMove}
+                          onEditExteriorColor={setExteriorColorCarId}
+                          onRequestHalfDeal={setHalfDealCarId}
+                          onHalfDealWith={halfDealWith}
+                          onClearHalfDeal={clearHalfDeal}
+                          onDelete={() => void handleDeleteSalesperson(person.id)}
+                        />
+                      </TeamLaneItem>
+                    )
+                  )}
+                </TeamLaneScroll>
               </div>
                 </>
               )}
@@ -1056,27 +1105,25 @@ export function KanbanBoard({
                   Drop sales here for this date. End day (or overnight) moves
                   them into the monthly columns above.
                 </p>
-                <div
-                  className="grid gap-2"
-                  style={{
-                    gridTemplateColumns: `repeat(${Math.max(todaySalesByPerson.length, 1)}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {todaySalesByPerson.map(
-                    ({ person, todayCars, saleCount }) => (
-                      <TodaySalesColumn
-                        key={person.id}
-                        salesperson={person}
-                        cars={todayCars}
-                        saleCount={saleCount}
-                        onMove={requestMove}
-                        onEditExteriorColor={setExteriorColorCarId}
-                        onRequestHalfDeal={setHalfDealCarId}
-                        onHalfDealWith={halfDealWith}
-                        onClearHalfDeal={clearHalfDeal}
-                      />
-                    ),
-                  )}
+                <div>
+                  <TeamLaneScroll count={todaySalesByPerson.length}>
+                    {todaySalesByPerson.map(
+                      ({ person, todayCars, saleCount }) => (
+                        <TeamLaneItem key={person.id}>
+                          <TodaySalesColumn
+                            salesperson={person}
+                            cars={todayCars}
+                            saleCount={saleCount}
+                            onMove={requestMove}
+                            onEditExteriorColor={setExteriorColorCarId}
+                            onRequestHalfDeal={setHalfDealCarId}
+                            onHalfDealWith={halfDealWith}
+                            onClearHalfDeal={clearHalfDeal}
+                          />
+                        </TeamLaneItem>
+                      )
+                    )}
+                  </TeamLaneScroll>
                 </div>
               </div>
               )}
@@ -1092,21 +1139,19 @@ export function KanbanBoard({
                   Deals in progress — not closed yet. Move to Daily Sales when
                   the deal is done.
                 </p>
-                <div
-                  className="grid gap-2"
-                  style={{
-                    gridTemplateColumns: `repeat(${Math.max(salespeople.length, 1)}, minmax(0, 1fr))`,
-                  }}
-                >
-                  {salespeople.map((person) => (
-                    <WorkingDealColumn
-                      key={person.id}
-                      salesperson={person}
-                      cars={board[workingDealContainerId(person.id)] ?? []}
-                      onMove={requestMove}
-                      onEditExteriorColor={setExteriorColorCarId}
-                    />
-                  ))}
+                <div>
+                  <TeamLaneScroll count={salespeople.length}>
+                    {salespeople.map((person) => (
+                      <TeamLaneItem key={person.id}>
+                        <WorkingDealColumn
+                          salesperson={person}
+                          cars={board[workingDealContainerId(person.id)] ?? []}
+                          onMove={requestMove}
+                          onEditExteriorColor={setExteriorColorCarId}
+                        />
+                      </TeamLaneItem>
+                    ))}
+                  </TeamLaneScroll>
                 </div>
               </section>
             )}
@@ -1116,7 +1161,7 @@ export function KanbanBoard({
               <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                 Manager Demos
               </h2>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
+              <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 sm:grid-cols-3 xl:grid-cols-5">
                 {MANAGERS.map((manager) => (
                   <ManagerColumn
                     key={manager.id}
@@ -1171,18 +1216,21 @@ export function KanbanBoard({
                   </ul>
                 </div>
               )}
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {salespeople.map((person) => (
-                  <OvernightColumn
-                    key={person.id}
-                    person={person}
-                    cars={board[overnightContainerId(person.id)] ?? []}
-                    onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
-                    onEditCheckoutDates={requestEditCheckoutDates}
-                    onReviewOvernightDue={setOvernightDueCarId}
-                  />
-                ))}
+              <div>
+                <TeamLaneScroll count={salespeople.length}>
+                  {salespeople.map((person) => (
+                    <TeamLaneItem key={person.id}>
+                      <OvernightColumn
+                        person={person}
+                        cars={board[overnightContainerId(person.id)] ?? []}
+                        onMove={requestMove}
+                        onEditExteriorColor={setExteriorColorCarId}
+                        onEditCheckoutDates={requestEditCheckoutDates}
+                        onReviewOvernightDue={setOvernightDueCarId}
+                      />
+                    </TeamLaneItem>
+                  ))}
+                </TeamLaneScroll>
               </div>
             </section>
             )}
@@ -1192,7 +1240,7 @@ export function KanbanBoard({
                 <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
                   Incoming · DX · Loaners
                 </h2>
-                <div className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+                <div className="grid grid-cols-1 gap-2 min-[420px]:grid-cols-2 lg:grid-cols-4">
                   {visibleIntakeColumns.map((column) => (
                     <KanbanColumn
                       key={column.id}
@@ -1200,7 +1248,7 @@ export function KanbanBoard({
                       className="flex min-w-0 w-full flex-col rounded-2xl bg-slate-100/80"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
+                      onEditExteriorColor={setExteriorColorCarId}
                       onEditCheckoutDates={requestEditCheckoutDates}
                       onRequestHalfDeal={setHalfDealCarId}
                       onHalfDealWith={halfDealWith}

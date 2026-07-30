@@ -34,7 +34,7 @@ export function AutoSyncLanding({
 
   return (
     <div className="min-h-screen bg-[var(--autosync-surface)] text-[var(--autosync-ink)]">
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-6 py-5 md:px-10">
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 md:px-10 md:py-5">
         <p className="font-[family-name:var(--font-syne)] text-lg font-extrabold tracking-tight text-white md:text-xl">
           AutoSync
         </p>
