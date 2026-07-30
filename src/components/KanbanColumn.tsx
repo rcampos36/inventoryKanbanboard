@@ -44,8 +44,10 @@ export function KanbanColumn({
       }
     >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <h2 className="text-sm font-semibold text-slate-700">{column.title}</h2>
-        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
+        <h2 className="text-base font-bold leading-snug text-slate-800">
+          {column.title}
+        </h2>
+        <span className="rounded-full bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
           {cars.length}
         </span>
       </div>

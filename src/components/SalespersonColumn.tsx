@@ -68,7 +68,7 @@ export function SalespersonColumn({
           </span>
         </div>
         <div className="min-w-0 flex-1">
-          <h3 className="truncate text-[11px] font-semibold leading-tight text-slate-800">
+          <h3 className="truncate text-sm font-bold leading-tight text-slate-900">
             {salesperson.name}
           </h3>
           <p className="truncate text-[10px] leading-tight text-slate-500">
