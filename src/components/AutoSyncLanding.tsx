@@ -40,26 +40,29 @@ export function AutoSyncLanding({
 
   return (
     <div className="min-h-screen bg-sand text-brand">
-      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between px-4 py-4 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 md:px-10 md:py-5">
-        <p className="font-[family-name:var(--font-syne)] text-lg font-extrabold tracking-tight text-sand md:text-xl">
+      <header className="absolute inset-x-0 top-0 z-20 flex items-center justify-between gap-3 px-6 pb-3 pt-[max(1.25rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:pb-4 sm:pt-5 md:px-10 md:pt-6">
+        <p className="shrink-0 font-[family-name:var(--font-syne)] text-base font-extrabold tracking-tight text-sand sm:text-lg md:text-xl">
           AutoSync
         </p>
-        <div className="flex items-center gap-2">
+        <nav className="flex shrink-0 items-center gap-2.5 sm:gap-3">
           {!isSignedIn && (
             <Link
               href={secondaryHref}
-              className="rounded-full px-4 py-2 text-sm font-bold text-sand/90 transition hover:text-sand"
+              className="inline-flex h-9 items-center justify-center rounded-full px-3 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
             >
               {secondaryLabel}
             </Link>
           )}
           <Link
             href={primaryHref}
-            className="rounded-full bg-peach px-5 py-2 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]"
+            className="inline-flex h-9 items-center justify-center rounded-full bg-peach px-3.5 text-xs font-bold text-brand transition hover:bg-[#f5c9a4] sm:h-10 sm:px-5 sm:text-sm"
           >
-            {primaryLabel}
+            <span className="sm:hidden">
+              {isSignedIn ? "Dashboard" : "Register"}
+            </span>
+            <span className="hidden sm:inline">{primaryLabel}</span>
           </Link>
-        </div>
+        </nav>
       </header>
 
       <section className="relative isolate min-h-[100svh] overflow-hidden">
