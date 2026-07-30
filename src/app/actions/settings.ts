@@ -55,7 +55,7 @@ export async function setOpenSalesDayAction(
     },
     update: { openSalesDay },
   });
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return row.openSalesDay;
 }
 
@@ -67,6 +67,6 @@ export async function setBoardTitleAction(boardTitle: string): Promise<string> {
     where: { id: existing.id },
     data: { boardTitle: title },
   });
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return row.boardTitle;
 }

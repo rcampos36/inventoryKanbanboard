@@ -1,11 +1,18 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { DEFAULT_BOARD_TITLE } from "@/lib/board";
+import { Figtree, Syne } from "next/font/google";
+import { Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const syne = Syne({
+  variable: "--font-syne",
   subsets: ["latin"],
+  weight: ["600", "700", "800"],
+});
+
+const figtree = Figtree({
+  variable: "--font-figtree",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -14,9 +21,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: DEFAULT_BOARD_TITLE,
+  title: "AutoSync — Dealership Management Powerhouse",
   description:
-    "Pearson Mazda inventory and sales board for dealership stock management",
+    "Secure, cloud-based operational hub for automotive General Managers and Sales Managers. Track inventory, sales pacing, and demos in one dashboard.",
 };
 
 export default function RootLayout({
@@ -27,9 +34,11 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${syne.variable} ${figtree.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col font-[family-name:var(--font-figtree)]">
+        {children}
+      </body>
     </html>
   );
 }

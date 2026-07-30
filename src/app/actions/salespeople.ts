@@ -68,7 +68,7 @@ export async function createSalespersonAction(
     },
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true, person: { id: person.id, name: person.name } };
 }
 
@@ -103,6 +103,6 @@ export async function deleteSalespersonAction(
   }
 
   await prisma.salesperson.delete({ where: { id: salespersonId } });
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return { ok: true };
 }

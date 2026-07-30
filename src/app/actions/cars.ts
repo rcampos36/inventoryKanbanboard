@@ -31,7 +31,7 @@ export async function createCarAction(
     },
   });
 
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return toAppCar(row);
 }
 
@@ -41,7 +41,7 @@ export async function updateCarAction(car: Car): Promise<Car> {
     where: { id: car.id },
     data: toDbCarData(car),
   });
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return toAppCar(row);
 }
 
@@ -58,12 +58,12 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
       })
     )
   );
-  revalidatePath("/");
+  revalidatePath("/dashboard");
 }
 
 export async function clearAllCarsAction(): Promise<number> {
   await requireUser();
   const result = await prisma.car.deleteMany({});
-  revalidatePath("/");
+  revalidatePath("/dashboard");
   return result.count;
 }

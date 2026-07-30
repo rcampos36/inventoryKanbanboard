@@ -57,12 +57,12 @@ export async function loginAction(
     role: user.role,
   });
   await setSessionCookie(token);
-  redirect("/");
+  redirect("/dashboard");
 }
 
 export async function logoutAction() {
   await clearSessionCookie();
-  redirect("/login");
+  redirect("/");
 }
 
 function actionErrorMessage(error: unknown, fallback: string): string {
