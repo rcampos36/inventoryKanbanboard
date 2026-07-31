@@ -367,7 +367,7 @@ export function CarCard({
                   className={menuItemClass}
                 >
                   <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${sColor.accent}`}
+                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-brand ${sColor.accent}`}
                   >
                     {s.name.charAt(0)}
                   </span>
@@ -389,7 +389,7 @@ export function CarCard({
                   className={menuItemClass}
                 >
                   <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${sColor.accent}`}
+                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-brand ${sColor.accent}`}
                   >
                     {s.name.charAt(0)}
                   </span>
@@ -430,7 +430,7 @@ export function CarCard({
                           className={menuItemClass}
                         >
                           <span
-                            className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${sColor.accent}`}
+                            className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-brand ${sColor.accent}`}
                           >
                             {s.name.charAt(0)}
                           </span>
@@ -467,7 +467,7 @@ export function CarCard({
                   className={menuItemClass}
                 >
                   <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${mColor.accent}`}
+                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-brand ${mColor.accent}`}
                   >
                     {m.name.charAt(0)}
                   </span>
@@ -489,7 +489,7 @@ export function CarCard({
                   className={menuItemClass}
                 >
                   <span
-                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-white ${sColor.accent}`}
+                    className={`flex h-4 w-4 items-center justify-center rounded-full text-[8px] font-bold text-brand ${sColor.accent}`}
                   >
                     {s.name.charAt(0)}
                   </span>

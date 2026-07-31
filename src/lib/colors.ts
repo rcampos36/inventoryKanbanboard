@@ -5,7 +5,7 @@ export interface ModelColor {
   bg: string;
   /** Border color for the chip */
   border: string;
-  /** Primary text on the chip — black for contrast */
+  /** Primary text on the chip */
   text: string;
   /** Badge background for the model pill */
   badgeBg: string;
@@ -14,122 +14,135 @@ export interface ModelColor {
 }
 
 /**
- * A curated palette. Each entry uses fully static class strings so the
- * Tailwind JIT compiler can see them at build time.
- * Chip backgrounds use solid colors with black text for readability.
+ * Pastel palette tuned to AutoSync brand (teal #023441, peach #EFBB92, sand #FFE0C0).
+ * Static class strings so Tailwind JIT can see them at build time.
  */
 const PALETTE: ModelColor[] = [
   {
-    accent: "bg-rose-400",
-    bg: "bg-rose-400",
-    border: "border-rose-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft peach / blush — brand peach family
+    accent: "bg-orange-200",
+    bg: "bg-orange-200",
+    border: "border-orange-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-orange-400",
-    bg: "bg-orange-400",
-    border: "border-orange-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Warm sand
+    accent: "bg-amber-100",
+    bg: "bg-amber-100",
+    border: "border-amber-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-amber-400",
-    bg: "bg-amber-400",
-    border: "border-amber-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft apricot
+    accent: "bg-orange-100",
+    bg: "bg-orange-100",
+    border: "border-orange-200",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-yellow-400",
-    bg: "bg-yellow-400",
-    border: "border-yellow-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Pale butter
+    accent: "bg-yellow-100",
+    bg: "bg-yellow-100",
+    border: "border-yellow-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-lime-400",
-    bg: "bg-lime-400",
-    border: "border-lime-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft sage
+    accent: "bg-lime-100",
+    bg: "bg-lime-100",
+    border: "border-lime-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-emerald-400",
-    bg: "bg-emerald-400",
-    border: "border-emerald-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Mint — near brand teal
+    accent: "bg-emerald-100",
+    bg: "bg-emerald-100",
+    border: "border-emerald-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-teal-400",
-    bg: "bg-teal-400",
-    border: "border-teal-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft teal — brand echo
+    accent: "bg-teal-100",
+    bg: "bg-teal-100",
+    border: "border-teal-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-cyan-400",
-    bg: "bg-cyan-400",
-    border: "border-cyan-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Seafoam
+    accent: "bg-cyan-100",
+    bg: "bg-cyan-100",
+    border: "border-cyan-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-sky-400",
-    bg: "bg-sky-400",
-    border: "border-sky-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft sky
+    accent: "bg-sky-100",
+    bg: "bg-sky-100",
+    border: "border-sky-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-blue-400",
-    bg: "bg-blue-400",
-    border: "border-blue-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Powder blue
+    accent: "bg-blue-100",
+    bg: "bg-blue-100",
+    border: "border-blue-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-indigo-400",
-    bg: "bg-indigo-400",
-    border: "border-indigo-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Dusty periwinkle
+    accent: "bg-indigo-100",
+    bg: "bg-indigo-100",
+    border: "border-indigo-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-violet-400",
-    bg: "bg-violet-400",
-    border: "border-violet-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft lilac
+    accent: "bg-violet-100",
+    bg: "bg-violet-100",
+    border: "border-violet-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-fuchsia-400",
-    bg: "bg-fuchsia-400",
-    border: "border-fuchsia-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Blush rose
+    accent: "bg-rose-100",
+    bg: "bg-rose-100",
+    border: "border-rose-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
   {
-    accent: "bg-pink-400",
-    bg: "bg-pink-400",
-    border: "border-pink-500",
-    text: "text-black",
-    badgeBg: "bg-white/70",
-    badgeText: "text-black",
+    // Soft pink
+    accent: "bg-pink-100",
+    bg: "bg-pink-100",
+    border: "border-pink-300",
+    text: "text-brand",
+    badgeBg: "bg-white/75",
+    badgeText: "text-brand",
   },
 ];
 
@@ -181,30 +194,30 @@ export function normalizeModelColorKey(model: string): string {
   return value;
 }
 
-/** Explicit chip accent colors for each new-car model family. */
+/** Explicit pastel chip colors for each new-car model family. */
 const MODEL_FAMILY_COLORS: Record<string, ModelColor> = {
-  "mazda3-sedan": PALETTE[9], // blue
-  "mazda3-hatchback": PALETTE[10], // indigo
+  "mazda3-sedan": PALETTE[9], // powder blue
+  "mazda3-hatchback": PALETTE[10], // periwinkle
   mazda3: PALETTE[9],
-  "cx-30": PALETTE[7], // cyan
-  "cx-5": PALETTE[5], // emerald
-  "cx-50": PALETTE[1], // orange
-  "cx-70": PALETTE[11], // violet
-  "cx-90": PALETTE[0], // rose
-  "mx-5-miata": PALETTE[13], // pink
+  "cx-30": PALETTE[7], // seafoam
+  "cx-5": PALETTE[6], // soft teal
+  "cx-50": PALETTE[0], // peach
+  "cx-70": PALETTE[5], // mint
+  "cx-90": PALETTE[12], // blush
+  "mx-5-miata": PALETTE[13], // soft pink
   "civic-sedan": PALETTE[9],
   "civic-hatchback": PALETTE[10],
-  accord: PALETTE[5],
+  accord: PALETTE[6],
   "hr-v": PALETTE[7],
-  "cr-v": PALETTE[1],
-  "cr-v-hybrid": PALETTE[1],
-  pilot: PALETTE[11],
-  passport: PALETTE[0],
-  ridgeline: PALETTE[2],
+  "cr-v": PALETTE[0],
+  "cr-v-hybrid": PALETTE[2],
+  pilot: PALETTE[5],
+  passport: PALETTE[12],
+  ridgeline: PALETTE[1],
   odyssey: PALETTE[8],
 };
 
-/** All used inventory chips share this yellow treatment. */
+/** Used inventory chips share a soft sand/butter treatment. */
 export const USED_CAR_COLOR: ModelColor = PALETTE[3];
 
 /** Common Mazda exterior paint names for Add Vehicle suggestions. */

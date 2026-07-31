@@ -47,7 +47,7 @@ export function ManagerColumn({
     <div className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/55">
       <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <span
-          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${color.accent}`}
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-brand ${color.accent}`}
         >
           {initials(manager.name)}
         </span>

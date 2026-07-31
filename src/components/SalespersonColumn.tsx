@@ -56,7 +56,7 @@ export function SalespersonColumn({
       <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <div className="relative shrink-0">
           <span
-            className={`flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold text-white ${color.accent}`}
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-[9px] font-bold text-brand ${color.accent}`}
           >
             {initials(salesperson.name)}
           </span>
