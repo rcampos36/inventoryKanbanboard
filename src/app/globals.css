@@ -8,14 +8,14 @@
 
   --background: #ffe0c0;
   --foreground: #023441;
-  --autosync-ink: #023441;
-  --autosync-muted: #3a5c66;
-  --autosync-peach: #efbb92;
-  --autosync-sand: #ffe0c0;
-  --autosync-surface: #fff8ef;
-  --autosync-line: color-mix(in srgb, #efbb92 55%, #023441 10%);
-  --autosync-teal: #023441;
-  --autosync-teal-bright: #efbb92;
+  --salestower-ink: #023441;
+  --salestower-muted: #3a5c66;
+  --salestower-peach: #efbb92;
+  --salestower-sand: #ffe0c0;
+  --salestower-surface: #fff8ef;
+  --salestower-line: color-mix(in srgb, #efbb92 55%, #023441 10%);
+  --salestower-teal: #023441;
+  --salestower-teal-bright: #efbb92;
 }
 
 @theme inline {
@@ -44,7 +44,7 @@ html {
   }
 }
 
-@keyframes autosync-fade-up {
+@keyframes salestower-fade-up {
   from {
     opacity: 0;
     transform: translateY(18px);
@@ -55,7 +55,7 @@ html {
   }
 }
 
-@keyframes autosync-fade-in {
+@keyframes salestower-fade-in {
   from {
     opacity: 0;
   }
@@ -64,7 +64,7 @@ html {
   }
 }
 
-@keyframes autosync-kenburns {
+@keyframes salestower-kenburns {
   from {
     transform: scale(1);
   }
@@ -73,26 +73,26 @@ html {
   }
 }
 
-.autosync-animate-fade-up {
-  animation: autosync-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+.salestower-animate-fade-up {
+  animation: salestower-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
-.autosync-animate-fade-in {
-  animation: autosync-fade-in 1.1s ease both;
+.salestower-animate-fade-in {
+  animation: salestower-fade-in 1.1s ease both;
 }
 
-.autosync-animate-kenburns {
-  animation: autosync-kenburns 18s ease-out forwards;
+.salestower-animate-kenburns {
+  animation: salestower-kenburns 18s ease-out forwards;
 }
 
-.autosync-delay-1 {
+.salestower-delay-1 {
   animation-delay: 0.12s;
 }
 
-.autosync-delay-2 {
+.salestower-delay-2 {
   animation-delay: 0.28s;
 }
 
-.autosync-delay-3 {
+.salestower-delay-3 {
   animation-delay: 0.44s;
 }

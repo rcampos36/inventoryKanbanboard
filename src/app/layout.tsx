@@ -21,7 +21,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AutoSync — Dealership Management Powerhouse",
+  title: "SalesTower — Dealership Management Powerhouse",
   description:
     "Secure, cloud-based operational hub for automotive General Managers and Sales Managers. Track inventory, sales pacing, and demos in one dashboard.",
 };

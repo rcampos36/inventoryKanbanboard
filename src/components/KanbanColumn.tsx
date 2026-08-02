@@ -40,7 +40,7 @@ export function KanbanColumn({
     <div
       className={
         className ??
-        "flex w-full min-w-0 flex-col rounded-2xl bg-[var(--autosync-surface)]/90 sm:w-72 sm:shrink-0"
+        "flex w-full min-w-0 flex-col rounded-2xl bg-[var(--salestower-surface)]/90 sm:w-72 sm:shrink-0"
       }
     >
       <div className="flex items-center justify-between px-4 pt-4 pb-2">

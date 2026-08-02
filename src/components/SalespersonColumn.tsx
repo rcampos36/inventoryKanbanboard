@@ -52,7 +52,7 @@ export function SalespersonColumn({
   const color = getModelColor(salesperson.name);
 
   return (
-    <div className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/55">
+    <div className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--salestower-surface)] ring-1 ring-peach/55">
       <div className="flex items-center gap-1.5 px-2 pt-2.5 pb-1.5">
         <div className="relative shrink-0">
           <span

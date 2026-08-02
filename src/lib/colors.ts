@@ -14,7 +14,7 @@ export interface ModelColor {
 }
 
 /**
- * Pastel palette tuned to AutoSync brand (teal #023441, peach #EFBB92, sand #FFE0C0).
+ * Pastel palette tuned to SalesTower brand (teal #023441, peach #EFBB92, sand #FFE0C0).
  * Static class strings so Tailwind JIT can see them at build time.
  */
 const PALETTE: ModelColor[] = [

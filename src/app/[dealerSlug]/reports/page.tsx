@@ -38,7 +38,7 @@ export default async function ReportsPage({
 
   return (
     <main className="min-h-screen bg-sand text-brand">
-      <header className="border-b border-peach/50 bg-[var(--autosync-surface)] px-4 py-4 sm:px-6">
+      <header className="border-b border-peach/50 bg-[var(--salestower-surface)] px-4 py-4 sm:px-6">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-bold uppercase tracking-wider text-brand/50">
@@ -55,7 +55,7 @@ export default async function ReportsPage({
             />
             <Link
               href={boardHref}
-              className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
+              className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
             >
               Back to board
             </Link>
@@ -81,7 +81,7 @@ export default async function ReportsPage({
             <h2 className="text-xs font-bold uppercase tracking-wider text-brand/55">
               Best-selling models
             </h2>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-peach/55 bg-[var(--autosync-surface)]">
+            <div className="mt-3 overflow-hidden rounded-2xl border border-peach/55 bg-[var(--salestower-surface)]">
               {report.topModels.length === 0 ? (
                 <EmptyRow text="No sales recorded this month." />
               ) : (
@@ -119,7 +119,7 @@ export default async function ReportsPage({
             <h2 className="text-xs font-bold uppercase tracking-wider text-brand/55">
               Sales by team member
             </h2>
-            <div className="mt-3 overflow-hidden rounded-2xl border border-peach/55 bg-[var(--autosync-surface)]">
+            <div className="mt-3 overflow-hidden rounded-2xl border border-peach/55 bg-[var(--salestower-surface)]">
               {report.teamSales.every((row) => row.units === 0) ? (
                 <EmptyRow text="No team sales this month." />
               ) : (
@@ -181,7 +181,7 @@ export default async function ReportsPage({
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-peach/55 bg-[var(--autosync-surface)] px-4 py-4">
+    <div className="rounded-2xl border border-peach/55 bg-[var(--salestower-surface)] px-4 py-4">
       <p className="text-xs font-bold uppercase tracking-wider text-brand/55">
         {label}
       </p>

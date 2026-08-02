@@ -880,10 +880,10 @@ export function KanbanBoard({
     <SalespeopleProvider salespeople={salespeople}>
     <ManagersProvider managers={managers}>
     <div className="flex h-full min-h-0 flex-col">
-      <header className="flex shrink-0 flex-col gap-3 border-b border-peach/50 bg-[var(--autosync-surface)] px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
+      <header className="flex shrink-0 flex-col gap-3 border-b border-peach/50 bg-[var(--salestower-surface)] px-3 py-3 pt-[max(0.75rem,env(safe-area-inset-top))] sm:gap-4 sm:px-6 sm:py-4">
         <div className="flex justify-center">
           <span className="font-[family-name:var(--font-syne)] text-2xl font-extrabold tracking-tight text-brand sm:text-3xl">
-            AutoSync
+            SalesTower
           </span>
         </div>
         <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
@@ -980,7 +980,7 @@ export function KanbanBoard({
                     "px-2.5 py-2 text-xs font-semibold capitalize transition-colors sm:px-3",
                     conditionFilter === option
                       ? "bg-brand text-sand"
-                      : "bg-[var(--autosync-surface)] text-brand/70 hover:bg-peach/40",
+                      : "bg-[var(--salestower-surface)] text-brand/70 hover:bg-peach/40",
                   ].join(" ")}
                 >
                   {option}
@@ -997,7 +997,7 @@ export function KanbanBoard({
               type="button"
               onClick={() => setClearConfirmOpen(true)}
               disabled={totalCount === 0}
-              className="rounded-lg border border-rose-300/80 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg border border-rose-300/80 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
               title="Remove every vehicle from the board"
             >
               <span className="sm:hidden">Reset</span>
@@ -1007,7 +1007,7 @@ export function KanbanBoard({
             <button
               type="button"
               onClick={() => setImportOpen(true)}
-              className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/40"
+              className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/40"
               title="Import vehicles from a spreadsheet"
             >
               <span className="sm:hidden">Import</span>
@@ -1099,7 +1099,7 @@ export function KanbanBoard({
                         <KanbanColumn
                           key={column.id}
                           column={column}
-                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
+                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--salestower-surface)] ring-1 ring-peach/40"
                           cars={filteredBoard[column.id] ?? []}
                           onMove={requestMove}
                           onEditExteriorColor={setExteriorColorCarId}
@@ -1123,7 +1123,7 @@ export function KanbanBoard({
                         <KanbanColumn
                           key={column.id}
                           column={column}
-                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
+                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--salestower-surface)] ring-1 ring-peach/40"
                           cars={filteredBoard[column.id] ?? []}
                           onMove={requestMove}
                           onEditExteriorColor={setExteriorColorCarId}
@@ -1167,7 +1167,7 @@ export function KanbanBoard({
                       onChange={(e) => setNewSalespersonName(e.target.value)}
                       placeholder="New salesperson"
                       disabled={savingSalesperson}
-                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
+                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
                     />
                     <button
                       type="submit"
@@ -1182,7 +1182,7 @@ export function KanbanBoard({
                     <select
                       value={salesMonth}
                       onChange={(e) => setSalesMonth(e.target.value)}
-                      className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
+                      className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
                     >
                       {salesMonthOptions.map((key) => (
                         <option key={key} value={key}>
@@ -1240,14 +1240,14 @@ export function KanbanBoard({
                           if (e.target.value)
                             void persistSalesDay(e.target.value);
                         }}
-                        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60"
+                        className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60"
                       />
                     </label>
                     <button
                       type="button"
                       disabled={savingSalesDay}
                       onClick={() => void persistSalesDay(todayIsoDate())}
-                      className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand/80 hover:bg-peach/30 disabled:opacity-60"
+                      className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand/80 hover:bg-peach/30 disabled:opacity-60"
                     >
                       Today
                     </button>
@@ -1332,7 +1332,7 @@ export function KanbanBoard({
                     onChange={(e) => setNewManagerName(e.target.value)}
                     placeholder="New manager"
                     disabled={savingManager}
-                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
+                    className="w-full min-w-0 max-w-[11rem] rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60 sm:w-40 sm:max-w-none"
                   />
                   <button
                     type="submit"
@@ -1386,7 +1386,7 @@ export function KanbanBoard({
                         <button
                           type="button"
                           onClick={() => setOvernightDueCarId(car.id)}
-                          className="flex w-full items-center justify-between gap-2 rounded-lg bg-[var(--autosync-surface)]/90 px-2.5 py-1.5 text-left text-xs font-semibold text-brand ring-1 ring-amber-200/80 hover:bg-[var(--autosync-surface)]"
+                          className="flex w-full items-center justify-between gap-2 rounded-lg bg-[var(--salestower-surface)]/90 px-2.5 py-1.5 text-left text-xs font-semibold text-brand ring-1 ring-amber-200/80 hover:bg-[var(--salestower-surface)]"
                         >
                           <span className="min-w-0 truncate">
                             #{car.stockNumber}
@@ -1439,7 +1439,7 @@ export function KanbanBoard({
                     <KanbanColumn
                       key={column.id}
                       column={column}
-                      className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
+                      className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--salestower-surface)] ring-1 ring-peach/40"
                       cars={filteredBoard[column.id] ?? []}
                       onMove={requestMove}
                       onEditExteriorColor={setExteriorColorCarId}

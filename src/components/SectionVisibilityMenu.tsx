@@ -96,7 +96,7 @@ export function SectionVisibilityMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
+        className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
         aria-expanded={open}
         aria-haspopup="menu"
       >
@@ -111,7 +111,7 @@ export function SectionVisibilityMenu({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-40 mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-peach/60 bg-[var(--autosync-surface)] p-2 shadow-xl"
+          className="absolute right-0 z-40 mt-2 w-[min(16rem,calc(100vw-1.5rem))] rounded-xl border border-peach/60 bg-[var(--salestower-surface)] p-2 shadow-xl"
         >
           <p className="px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase tracking-wider text-brand/45">
             Show on board

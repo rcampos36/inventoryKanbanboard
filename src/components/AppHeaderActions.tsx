@@ -8,14 +8,14 @@ export function AppHeaderActions({ user }: { user: SessionUser }) {
     <div className="flex items-center gap-1.5 sm:gap-2">
       <Link
         href={`${boardPath(user.organizationSlug)}/reports`}
-        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
+        className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
       >
         Reports
       </Link>
       {user.role === "ADMIN" && (
         <Link
           href="/admin"
-          className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
+          className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
         >
           <span className="sm:hidden">Users</span>
           <span className="hidden sm:inline">Manage users</span>
@@ -27,7 +27,7 @@ export function AppHeaderActions({ user }: { user: SessionUser }) {
       <form action={logoutAction}>
         <button
           type="submit"
-          className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
+          className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
         >
           Sign out
         </button>

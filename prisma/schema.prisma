@@ -9,7 +9,7 @@ datasource db {
   provider = "postgresql"
 }
 
-/** A dealership / customer tenant on the shared AutoSync database. */
+/** A dealership / customer tenant on the shared SalesTower database. */
 model Organization {
   id        String   @id @default(cuid())
   name      String

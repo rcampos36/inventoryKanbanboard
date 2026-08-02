@@ -62,7 +62,7 @@ export function AdminUsersPanel({
         </p>
       </div>
 
-      <section className="rounded-2xl border border-peach/60 bg-[var(--autosync-surface)] p-5 shadow-sm">
+      <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           Grant access
         </h2>
@@ -134,7 +134,7 @@ export function AdminUsersPanel({
         </form>
       </section>
 
-      <section className="rounded-2xl border border-peach/60 bg-[var(--autosync-surface)] p-5 shadow-sm">
+      <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           People with access ({users.length})
         </h2>

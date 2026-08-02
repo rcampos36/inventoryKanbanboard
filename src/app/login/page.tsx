@@ -30,18 +30,18 @@ export default async function LoginPage() {
             href="/"
             className="font-[family-name:var(--font-syne)] text-3xl font-extrabold tracking-tight text-brand"
           >
-            AutoSync
+            SalesTower
           </Link>
           <p className="mt-2 text-sm text-brand/65">
             Manager access to your dealership dashboard
           </p>
         </div>
-        <div className="rounded-2xl border border-peach/70 bg-[var(--autosync-surface)] p-8 shadow-sm">
+        <div className="rounded-2xl border border-peach/70 bg-[var(--salestower-surface)] p-8 shadow-sm">
           <LoginForm setupError={setupError} />
         </div>
         <p className="mt-4 text-center text-sm text-brand/65">
           <Link href="/" className="font-semibold text-brand hover:underline">
-            Back to AutoSync
+            Back to SalesTower
           </Link>
         </p>
       </div>

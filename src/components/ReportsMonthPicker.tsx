@@ -22,7 +22,7 @@ export function ReportsMonthPicker({
           url.searchParams.set("month", month);
           router.push(`${url.pathname}?${url.searchParams.toString()}`);
         }}
-        className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-2.5 py-2 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
+        className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
       >
         {months.map((month) => (
           <option key={month.key} value={month.key}>
