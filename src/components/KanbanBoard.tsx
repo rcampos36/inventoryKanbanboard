@@ -18,6 +18,8 @@ import {
   INTAKE_COLUMNS,
   getColumns,
   getModelColumns,
+  getNewModelColumns,
+  getUsedColumns,
 } from "@/lib/data";
 import { BoardConfigProvider } from "./BoardConfigContext";
 import {
@@ -51,6 +53,7 @@ import {
 import {
   clearAllCarsAction,
   createCarAction,
+  importInventoryAction,
   updateCarAction,
   updateCarsAction,
 } from "@/app/actions/cars";
@@ -80,6 +83,7 @@ import { ExteriorColorModal } from "./ExteriorColorModal";
 import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
+import { ImportInventoryModal } from "./ImportInventoryModal";
 import { SalespeopleProvider } from "./SalespeopleContext";
 import { ManagersProvider } from "./ManagersContext";
 import { TeamLaneItem, TeamLaneScroll } from "./TeamLaneScroll";
@@ -166,6 +170,8 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const brand = organizationBrand;
   const modelColumns = useMemo(() => getModelColumns(brand), [brand]);
+  const newModelColumns = useMemo(() => getNewModelColumns(brand), [brand]);
+  const usedModelColumns = useMemo(() => getUsedColumns(brand), [brand]);
   const inventoryColumns = useMemo(() => getColumns(brand), [brand]);
   const [salespeople, setSalespeople] =
     useState<Salesperson[]>(initialSalespeople);
@@ -177,6 +183,8 @@ export function KanbanBoard({
   const [query, setQuery] = useState("");
   const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [clearConfirmOpen, setClearConfirmOpen] = useState(false);
   const [clearingBoard, setClearingBoard] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -320,6 +328,12 @@ export function KanbanBoard({
   const isFiltering = conditionFilter !== "all" || query.trim() !== "";
 
   const visibleModelColumns = modelColumns.filter(
+    (column) => !isFiltering || (filteredBoard[column.id]?.length ?? 0) > 0
+  );
+  const visibleNewModelColumns = newModelColumns.filter(
+    (column) => !isFiltering || (filteredBoard[column.id]?.length ?? 0) > 0
+  );
+  const visibleUsedModelColumns = usedModelColumns.filter(
     (column) => !isFiltering || (filteredBoard[column.id]?.length ?? 0) > 0
   );
   const visibleIntakeColumns = INTAKE_COLUMNS.filter(
@@ -821,6 +835,28 @@ export function KanbanBoard({
     }
   }
 
+  async function handleImportInventory(file: File) {
+    setImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const result = await importInventoryAction(formData);
+      if (result.ok && result.cars.length > 0) {
+        setBoard((prev) => {
+          const next = { ...prev };
+          for (const car of result.cars) {
+            const columnId = carContainerId(car);
+            next[columnId] = [...(next[columnId] ?? []), car];
+          }
+          return next;
+        });
+      }
+      return result;
+    } finally {
+      setImporting(false);
+    }
+  }
+
   if (!mounted) {
     return (
       <div className="flex h-full items-center justify-center text-sm text-sand/60">
@@ -969,6 +1005,16 @@ export function KanbanBoard({
             </button>
 
             <button
+              type="button"
+              onClick={() => setImportOpen(true)}
+              className="rounded-lg border border-peach/70 bg-[var(--autosync-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/40"
+              title="Import vehicles from a spreadsheet"
+            >
+              <span className="sm:hidden">Import</span>
+              <span className="hidden sm:inline">Import file</span>
+            </button>
+
+            <button
               onClick={() => setModalOpen(true)}
               className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-2 text-sm font-semibold text-sand hover:bg-[#034a5c] sm:px-4"
             >
@@ -1042,24 +1088,54 @@ export function KanbanBoard({
                   : "flex-1",
               ].join(" ")}
             >
-              <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
-                Inventory by Model
-              </h2>
-              <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
-                {visibleModelColumns.map((column) => (
-                  <KanbanColumn
-                    key={column.id}
-                    column={column}
-                    className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
-                    cars={filteredBoard[column.id] ?? []}
-                    onMove={requestMove}
-                    onEditExteriorColor={setExteriorColorCarId}
-                    onEditCheckoutDates={requestEditCheckoutDates}
-                    onRequestHalfDeal={setHalfDealCarId}
-                    onHalfDealWith={halfDealWith}
-                    onClearHalfDeal={clearHalfDeal}
-                  />
-                ))}
+              <div className="flex flex-col gap-5">
+                {visibleNewModelColumns.length > 0 && (
+                  <section>
+                    <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
+                      New · by Model
+                    </h2>
+                    <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
+                      {visibleNewModelColumns.map((column) => (
+                        <KanbanColumn
+                          key={column.id}
+                          column={column}
+                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
+                          cars={filteredBoard[column.id] ?? []}
+                          onMove={requestMove}
+                          onEditExteriorColor={setExteriorColorCarId}
+                          onEditCheckoutDates={requestEditCheckoutDates}
+                          onRequestHalfDeal={setHalfDealCarId}
+                          onHalfDealWith={halfDealWith}
+                          onClearHalfDeal={clearHalfDeal}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {visibleUsedModelColumns.length > 0 && (
+                  <section>
+                    <h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-peach">
+                      Used
+                    </h2>
+                    <div className="grid grid-cols-1 gap-3 min-[420px]:grid-cols-2 xl:grid-cols-2">
+                      {visibleUsedModelColumns.map((column) => (
+                        <KanbanColumn
+                          key={column.id}
+                          column={column}
+                          className="flex min-w-0 w-full flex-col rounded-2xl bg-[var(--autosync-surface)] ring-1 ring-peach/40"
+                          cars={filteredBoard[column.id] ?? []}
+                          onMove={requestMove}
+                          onEditExteriorColor={setExteriorColorCarId}
+                          onEditCheckoutDates={requestEditCheckoutDates}
+                          onRequestHalfDeal={setHalfDealCarId}
+                          onHalfDealWith={halfDealWith}
+                          onClearHalfDeal={clearHalfDeal}
+                        />
+                      ))}
+                    </div>
+                  </section>
+                )}
               </div>
             </aside>
           )}
@@ -1391,6 +1467,13 @@ export function KanbanBoard({
         brand={brand}
         onClose={() => setModalOpen(false)}
         onAdd={handleAddCar}
+      />
+
+      <ImportInventoryModal
+        open={importOpen}
+        busy={importing}
+        onClose={() => setImportOpen(false)}
+        onImport={handleImportInventory}
       />
 
       <CheckoutDatesModal

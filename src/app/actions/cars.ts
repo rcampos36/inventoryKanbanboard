@@ -10,6 +10,7 @@ import {
   recordBoardEvents,
   recordInventoryAdded,
 } from "@/lib/board-events";
+import { parseInventoryFile } from "@/lib/inventory-import";
 import type { Car } from "@/lib/types";
 
 export async function getCars(): Promise<Car[]> {
@@ -108,4 +109,119 @@ export async function clearAllCarsAction(): Promise<number> {
   });
   revalidatePath(boardPath(user.organizationSlug));
   return result.count;
+}
+
+const MAX_IMPORT_BYTES = 5 * 1024 * 1024;
+
+export type ImportInventoryResult =
+  | {
+      ok: true;
+      added: number;
+      skippedDuplicates: number;
+      skippedInvalid: number;
+      cars: Car[];
+      warnings: string[];
+    }
+  | { ok: false; error: string };
+
+/** Import vehicles from an uploaded .xls / .xlsx / .csv into the current org. */
+export async function importInventoryAction(
+  formData: FormData
+): Promise<ImportInventoryResult> {
+  const user = await requireUser();
+  const file = formData.get("file");
+
+  if (!(file instanceof File)) {
+    return { ok: false, error: "Choose a .csv, .xls, or .xlsx file." };
+  }
+  if (file.size <= 0) {
+    return { ok: false, error: "The selected file is empty." };
+  }
+  if (file.size > MAX_IMPORT_BYTES) {
+    return { ok: false, error: "File is too large (max 5 MB)." };
+  }
+
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const parsed = parseInventoryFile(
+    buffer,
+    file.name,
+    user.organizationBrand
+  );
+
+  if (parsed.rows.length === 0) {
+    return {
+      ok: false,
+      error:
+        parsed.warnings[0] ??
+        "No vehicles could be read from that file. Include Stock # and Vehicle, or Year/Make/Model columns.",
+    };
+  }
+
+  const existing = await prisma.car.findMany({
+    where: {
+      organizationId: user.organizationId,
+      stockNumber: { in: parsed.rows.map((row) => row.stockNumber) },
+    },
+    select: { stockNumber: true },
+  });
+  const existingStocks = new Set(
+    existing.map((row) => row.stockNumber.toLowerCase())
+  );
+
+  const toCreate = parsed.rows.filter(
+    (row) => !existingStocks.has(row.stockNumber.toLowerCase())
+  );
+  const skippedDuplicates = parsed.rows.length - toCreate.length;
+
+  if (toCreate.length === 0) {
+    return {
+      ok: true,
+      added: 0,
+      skippedDuplicates,
+      skippedInvalid: parsed.skippedInvalid,
+      cars: [],
+      warnings: [
+        ...parsed.warnings,
+        "Every stock number in the file already exists on this board.",
+      ].slice(0, 25),
+    };
+  }
+
+  const positionBase = await prisma.car.aggregate({
+    where: { organizationId: user.organizationId },
+    _max: { position: true },
+  });
+  let position = (positionBase._max.position ?? -1) + 1;
+
+  const createdCars: Car[] = [];
+  for (const row of toCreate) {
+    const created = await prisma.car.create({
+      data: {
+        organizationId: user.organizationId,
+        stockNumber: row.stockNumber,
+        year: row.year,
+        make: row.make,
+        model: row.model,
+        trim: row.trim,
+        condition: row.condition,
+        columnId: row.columnId,
+        exteriorColor: row.exteriorColor ?? null,
+        price: row.price ?? null,
+        position,
+      },
+    });
+    position += 1;
+    await recordInventoryAdded(user.organizationId, created);
+    createdCars.push(toAppCar(created));
+  }
+
+  revalidatePath(boardPath(user.organizationSlug));
+  return {
+    ok: true,
+    added: createdCars.length,
+    skippedDuplicates,
+    skippedInvalid: parsed.skippedInvalid,
+    cars: createdCars,
+    warnings: parsed.warnings,
+  };
 }

@@ -42,9 +42,17 @@ export function suggestInventoryColumnId(
       }
     }
 
-    const match = newColumns.find(
-      (col) => col.title.toLowerCase() === normalizedModel
-    );
+    // Prefer longest title so "CX-70 PHEV" wins over "CX-70".
+    const match = [...newColumns]
+      .sort((a, b) => b.title.length - a.title.length)
+      .find((col) => {
+        const title = col.title.toLowerCase();
+        return (
+          normalizedModel === title ||
+          normalizedModel.startsWith(`${title} `) ||
+          normalizedModel.startsWith(title)
+        );
+      });
     if (match) return match.id;
     return newColumns[0]?.id ?? franchiseUsedId;
   }

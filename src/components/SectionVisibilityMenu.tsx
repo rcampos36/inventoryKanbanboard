@@ -17,7 +17,7 @@ export type BoardSection = (typeof BOARD_SECTIONS)[number];
 export type SectionVisibility = Record<BoardSection, boolean>;
 
 export const SECTION_LABELS: Record<BoardSection, string> = {
-  inventory: "Inventory by Model",
+  inventory: "Inventory (New & Used)",
   sales: "Sales Team",
   dailySales: "Daily Sales",
   workingDeals: "Working Deals",
