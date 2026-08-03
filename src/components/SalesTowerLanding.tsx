@@ -1,34 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { boardPath } from "@/lib/paths";
-
-const FEATURES = [
-  {
-    eyebrow: "Secure access",
-    title: "Secure, role-based access",
-    body: "A restricted login system protects sensitive store data from unauthorized personnel. Manager-level permissions grant exclusive access to sales metrics and demo logs.",
-  },
-  {
-    eyebrow: "Sales visibility",
-    title: "Real-time sales tracking",
-    body: "Daily performance logs monitor unit velocity and write clear historical daily logs. Month-to-date pacing visualizes target goals so managers can adjust strategies mid-month.",
-  },
-  {
-    eyebrow: "Inventory control",
-    title: "Unified new & used inventory",
-    body: "Live lot auditing separates and monitors both new factory arrivals and pre-owned trades. Holding cost visibility flags aging stock directly on the dashboard to protect profit margins.",
-  },
-  {
-    eyebrow: "Asset protection",
-    title: "Comprehensive demo & asset tracking",
-    body: "Manager demo control logs company vehicles assigned to dealership leadership. Overnight customer demos track liability, test-drive duration, and vehicle location.",
-  },
-] as const;
+import type { LandingContent } from "@/lib/landing-content";
 
 export function SalesTowerLanding({
+  content,
   isSignedIn = false,
   organizationSlug = "",
 }: {
+  content: LandingContent;
   isSignedIn?: boolean;
   organizationSlug?: string;
 }) {
@@ -88,11 +68,10 @@ export function SalesTowerLanding({
             SalesTower
           </p>
           <h1 className="salestower-animate-fade-up salestower-delay-1 mt-4 max-w-2xl font-[family-name:var(--font-syne)] text-2xl font-bold leading-tight text-peach sm:text-3xl md:text-4xl">
-            The Operating System for Modern Dealerships
+            {content.heroHeadline}
           </h1>
           <p className="salestower-animate-fade-up salestower-delay-2 mt-4 max-w-xl text-base leading-relaxed text-sand/90 sm:text-lg">
-            Know what&apos;s happening across your inventory, sales tower, and
-            showroom—in real time.
+            {content.heroSubcopy}
           </p>
           <div className="salestower-animate-fade-up salestower-delay-3 mt-8 flex flex-wrap items-center gap-3">
             <Link
@@ -117,20 +96,14 @@ export function SalesTowerLanding({
         <div className="mx-auto grid max-w-6xl gap-10 lg:grid-cols-[0.9fr_1.1fr] lg:gap-16">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand/70">
-              What it is
+              {content.aboutEyebrow}
             </p>
             <h2 className="mt-3 font-[family-name:var(--font-syne)] text-3xl font-bold tracking-tight text-brand md:text-4xl">
-              Built for Sales Managers.
+              {content.aboutTitle}
             </h2>
           </div>
           <div className="space-y-5 text-base leading-relaxed text-[var(--salestower-muted)] md:text-lg">
-            <p>
-              Sales managers waste valuable time switching between systems,
-              checking inventory boards, and asking for updates. SalesTower brings
-              inventory, active deals, and salesperson performance into one live
-              dashboard—giving managers the visibility they need to make faster
-              decisions.
-            </p>
+            <p>{content.aboutBody}</p>
           </div>
         </div>
       </section>
@@ -141,16 +114,16 @@ export function SalesTowerLanding({
       >
         <div className="mx-auto max-w-6xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand/70">
-            Key operational features
+            {content.featuresEyebrow}
           </p>
           <h2 className="mt-3 max-w-2xl font-[family-name:var(--font-syne)] text-3xl font-bold tracking-tight text-brand md:text-4xl">
-            Everything managers need to run the floor and protect the lot
+            {content.featuresTitle}
           </h2>
 
           <div className="mt-14 divide-y divide-peach/45 border-y border-peach/45">
-            {FEATURES.map((feature) => (
+            {content.features.map((feature) => (
               <article
-                key={feature.title}
+                key={`${feature.eyebrow}-${feature.title}`}
                 className="grid gap-3 py-10 md:grid-cols-[220px_1fr] md:gap-10"
               >
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand/65">
@@ -173,15 +146,13 @@ export function SalesTowerLanding({
       <section className="border-b border-peach/30 bg-brand px-6 py-20 md:px-10">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-peach">
-            The bottom line for management
+            {content.bottomEyebrow}
           </p>
           <h2 className="mt-4 font-[family-name:var(--font-syne)] text-3xl font-bold tracking-tight text-sand md:text-4xl">
-            Eliminate the guesswork from dealership oversight
+            {content.bottomTitle}
           </h2>
           <p className="mt-6 text-base leading-relaxed text-sand/80 md:text-lg">
-            SalesTower gives GMs and sales managers the exact data they need for
-            morning save-a-deal meetings, asset protection, and accurate monthly
-            forecasting.
+            {content.bottomBody}
           </p>
         </div>
       </section>
@@ -189,29 +160,12 @@ export function SalesTowerLanding({
       <section className="bg-[var(--salestower-surface)] px-6 py-20 md:px-10">
         <div className="mx-auto max-w-4xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand/70">
-            The 30-second financial pitch
+            {content.pitchEyebrow}
           </p>
           <blockquote className="mt-6 space-y-5 border-l-4 border-peach pl-5 font-[family-name:var(--font-syne)] text-xl font-semibold leading-snug tracking-tight text-brand md:text-2xl md:leading-snug">
-            <p>
-              For automotive GMs and Sales Managers, unmonitored assets and slow
-              lot turn directly drain the monthly financial statement.
-            </p>
-            <p>
-              SalesTower is a secure, manager-only dashboard designed to protect
-              gross profit and eliminate inventory leaks. It tracks new and used
-              stock to accelerate your velocity, visualizes real-time daily and
-              monthly sales pacing, and stops holding costs from eating your
-              margins. Crucially, it secures your physical assets by tightly
-              logging manager and overnight customer demos—slashing floor plan
-              interest expenses, reducing insurance liabilities, and preventing
-              unapproved mileage depreciation.
-            </p>
-            <p>
-              Instead of losing thousands to untracked vehicle days, SalesTower
-              turns lot oversight into a profit center. It ensures your
-              inventory, your liabilities, and your net profit are always
-              perfectly in sync.
-            </p>
+            {content.pitchParagraphs.map((paragraph) => (
+              <p key={paragraph.slice(0, 48)}>{paragraph}</p>
+            ))}
           </blockquote>
           <div className="mt-10">
             <Link
@@ -230,7 +184,7 @@ export function SalesTowerLanding({
             SalesTower
           </p>
           <p className="text-sm text-[var(--salestower-muted)]">
-            Secure dealership operations for GMs and sales managers.
+            {content.footerTagline}
           </p>
         </div>
       </footer>

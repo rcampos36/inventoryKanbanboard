@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
 import { DEFAULT_BOARD_TITLE } from "@/lib/board";
+import { PEARSON_ORG_ID, SUNRISE_ORG_ID } from "@/lib/org-ids";
 import { todayIsoDate } from "@/lib/types";
 
-export const PEARSON_ORG_ID = "org_pearson_mazda";
-export const SUNRISE_ORG_ID = "org_sunrise_honda";
+export { PEARSON_ORG_ID, SUNRISE_ORG_ID };
 
 export const PEARSON_ORG = {
   id: PEARSON_ORG_ID,

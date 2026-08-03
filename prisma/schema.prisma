@@ -130,6 +130,31 @@ model Manager {
 }
 
 /**
+ * Singleton marketing copy for the public SalesTower landing page.
+ * Edited from /admin/landing by the platform (Pearson) admin.
+ */
+model LandingPageContent {
+  id                  String   @id @default("default")
+  heroHeadline        String
+  heroSubcopy         String   @db.Text
+  aboutEyebrow        String
+  aboutTitle          String
+  aboutBody           String   @db.Text
+  featuresEyebrow     String
+  featuresTitle       String
+  /** JSON array of { eyebrow, title, body }. */
+  featuresJson        Json
+  bottomEyebrow       String
+  bottomTitle         String
+  bottomBody          String   @db.Text
+  pitchEyebrow        String
+  /** JSON array of paragraph strings. */
+  pitchParagraphsJson Json
+  footerTagline       String
+  updatedAt           DateTime @updatedAt
+}
+
+/**
  * Durable history for reports (sales + inventory movement).
  * Events are append-only so unselling a car does not erase past sales.
  */

@@ -2,7 +2,7 @@ import { PrismaPg } from "@prisma/adapter-pg";
 import { PrismaClient } from "@/generated/prisma/client";
 
 /** Bump when adding/removing Prisma models/fields so hot reload drops a stale client. */
-const PRISMA_CLIENT_VERSION = 6;
+const PRISMA_CLIENT_VERSION = 7;
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
