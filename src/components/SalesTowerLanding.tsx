@@ -91,9 +91,8 @@ export function SalesTowerLanding({
             The Operating System for Modern Dealerships
           </h1>
           <p className="salestower-animate-fade-up salestower-delay-2 mt-4 max-w-xl text-base leading-relaxed text-sand/90 sm:text-lg">
-            SalesTower works alongside your existing CRM to give managers one
-            real-time view of inventory, sales activity, and dealership
-            operations.
+            Know what&apos;s happening across your inventory, sales tower, and
+            showroom—in real time.
           </p>
           <div className="salestower-animate-fade-up salestower-delay-3 mt-8 flex flex-wrap items-center gap-3">
             <Link
