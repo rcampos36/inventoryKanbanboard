@@ -88,12 +88,11 @@ export function SalesTowerLanding({
             SalesTower
           </p>
           <h1 className="salestower-animate-fade-up salestower-delay-1 mt-4 max-w-2xl font-[family-name:var(--font-syne)] text-2xl font-bold leading-tight text-peach sm:text-3xl md:text-4xl">
-            Dealership management powerhouse
+            The Operating System for Modern Dealerships
           </h1>
           <p className="salestower-animate-fade-up salestower-delay-2 mt-4 max-w-xl text-base leading-relaxed text-sand/90 sm:text-lg">
-            A secure, cloud-based operational hub for automotive General
-            Managers and Sales Managers — inventory, sales pacing, and demos in
-            one live dashboard.
+            Works with your existing CRM. Replaces your whiteboards, spreadsheets,
+            and disconnected workflows.
           </p>
           <div className="salestower-animate-fade-up salestower-delay-3 mt-8 flex flex-wrap items-center gap-3">
             <Link
