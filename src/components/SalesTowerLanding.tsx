@@ -31,6 +31,13 @@ export function SalesTowerLanding({
           >
             Features
           </a>
+          <Link
+            href="/admin/landing"
+            className="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
+          >
+            <span className="sm:hidden">Edit</span>
+            <span className="hidden sm:inline">Edit copy</span>
+          </Link>
           {!isSignedIn && (
             <Link
               href={secondaryHref}
