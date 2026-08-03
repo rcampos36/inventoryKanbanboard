@@ -120,7 +120,7 @@ export function SalesTowerLanding({
               What it is
             </p>
             <h2 className="mt-3 font-[family-name:var(--font-syne)] text-3xl font-bold tracking-tight text-brand md:text-4xl">
-              SalesTower: dealership management powerhouse
+              Built for Sales Managers.
             </h2>
           </div>
           <div className="space-y-5 text-base leading-relaxed text-[var(--salestower-muted)] md:text-lg">
