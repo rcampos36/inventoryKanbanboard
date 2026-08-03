@@ -125,16 +125,11 @@ export function SalesTowerLanding({
           </div>
           <div className="space-y-5 text-base leading-relaxed text-[var(--salestower-muted)] md:text-lg">
             <p>
-              SalesTower is a secure, cloud-based operational hub designed
-              exclusively for automotive General Managers and Sales Managers. It
-              streamlines asset tracking, protects your inventory investments,
-              and provides real-time sales visibility to keep your dealership
-              moving at peak efficiency.
-            </p>
-            <p>
-              By replacing disjointed spreadsheets with a unified digital
-              dashboard, SalesTower ensures your sales floor and vehicle lots are
-              always perfectly in sync.
+              Sales managers waste valuable time switching between systems,
+              checking inventory boards, and asking for updates. SalesTower brings
+              inventory, active deals, and salesperson performance into one live
+              dashboard—giving managers the visibility they need to make faster
+              decisions.
             </p>
           </div>
         </div>
