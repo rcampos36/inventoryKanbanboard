@@ -13,6 +13,7 @@ export type ScheduleDemoState = {
 };
 
 const DEFAULT_DEMO_TO = "info@salestower.io";
+const TEST_FROM = "SalesTower <onboarding@resend.dev>";
 
 function getResend(): Resend | null {
   const key = process.env.RESEND_API_KEY?.trim();
@@ -24,7 +25,21 @@ function describeResendError(error: unknown): string {
   if (!error) return "Unknown email error";
   if (typeof error === "string") return error;
   if (typeof error === "object" && error !== null) {
-    const record = error as { message?: string; name?: string; statusCode?: number };
+    const record = error as {
+      message?: string;
+      name?: string;
+      statusCode?: number;
+    };
+    const message = record.message ?? "";
+    if (
+      message.includes("only send testing emails to your own email address") ||
+      message.includes("verify a domain")
+    ) {
+      return (
+        "Resend test mode can only email your Resend account address. " +
+        "Set DEMO_TO_EMAIL to that address for now, or verify salestower.io at resend.com/domains and set DEMO_FROM_EMAIL to an address on that domain (e.g. hello@salestower.io)."
+      );
+    }
     const parts = [
       record.name,
       record.statusCode ? `HTTP ${record.statusCode}` : null,
@@ -33,6 +48,22 @@ function describeResendError(error: unknown): string {
     if (parts.length) return parts.join(" — ");
   }
   return "Unknown email error";
+}
+
+function resolveFromAddress(): string {
+  return process.env.DEMO_FROM_EMAIL?.trim() || TEST_FROM;
+}
+
+function resolveToAddress(from: string): string | null {
+  const configured = process.env.DEMO_TO_EMAIL?.trim();
+  if (configured) return configured;
+
+  const usingTestSender = from.toLowerCase().includes("onboarding@resend.dev");
+  if (usingTestSender) {
+    // Without a verified domain, Resend rejects any recipient except the account owner.
+    return null;
+  }
+  return DEFAULT_DEMO_TO;
 }
 
 export async function scheduleDemoAction(
@@ -62,46 +93,53 @@ export async function scheduleDemoAction(
 
   let emailSent = false;
   let emailError: string | null = null;
+  let emailedTo: string | null = null;
 
   const resend = getResend();
   if (!resend) {
     emailError = "RESEND_API_KEY is not configured";
   } else {
-    const from =
-      process.env.DEMO_FROM_EMAIL?.trim() ||
-      "SalesTower <onboarding@resend.dev>";
-    const to = process.env.DEMO_TO_EMAIL?.trim() || DEFAULT_DEMO_TO;
+    const from = resolveFromAddress();
+    const to = resolveToAddress(from);
 
-    const lines = [
-      "New SalesTower demo request",
-      "",
-      `Name: ${name}`,
-      `Email: ${email}`,
-      `Dealership: ${dealership}`,
-      `Phone: ${phone || "(not provided)"}`,
-      "",
-      "Message:",
-      message || "(none)",
-    ];
+    if (!to) {
+      emailError =
+        "Using Resend's test sender. Set DEMO_TO_EMAIL to your Resend account email (rcrogercampos@gmail.com), or verify salestower.io and set DEMO_FROM_EMAIL to hello@salestower.io.";
+    } else {
+      const lines = [
+        "New SalesTower demo request",
+        "",
+        `Name: ${name}`,
+        `Email: ${email}`,
+        `Dealership: ${dealership}`,
+        `Phone: ${phone || "(not provided)"}`,
+        "",
+        "Message:",
+        message || "(none)",
+        "",
+        `Submitted via SalesTower landing page → notify ${to}`,
+      ];
 
-    try {
-      const { error } = await resend.emails.send({
-        from,
-        to: [to],
-        replyTo: email,
-        subject: `Demo request — ${dealership} (${name})`,
-        text: lines.join("\n"),
-      });
+      try {
+        const { error } = await resend.emails.send({
+          from,
+          to: [to],
+          replyTo: email,
+          subject: `Demo request — ${dealership} (${name})`,
+          text: lines.join("\n"),
+        });
 
-      if (error) {
+        if (error) {
+          emailError = describeResendError(error);
+          console.error("Resend demo email failed", error);
+        } else {
+          emailSent = true;
+          emailedTo = to;
+        }
+      } catch (error) {
         emailError = describeResendError(error);
-        console.error("Resend demo email failed", error);
-      } else {
-        emailSent = true;
+        console.error("Resend demo email threw", error);
       }
-    } catch (error) {
-      emailError = describeResendError(error);
-      console.error("Resend demo email threw", error);
     }
   }
 
@@ -114,12 +152,15 @@ export async function scheduleDemoAction(
         phone: phone || null,
         message: message || null,
         emailSent,
-        emailError,
+        emailError: emailSent
+          ? emailedTo
+            ? `Delivered to ${emailedTo}`
+            : null
+          : emailError,
       },
     });
   } catch (error) {
     console.error("Failed to store demo request", error);
-    // If we at least emailed, treat as success.
     if (emailSent) return { ok: true };
     return {
       ok: false,
@@ -128,7 +169,6 @@ export async function scheduleDemoAction(
     };
   }
 
-  // Lead is stored even when outbound email fails (common until the domain is verified).
   return { ok: true };
 }
 

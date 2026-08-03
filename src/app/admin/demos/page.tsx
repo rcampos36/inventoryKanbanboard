@@ -24,9 +24,11 @@ export default async function AdminDemosPage() {
             Administrator
           </p>
           <h1 className="text-lg font-bold text-brand">Demo requests</h1>
-          <p className="mt-1 text-sm text-brand/65">
-            Leads from the Schedule a Demo form. Email delivery requires a verified
-            Resend domain.
+          <p className="mt-1 max-w-xl text-sm text-brand/65">
+            Leads from the Schedule a Demo form. Until{" "}
+            <span className="font-semibold">salestower.io</span> is verified in
+            Resend, set <span className="font-semibold">DEMO_TO_EMAIL</span> to
+            your Resend account email so notifications can deliver.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -92,13 +94,13 @@ export default async function AdminDemosPage() {
                 </div>
                 <p
                   className={[
-                    "mt-3 text-xs font-semibold",
+                    "mt-3 text-xs font-semibold leading-relaxed",
                     request.emailSent ? "text-emerald-700" : "text-amber-800",
                   ].join(" ")}
                 >
                   {request.emailSent
-                    ? "Email sent to info@salestower.io"
-                    : `Email not sent${request.emailError ? `: ${request.emailError}` : ""}`}
+                    ? request.emailError || "Notification email sent"
+                    : `Email not sent. ${request.emailError ?? "Check Resend domain / DEMO_TO_EMAIL settings."}`}
                 </p>
               </li>
             ))}
