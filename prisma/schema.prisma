@@ -148,7 +148,9 @@ model LandingPageContent {
   bottomTitle         String
   bottomBody          String   @db.Text
   pitchEyebrow        String
-  /** JSON array of paragraph strings. */
+  /** Rich HTML for the pitch body (headings, lists, paragraphs). */
+  pitchHtml           String   @default("") @db.Text
+  /** Legacy plain paragraphs — kept for migration fallback. */
   pitchParagraphsJson Json
   footerTagline       String
   updatedAt           DateTime @updatedAt

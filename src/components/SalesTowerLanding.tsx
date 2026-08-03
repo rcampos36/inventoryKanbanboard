@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { boardPath } from "@/lib/paths";
 import type { LandingContent } from "@/lib/landing-content";
+import { LandingRichHtml } from "@/components/LandingRichHtml";
 
 export function SalesTowerLanding({
   content,
@@ -169,11 +170,9 @@ export function SalesTowerLanding({
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand/70">
             {content.pitchEyebrow}
           </p>
-          <blockquote className="mt-6 space-y-5 border-l-4 border-peach pl-5 font-[family-name:var(--font-syne)] text-xl font-semibold leading-snug tracking-tight text-brand md:text-2xl md:leading-snug">
-            {content.pitchParagraphs.map((paragraph) => (
-              <p key={paragraph.slice(0, 48)}>{paragraph}</p>
-            ))}
-          </blockquote>
+          <div className="mt-6 border-l-4 border-peach pl-5">
+            <LandingRichHtml html={content.pitchHtml} />
+          </div>
           <div className="mt-10">
             <Link
               href={primaryHref}

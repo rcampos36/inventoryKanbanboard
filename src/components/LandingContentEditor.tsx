@@ -1,12 +1,14 @@
 "use client";
 
-import { useActionState, useMemo, useState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
 import {
   saveLandingContentAction,
   type SaveLandingContentState,
 } from "@/app/actions/landing";
 import type { LandingContent, LandingFeature } from "@/lib/landing-content";
+import { RichTextEditor } from "@/components/RichTextEditor";
+import { LandingRichHtml } from "@/components/LandingRichHtml";
 
 const initialState: SaveLandingContentState = { ok: false };
 
@@ -63,11 +65,6 @@ export function LandingContentEditor({
     initialState
   );
 
-  const pitchText = useMemo(
-    () => content.pitchParagraphs.join("\n\n"),
-    [content.pitchParagraphs]
-  );
-
   function update<K extends keyof LandingContent>(key: K, value: LandingContent[K]) {
     setContent((prev) => ({ ...prev, [key]: value }));
   }
@@ -106,7 +103,6 @@ export function LandingContentEditor({
     <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:px-6">
       <form action={formAction} className="space-y-6">
         <input type="hidden" name="featureCount" value={content.features.length} />
-        <input type="hidden" name="pitchParagraphs" value={pitchText} />
 
         <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
           <h2 className="text-sm font-bold uppercase tracking-wider text-brand/50">
@@ -270,25 +266,12 @@ export function LandingContentEditor({
               value={content.pitchEyebrow}
               onChange={(v) => update("pitchEyebrow", v)}
             />
-            <label className="block">
-              <span className="text-xs font-semibold uppercase tracking-wide text-brand/55">
-                Pitch paragraphs (blank line between each)
-              </span>
-              <textarea
-                value={pitchText}
-                rows={10}
-                onChange={(e) =>
-                  update(
-                    "pitchParagraphs",
-                    e.target.value
-                      .split(/\n\s*\n/)
-                      .map((p) => p.trim())
-                      .filter(Boolean)
-                  )
-                }
-                className="mt-1.5 w-full rounded-lg border border-peach/70 bg-white px-3 py-2 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15"
-              />
-            </label>
+            <RichTextEditor
+              label="Pitch body"
+              name="pitchHtml"
+              value={content.pitchHtml}
+              onChange={(html) => update("pitchHtml", html)}
+            />
             <Field
               label="Footer tagline"
               name="footerTagline"
@@ -342,36 +325,14 @@ export function LandingContentEditor({
 
         <div className="mt-4 rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand/55">
-            {content.aboutEyebrow || "Eyebrow"}
+            {content.pitchEyebrow || "Pitch"}
           </p>
-          <h3 className="mt-2 font-[family-name:var(--font-syne)] text-xl font-bold text-brand">
-            {content.aboutTitle || "Title"}
-          </h3>
-          <p className="mt-3 text-sm leading-relaxed text-[var(--salestower-muted)]">
-            {content.aboutBody || "Body copy"}
-          </p>
-        </div>
-
-        <div className="mt-4 rounded-2xl border border-peach/60 bg-sand p-5 shadow-sm">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand/55">
-            {content.featuresEyebrow || "Features"}
-          </p>
-          <h3 className="mt-2 font-[family-name:var(--font-syne)] text-lg font-bold text-brand">
-            {content.featuresTitle || "Features title"}
-          </h3>
-          <ul className="mt-4 space-y-3">
-            {content.features.map((feature, index) => (
-              <li key={index} className="border-t border-peach/40 pt-3">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-brand/50">
-                  {feature.eyebrow}
-                </p>
-                <p className="mt-1 text-sm font-bold text-brand">{feature.title}</p>
-                <p className="mt-1 text-xs leading-relaxed text-[var(--salestower-muted)]">
-                  {feature.body}
-                </p>
-              </li>
-            ))}
-          </ul>
+          <div className="mt-4 border-l-4 border-peach pl-4">
+            <LandingRichHtml
+              html={content.pitchHtml}
+              className="!text-base md:!text-lg"
+            />
+          </div>
         </div>
       </aside>
     </div>

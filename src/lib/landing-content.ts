@@ -1,3 +1,5 @@
+import { paragraphsToHtml, sanitizeLandingHtml } from "@/lib/sanitize-html";
+
 export type LandingFeature = {
   eyebrow: string;
   title: string;
@@ -17,9 +19,29 @@ export type LandingContent = {
   bottomTitle: string;
   bottomBody: string;
   pitchEyebrow: string;
-  pitchParagraphs: string[];
+  /** Sanitized HTML for the pitch body (headings, lists, paragraphs). */
+  pitchHtml: string;
   footerTagline: string;
 };
+
+export const DEFAULT_PITCH_HTML = `
+<h3>Why dealerships lose money</h3>
+<ul>
+  <li>Aging inventory</li>
+  <li>Missed follow-up</li>
+  <li>Untracked demo vehicles</li>
+  <li>Poor sales visibility</li>
+  <li>Manual inventory processes</li>
+</ul>
+<h3>SalesTower helps managers</h3>
+<ul>
+  <li>Protect inventory</li>
+  <li>Improve accountability</li>
+  <li>Monitor sales pacing</li>
+  <li>Reduce floorplan costs</li>
+  <li>Make decisions with live data</li>
+</ul>
+`.trim();
 
 export const DEFAULT_LANDING_CONTENT: LandingContent = {
   heroHeadline: "The Operating System for Modern Dealerships",
@@ -59,19 +81,23 @@ export const DEFAULT_LANDING_CONTENT: LandingContent = {
   bottomBody:
     "SalesTower gives GMs and sales managers the exact data they need for morning save-a-deal meetings, asset protection, and accurate monthly forecasting.",
   pitchEyebrow: "The 30-second financial pitch",
-  pitchParagraphs: [
-    "For automotive GMs and Sales Managers, unmonitored assets and slow lot turn directly drain the monthly financial statement.",
-    "SalesTower is a secure, manager-only dashboard designed to protect gross profit and eliminate inventory leaks. It tracks new and used stock to accelerate your velocity, visualizes real-time daily and monthly sales pacing, and stops holding costs from eating your margins. Crucially, it secures your physical assets by tightly logging manager and overnight customer demos—slashing floor plan interest expenses, reducing insurance liabilities, and preventing unapproved mileage depreciation.",
-    "Instead of losing thousands to untracked vehicle days, SalesTower turns lot oversight into a profit center. It ensures your inventory, your liabilities, and your net profit are always perfectly in sync.",
-  ],
+  pitchHtml: DEFAULT_PITCH_HTML,
   footerTagline: "Secure dealership operations for GMs and sales managers.",
 };
 
 export function normalizeLandingContent(
-  input: Partial<LandingContent> | null | undefined
+  input: Partial<LandingContent> & {
+    pitchParagraphs?: string[];
+  } | null | undefined
 ): LandingContent {
   const base = DEFAULT_LANDING_CONTENT;
-  if (!input) return { ...base, features: [...base.features], pitchParagraphs: [...base.pitchParagraphs] };
+  if (!input) {
+    return {
+      ...base,
+      features: [...base.features],
+      pitchHtml: base.pitchHtml,
+    };
+  }
 
   const features =
     Array.isArray(input.features) && input.features.length > 0
@@ -82,10 +108,14 @@ export function normalizeLandingContent(
         }))
       : [...base.features];
 
-  const pitchParagraphs =
-    Array.isArray(input.pitchParagraphs) && input.pitchParagraphs.length > 0
-      ? input.pitchParagraphs.map((p) => String(p ?? "").trim()).filter(Boolean)
-      : [...base.pitchParagraphs];
+  let pitchHtml = String(input.pitchHtml ?? "").trim();
+  if (!pitchHtml && Array.isArray(input.pitchParagraphs) && input.pitchParagraphs.length) {
+    pitchHtml = paragraphsToHtml(
+      input.pitchParagraphs.map((p) => String(p ?? "").trim()).filter(Boolean)
+    );
+  }
+  if (!pitchHtml) pitchHtml = base.pitchHtml;
+  pitchHtml = sanitizeLandingHtml(pitchHtml) || base.pitchHtml;
 
   return {
     heroHeadline: String(input.heroHeadline ?? base.heroHeadline).trim() || base.heroHeadline,
@@ -105,7 +135,7 @@ export function normalizeLandingContent(
     bottomBody: String(input.bottomBody ?? base.bottomBody).trim() || base.bottomBody,
     pitchEyebrow:
       String(input.pitchEyebrow ?? base.pitchEyebrow).trim() || base.pitchEyebrow,
-    pitchParagraphs,
+    pitchHtml,
     footerTagline:
       String(input.footerTagline ?? base.footerTagline).trim() || base.footerTagline,
   };

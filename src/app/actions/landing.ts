@@ -12,6 +12,7 @@ import {
   type LandingContent,
   type LandingFeature,
 } from "@/lib/landing-content";
+import { sanitizeLandingHtml } from "@/lib/sanitize-html";
 
 const LANDING_ID = "default";
 
@@ -28,8 +29,8 @@ function parseFeatures(value: unknown): LandingFeature[] {
 }
 
 function parseParagraphs(value: unknown): string[] {
-  if (!Array.isArray(value)) return DEFAULT_LANDING_CONTENT.pitchParagraphs;
-  return value.map((item) => String(item ?? ""));
+  if (!Array.isArray(value)) return [];
+  return value.map((item) => String(item ?? "")).filter(Boolean);
 }
 
 function rowToContent(row: {
@@ -45,6 +46,7 @@ function rowToContent(row: {
   bottomTitle: string;
   bottomBody: string;
   pitchEyebrow: string;
+  pitchHtml?: string | null;
   pitchParagraphsJson: unknown;
   footerTagline: string;
 }): LandingContent {
@@ -61,6 +63,7 @@ function rowToContent(row: {
     bottomTitle: row.bottomTitle,
     bottomBody: row.bottomBody,
     pitchEyebrow: row.pitchEyebrow,
+    pitchHtml: row.pitchHtml ?? "",
     pitchParagraphs: parseParagraphs(row.pitchParagraphsJson),
     footerTagline: row.footerTagline,
   });
@@ -97,7 +100,8 @@ export async function getLandingContent(): Promise<LandingContent> {
         bottomTitle: DEFAULT_LANDING_CONTENT.bottomTitle,
         bottomBody: DEFAULT_LANDING_CONTENT.bottomBody,
         pitchEyebrow: DEFAULT_LANDING_CONTENT.pitchEyebrow,
-        pitchParagraphsJson: DEFAULT_LANDING_CONTENT.pitchParagraphs,
+        pitchHtml: DEFAULT_LANDING_CONTENT.pitchHtml,
+        pitchParagraphsJson: [],
         footerTagline: DEFAULT_LANDING_CONTENT.footerTagline,
       },
     });
@@ -130,11 +134,7 @@ export async function saveLandingContentAction(
     });
   }
 
-  const pitchRaw = String(formData.get("pitchParagraphs") ?? "");
-  const pitchParagraphs = pitchRaw
-    .split(/\n\s*\n/)
-    .map((p) => p.trim())
-    .filter(Boolean);
+  const pitchHtml = sanitizeLandingHtml(String(formData.get("pitchHtml") ?? ""));
 
   const content = normalizeLandingContent({
     heroHeadline: String(formData.get("heroHeadline") ?? ""),
@@ -149,7 +149,7 @@ export async function saveLandingContentAction(
     bottomTitle: String(formData.get("bottomTitle") ?? ""),
     bottomBody: String(formData.get("bottomBody") ?? ""),
     pitchEyebrow: String(formData.get("pitchEyebrow") ?? ""),
-    pitchParagraphs,
+    pitchHtml,
     footerTagline: String(formData.get("footerTagline") ?? ""),
   });
 
@@ -170,7 +170,8 @@ export async function saveLandingContentAction(
         bottomTitle: content.bottomTitle,
         bottomBody: content.bottomBody,
         pitchEyebrow: content.pitchEyebrow,
-        pitchParagraphsJson: content.pitchParagraphs,
+        pitchHtml: content.pitchHtml,
+        pitchParagraphsJson: [],
         footerTagline: content.footerTagline,
       },
       update: {
@@ -186,7 +187,7 @@ export async function saveLandingContentAction(
         bottomTitle: content.bottomTitle,
         bottomBody: content.bottomBody,
         pitchEyebrow: content.pitchEyebrow,
-        pitchParagraphsJson: content.pitchParagraphs,
+        pitchHtml: content.pitchHtml,
         footerTagline: content.footerTagline,
       },
     });
