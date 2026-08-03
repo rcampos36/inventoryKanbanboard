@@ -133,9 +133,9 @@ function ScheduleDemoModal({
 
         {state.ok ? (
           <div className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
-            <p className="font-semibold">Request sent.</p>
+            <p className="font-semibold">Request received.</p>
             <p className="mt-1">
-              Thanks — we&apos;ll email you shortly to schedule your demo.
+              Thanks — we&apos;ll follow up at your email to schedule the demo.
             </p>
           </div>
         ) : (

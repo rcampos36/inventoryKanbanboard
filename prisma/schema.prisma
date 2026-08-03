@@ -129,6 +129,21 @@ model Manager {
   @@index([organizationId])
 }
 
+/** Inbound “Schedule a Demo” leads from the marketing site. */
+model DemoRequest {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  dealership  String
+  phone       String?
+  message     String?  @db.Text
+  emailSent   Boolean  @default(false)
+  emailError  String?
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 /**
  * Singleton marketing copy for the public SalesTower landing page.
  * Edited from /admin/landing by the platform (Pearson) admin.
