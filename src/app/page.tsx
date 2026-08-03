@@ -1,4 +1,5 @@
 import { SalesTowerLanding } from "@/components/SalesTowerLanding";
+import { ScheduleDemoProvider } from "@/components/ScheduleDemo";
 import { getLandingContent } from "@/app/actions/landing";
 import { getOptionalUser } from "@/lib/auth";
 
@@ -11,10 +12,12 @@ export default async function HomePage() {
   ]);
 
   return (
-    <SalesTowerLanding
-      content={content}
-      isSignedIn={Boolean(user)}
-      organizationSlug={user?.organizationSlug}
-    />
+    <ScheduleDemoProvider>
+      <SalesTowerLanding
+        content={content}
+        isSignedIn={Boolean(user)}
+        organizationSlug={user?.organizationSlug}
+      />
+    </ScheduleDemoProvider>
   );
 }

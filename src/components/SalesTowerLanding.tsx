@@ -3,6 +3,7 @@ import Link from "next/link";
 import { boardPath } from "@/lib/paths";
 import type { LandingContent } from "@/lib/landing-content";
 import { LandingRichHtml } from "@/components/LandingRichHtml";
+import { ScheduleDemoButton } from "@/components/ScheduleDemo";
 
 export function SalesTowerLanding({
   content,
@@ -32,6 +33,10 @@ export function SalesTowerLanding({
           >
             Features
           </a>
+          <ScheduleDemoButton className="inline-flex h-9 items-center justify-center rounded-full border border-peach/45 px-2.5 text-xs font-bold text-sand transition hover:border-peach hover:bg-peach/10 sm:h-10 sm:px-4 sm:text-sm">
+            <span className="sm:hidden">Demo</span>
+            <span className="hidden sm:inline">Schedule a Demo</span>
+          </ScheduleDemoButton>
           <Link
             href="/admin/landing"
             className="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
@@ -82,20 +87,15 @@ export function SalesTowerLanding({
             {content.heroSubcopy}
           </p>
           <div className="salestower-animate-fade-up salestower-delay-3 mt-8 flex flex-wrap items-center gap-3">
+            <ScheduleDemoButton className="rounded-full bg-peach px-7 py-3 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]">
+              Schedule a Demo
+            </ScheduleDemoButton>
             <Link
               href={primaryHref}
-              className="rounded-full bg-peach px-7 py-3 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]"
+              className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
             >
               {primaryLabel}
             </Link>
-            {!isSignedIn && (
-              <Link
-                href={secondaryHref}
-                className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
-              >
-                {secondaryLabel}
-              </Link>
-            )}
           </div>
         </div>
       </section>
@@ -112,6 +112,9 @@ export function SalesTowerLanding({
           </div>
           <div className="space-y-5 text-base leading-relaxed text-[var(--salestower-muted)] md:text-lg">
             <p>{content.aboutBody}</p>
+            <ScheduleDemoButton className="inline-flex rounded-full bg-brand px-6 py-2.5 text-sm font-bold text-sand transition hover:bg-[#034a5c]">
+              Schedule a Demo
+            </ScheduleDemoButton>
           </div>
         </div>
       </section>
@@ -162,6 +165,11 @@ export function SalesTowerLanding({
           <p className="mt-6 text-base leading-relaxed text-sand/80 md:text-lg">
             {content.bottomBody}
           </p>
+          <div className="mt-8">
+            <ScheduleDemoButton className="rounded-full bg-peach px-7 py-3 text-sm font-bold text-brand transition hover:bg-[#f5c9a4]">
+              Schedule a Demo
+            </ScheduleDemoButton>
+          </div>
         </div>
       </section>
 
@@ -173,10 +181,13 @@ export function SalesTowerLanding({
           <div className="mt-6 border-l-4 border-peach pl-5">
             <LandingRichHtml html={content.pitchHtml} />
           </div>
-          <div className="mt-10">
+          <div className="mt-10 flex flex-wrap items-center gap-3">
+            <ScheduleDemoButton className="inline-flex rounded-full bg-brand px-7 py-3 text-sm font-bold text-sand transition hover:bg-[#034a5c]">
+              Schedule a Demo
+            </ScheduleDemoButton>
             <Link
               href={primaryHref}
-              className="inline-flex rounded-full bg-brand px-7 py-3 text-sm font-bold text-sand transition hover:bg-[#034a5c]"
+              className="inline-flex rounded-full border border-brand/20 px-6 py-3 text-sm font-semibold text-brand transition hover:bg-peach/30"
             >
               {isSignedIn ? "Go to your dashboard" : "Register your dealership"}
             </Link>
@@ -186,12 +197,17 @@ export function SalesTowerLanding({
 
       <footer className="border-t border-peach/40 bg-sand px-6 py-8 md:px-10">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4">
-          <p className="font-[family-name:var(--font-syne)] text-lg font-bold tracking-tight text-brand">
-            SalesTower
-          </p>
-          <p className="text-sm text-[var(--salestower-muted)]">
-            {content.footerTagline}
-          </p>
+          <div>
+            <p className="font-[family-name:var(--font-syne)] text-lg font-bold tracking-tight text-brand">
+              SalesTower
+            </p>
+            <p className="mt-1 text-sm text-[var(--salestower-muted)]">
+              {content.footerTagline}
+            </p>
+          </div>
+          <ScheduleDemoButton className="rounded-full border border-brand/25 bg-[var(--salestower-surface)] px-5 py-2.5 text-sm font-bold text-brand transition hover:bg-peach/40">
+            Schedule a Demo
+          </ScheduleDemoButton>
         </div>
       </footer>
     </div>
