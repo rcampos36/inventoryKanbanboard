@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useActionState, useState } from "react";
 import Link from "next/link";
 import {
@@ -7,8 +8,20 @@ import {
   type SaveLandingContentState,
 } from "@/app/actions/landing";
 import type { LandingContent, LandingFeature } from "@/lib/landing-content";
-import { RichTextEditor } from "@/components/RichTextEditor";
 import { LandingRichHtml } from "@/components/LandingRichHtml";
+
+const RichTextEditor = dynamic(
+  () =>
+    import("@/components/RichTextEditor").then((mod) => mod.RichTextEditor),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="mt-1.5 min-h-[14rem] rounded-lg border border-peach/70 bg-white px-3 py-2 text-sm text-brand/50">
+        Loading editor…
+      </div>
+    ),
+  }
+);
 
 const initialState: SaveLandingContentState = { ok: false };
 
