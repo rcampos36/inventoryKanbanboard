@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   registerDealerAction,
@@ -11,12 +11,15 @@ import {
   PLANS,
   type PlanId,
 } from "@/lib/plans";
+import { getUsCitiesForState, getUsStates } from "@/lib/us-locations";
 
 const initialState: AuthFormState = {};
 
 const inputClass =
   "w-full rounded-lg border border-peach/70 px-3 py-2.5 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
 const labelClass = "text-xs font-semibold text-brand/70";
+
+const US_STATES = getUsStates();
 
 export function RegisterForm({ brands }: { brands: string[] }) {
   const [state, formAction, pending] = useActionState(
@@ -25,10 +28,17 @@ export function RegisterForm({ brands }: { brands: string[] }) {
   );
   const [brand, setBrand] = useState("");
   const [plan, setPlan] = useState<PlanId>(DEFAULT_PLAN_ID);
+  const [stateCode, setStateCode] = useState("");
+  const [city, setCity] = useState("");
   const [salespersonDraft, setSalespersonDraft] = useState("");
   const [salespeople, setSalespeople] = useState<string[]>([]);
   const [managerDraft, setManagerDraft] = useState("");
   const [managers, setManagers] = useState<string[]>([]);
+
+  const cityOptions = useMemo(
+    () => getUsCitiesForState(stateCode),
+    [stateCode]
+  );
 
   // Avoid password-manager autofill mismatching server HTML on first paint.
   const [hydrated, setHydrated] = useState(false);
@@ -244,32 +254,57 @@ export function RegisterForm({ brands }: { brands: string[] }) {
             />
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
-            <div className="flex flex-col gap-1 sm:col-span-1">
-              <label className={labelClass} htmlFor="city">
-                City
-              </label>
-              <input
-                id="city"
-                name="city"
-                required
-                autoComplete="address-level2"
-                className={inputClass}
-                suppressHydrationWarning
-              />
-            </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass} htmlFor="state">
                 State
               </label>
-              <input
+              <select
                 id="state"
                 name="state"
                 required
+                value={stateCode}
+                onChange={(e) => {
+                  setStateCode(e.target.value);
+                  setCity("");
+                }}
                 autoComplete="address-level1"
-                placeholder="FL"
                 className={inputClass}
                 suppressHydrationWarning
-              />
+              >
+                <option value="" disabled>
+                  Select state…
+                </option>
+                {US_STATES.map((option) => (
+                  <option key={option.code} value={option.code}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1 sm:col-span-1">
+              <label className={labelClass} htmlFor="city">
+                City
+              </label>
+              <select
+                id="city"
+                name="city"
+                required
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                disabled={!stateCode}
+                autoComplete="address-level2"
+                className={inputClass}
+                suppressHydrationWarning
+              >
+                <option value="" disabled>
+                  {stateCode ? "Select city…" : "Select state first…"}
+                </option>
+                {cityOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-1">
               <label className={labelClass} htmlFor="postalCode">

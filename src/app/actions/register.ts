@@ -15,6 +15,10 @@ import { uniqueSlug } from "@/lib/slug";
 import { boardPath, isReservedPathSlug } from "@/lib/paths";
 import { parsePlanId } from "@/lib/plans";
 import { todayIsoDate } from "@/lib/types";
+import {
+  isValidUsCity,
+  resolveUsStateCode,
+} from "@/lib/us-locations";
 import type { AuthFormState } from "@/app/actions/auth";
 
 function parseNameList(raw: FormDataEntryValue | null): string[] {
@@ -67,11 +71,15 @@ export async function registerDealerAction(
   if (!addressLine1) {
     return { error: "Street address is required." };
   }
+  const stateCode = resolveUsStateCode(state);
+  if (!stateCode) {
+    return { error: "Choose a valid U.S. state." };
+  }
   if (!city) {
     return { error: "City is required." };
   }
-  if (!state) {
-    return { error: "State is required." };
+  if (!isValidUsCity(stateCode, city)) {
+    return { error: "Choose a city that matches the selected state." };
   }
   if (!postalCode) {
     return { error: "ZIP code is required." };
@@ -159,7 +167,7 @@ export async function registerDealerAction(
           addressLine1,
           addressLine2: addressLine2 || null,
           city,
-          state,
+          state: stateCode,
           postalCode,
         },
       });
