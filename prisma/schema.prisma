@@ -9,6 +9,19 @@ datasource db {
   provider = "postgresql"
 }
 
+enum PlanId {
+  starter
+  professional
+  enterprise
+}
+
+enum PlanStatus {
+  trialing
+  active
+  past_due
+  canceled
+}
+
 /** A dealership / customer tenant on the shared SalesTower database. */
 model Organization {
   id        String   @id @default(cuid())
@@ -16,6 +29,9 @@ model Organization {
   slug      String   @unique
   /** Franchise brand for new-car model lanes (e.g. Mazda, Honda). */
   brand     String   @default("Mazda")
+  /** Selected subscription tier (Stripe billing can attach later). */
+  plan      PlanId   @default(professional)
+  planStatus PlanStatus @default(trialing)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -14,7 +14,7 @@ export default async function RegisterPage() {
   return (
     <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-sand px-4 py-10">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(239,187,146,0.55),_transparent_55%)]" />
-      <div className="relative w-full max-w-lg">
+      <div className="relative w-full max-w-2xl">
         <div className="mb-6 text-center">
           <Link
             href="/"
@@ -26,7 +26,7 @@ export default async function RegisterPage() {
             Set up your dealership workspace in a few minutes
           </p>
         </div>
-        <div className="rounded-2xl border border-peach/70 bg-[var(--salestower-surface)] p-8 shadow-sm">
+        <div className="rounded-2xl border border-peach/70 bg-[var(--salestower-surface)] p-6 shadow-sm sm:p-8">
           <RegisterForm brands={getFranchiseBrandOptions()} />
         </div>
         <p className="mt-4 text-center text-sm text-brand/65">

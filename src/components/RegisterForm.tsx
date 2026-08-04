@@ -6,6 +6,11 @@ import {
   registerDealerAction,
 } from "@/app/actions/register";
 import type { AuthFormState } from "@/app/actions/auth";
+import {
+  DEFAULT_PLAN_ID,
+  PLANS,
+  type PlanId,
+} from "@/lib/plans";
 
 const initialState: AuthFormState = {};
 
@@ -19,6 +24,7 @@ export function RegisterForm({ brands }: { brands: string[] }) {
     initialState
   );
   const [brand, setBrand] = useState("");
+  const [plan, setPlan] = useState<PlanId>(DEFAULT_PLAN_ID);
   const [salespersonDraft, setSalespersonDraft] = useState("");
   const [salespeople, setSalespeople] = useState<string[]>([]);
   const [managerDraft, setManagerDraft] = useState("");
@@ -47,12 +53,11 @@ export function RegisterForm({ brands }: { brands: string[] }) {
   }
 
   return (
-    <div className="flex w-full max-w-lg flex-col gap-5">
+    <div className="flex w-full flex-col gap-5">
       <div>
         <h1 className="text-2xl font-bold text-brand">Register your dealership</h1>
         <p className="mt-1 text-sm text-brand/60">
-          Create your store admin account, pick your franchise brand for inventory
-          model lanes, and optionally add your sales team and managers.
+          Choose a plan, create your store admin account, and set up your board.
         </p>
       </div>
 
@@ -63,6 +68,83 @@ export function RegisterForm({ brands }: { brands: string[] }) {
       )}
 
       <form action={formAction} className="flex flex-col gap-4" autoComplete="on">
+        <fieldset className="flex flex-col gap-3">
+          <legend className="text-sm font-bold text-brand">Plan</legend>
+          <input type="hidden" name="plan" value={plan} />
+          <div className="grid gap-3 sm:grid-cols-3">
+            {PLANS.map((option) => {
+              const selected = plan === option.id;
+              return (
+                <button
+                  key={option.id}
+                  type="button"
+                  onClick={() => setPlan(option.id)}
+                  className={[
+                    "flex h-full flex-col rounded-xl border px-3 py-3 text-left transition",
+                    selected
+                      ? "border-brand bg-brand text-sand ring-2 ring-brand/20"
+                      : "border-peach/70 bg-[var(--salestower-surface)] text-brand hover:border-brand/40 hover:bg-peach/20",
+                    option.highlighted && !selected
+                      ? "shadow-[0_0_0_1px_rgba(2,52,65,0.08)]"
+                      : "",
+                  ].join(" ")}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="text-sm font-bold">{option.name}</span>
+                    {option.highlighted && (
+                      <span
+                        className={[
+                          "rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide",
+                          selected
+                            ? "bg-sand/20 text-sand"
+                            : "bg-peach/70 text-brand",
+                        ].join(" ")}
+                      >
+                        Popular
+                      </span>
+                    )}
+                  </div>
+                  <p
+                    className={[
+                      "mt-1 font-[family-name:var(--font-syne)] text-lg font-extrabold",
+                      selected ? "text-sand" : "text-brand",
+                    ].join(" ")}
+                  >
+                    {option.priceLabel}
+                  </p>
+                  <p
+                    className={[
+                      "mt-1 text-xs leading-snug",
+                      selected ? "text-sand/80" : "text-brand/60",
+                    ].join(" ")}
+                  >
+                    {option.blurb}
+                  </p>
+                  <ul
+                    className={[
+                      "mt-3 flex flex-col gap-1 text-[11px] leading-snug",
+                      selected ? "text-sand/85" : "text-brand/70",
+                    ].join(" ")}
+                  >
+                    {option.features.map((feature) => (
+                      <li key={feature} className="flex gap-1.5">
+                        <span aria-hidden className="mt-0.5 shrink-0">
+                          ·
+                        </span>
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[11px] text-brand/55">
+            Billing checkout can be connected later. Your selection is saved on
+            the dealership now so we know which plan you want.
+          </p>
+        </fieldset>
+
         <fieldset className="flex flex-col gap-3">
           <legend className="text-sm font-bold text-brand">Dealership</legend>
           <div className="flex flex-col gap-1">

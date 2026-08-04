@@ -13,6 +13,7 @@ import {
 } from "@/lib/session";
 import { uniqueSlug } from "@/lib/slug";
 import { boardPath, isReservedPathSlug } from "@/lib/paths";
+import { parsePlanId } from "@/lib/plans";
 import { todayIsoDate } from "@/lib/types";
 import type { AuthFormState } from "@/app/actions/auth";
 
@@ -42,9 +43,13 @@ export async function registerDealerAction(
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
   const salespersonNames = parseNameList(formData.get("salespeople"));
   const managerNames = parseNameList(formData.get("managers"));
+  const plan = parsePlanId(formData.get("plan"));
 
   if (!dealershipName) {
     return { error: "Dealership name is required." };
+  }
+  if (!plan) {
+    return { error: "Please select a subscription plan." };
   }
   if (!brandRaw) {
     return { error: "Franchise brand is required." };
@@ -116,6 +121,8 @@ export async function registerDealerAction(
           name: dealershipName,
           slug,
           brand,
+          plan,
+          planStatus: "trialing",
         },
       });
 
