@@ -92,11 +92,19 @@ import { ManagersProvider } from "./ManagersContext";
 import { TeamLaneItem, TeamLaneScroll } from "./TeamLaneScroll";
 import {
   DEFAULT_SECTION_VISIBILITY,
+  applyPlanSectionAccess,
   loadSectionVisibility,
   saveSectionVisibility,
   SectionVisibilityMenu,
+  type BoardSection,
   type SectionVisibility,
 } from "./SectionVisibilityMenu";
+import {
+  DEFAULT_PLAN_ID,
+  planAllowedBoardSections,
+  planHasFeature,
+  type PlanId,
+} from "@/lib/plans";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -146,6 +154,7 @@ interface KanbanBoardProps {
   initialManagers: Manager[];
   organizationName?: string;
   organizationBrand?: string;
+  organizationPlan?: PlanId;
   isAdmin?: boolean;
   headerActions?: React.ReactNode;
   /**
@@ -163,11 +172,18 @@ export function KanbanBoard({
   initialManagers,
   organizationName,
   organizationBrand = "Mazda",
+  organizationPlan = DEFAULT_PLAN_ID,
   isAdmin = false,
   headerActions,
   sandbox = false,
 }: KanbanBoardProps) {
   const brand = organizationBrand;
+  const effectivePlan: PlanId = sandbox ? "enterprise" : organizationPlan;
+  const allowedBoardSections = useMemo(
+    () => planAllowedBoardSections(effectivePlan) as readonly BoardSection[],
+    [effectivePlan]
+  );
+  const canImport = sandbox || planHasFeature(effectivePlan, "import");
   const modelColumns = useMemo(() => getModelColumns(brand), [brand]);
   const newModelColumns = useMemo(() => getNewModelColumns(brand), [brand]);
   const usedModelColumns = useMemo(() => getUsedColumns(brand), [brand]);
@@ -246,12 +262,15 @@ export function KanbanBoard({
 
   useEffect(() => {
     setMounted(true);
-    setSectionVisibility(loadSectionVisibility());
-  }, []);
+    setSectionVisibility(
+      applyPlanSectionAccess(loadSectionVisibility(), allowedBoardSections)
+    );
+  }, [allowedBoardSections]);
 
   function updateSectionVisibility(next: SectionVisibility) {
-    setSectionVisibility(next);
-    saveSectionVisibility(next);
+    const clamped = applyPlanSectionAccess(next, allowedBoardSections);
+    setSectionVisibility(clamped);
+    saveSectionVisibility(clamped);
   }
 
   /** Sandbox: jump the calendar forward so Daily Sales move into Sold by. */
@@ -1153,6 +1172,7 @@ export function KanbanBoard({
             <SectionVisibilityMenu
               visibility={sectionVisibility}
               onChange={updateSectionVisibility}
+              allowedSections={allowedBoardSections}
             />
 
             {(isAdmin || sandbox) && (
@@ -1176,7 +1196,7 @@ export function KanbanBoard({
               </button>
             )}
 
-            {!sandbox && (
+            {canImport && !sandbox && (
               <button
                 type="button"
                 onClick={() => setImportOpen(true)}

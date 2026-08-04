@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireUser } from "@/lib/auth";
+import { requirePlanFeature } from "@/lib/auth";
 import {
   currentMonthKey,
   formatMonthLabel,
@@ -102,7 +102,7 @@ function isHalf(event: CreditEvent): boolean {
 export async function getMonthlyReportAction(
   monthKey?: string
 ): Promise<MonthlyReport> {
-  const user = await requireUser();
+  const user = await requirePlanFeature("reports");
   const months = lastTwelveMonthKeys().map((key) => ({
     key,
     label: formatMonthLabel(key),

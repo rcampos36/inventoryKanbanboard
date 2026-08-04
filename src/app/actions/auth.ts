@@ -15,6 +15,12 @@ import {
   setSessionCookie,
 } from "@/lib/session";
 import { boardPath } from "@/lib/paths";
+import {
+  DEFAULT_PLAN_ID,
+  isPlanId,
+  planLabel,
+  planMaxUsers,
+} from "@/lib/plans";
 
 export type AuthFormState = {
   error?: string;
@@ -59,6 +65,11 @@ export async function loginAction(
     return { error: "Invalid email or password." };
   }
 
+  const organizationPlan =
+    user.organization.plan && isPlanId(user.organization.plan)
+      ? user.organization.plan
+      : DEFAULT_PLAN_ID;
+
   const token = await createSessionToken({
     id: user.id,
     email: user.email,
@@ -68,6 +79,7 @@ export async function loginAction(
     organizationName: user.organization.name,
     organizationSlug: user.organization.slug,
     organizationBrand: user.organization.brand || "Mazda",
+    organizationPlan,
   });
   await setSessionCookie(token);
   redirect(boardPath(user.organization.slug));
@@ -119,6 +131,16 @@ export async function createUserAction(
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
       return { error: "A user with this email already exists." };
+    }
+
+    const maxUsers = planMaxUsers(admin.organizationPlan);
+    const userCount = await prisma.user.count({
+      where: { organizationId: admin.organizationId },
+    });
+    if (userCount >= maxUsers) {
+      return {
+        error: `Your ${planLabel(admin.organizationPlan)} plan allows up to ${maxUsers} user logins. Upgrade to add more.`,
+      };
     }
 
     const passwordHash = await bcrypt.hash(password, 12);

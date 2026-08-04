@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getMonthlyReportAction } from "@/app/actions/reports";
-import { requireUser } from "@/lib/auth";
+import { requirePlanFeature } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
 import { formatSaleCount, formatShortDate } from "@/lib/types";
 import { ReportsMonthPicker } from "@/components/ReportsMonthPicker";
@@ -27,7 +27,7 @@ export default async function ReportsPage({
 }: ReportsPageProps) {
   const { dealerSlug } = await params;
   const { month } = await searchParams;
-  const user = await requireUser();
+  const user = await requirePlanFeature("reports");
 
   if (user.organizationSlug !== dealerSlug) {
     redirect(`${boardPath(user.organizationSlug)}/reports`);

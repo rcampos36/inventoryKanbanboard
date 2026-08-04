@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { toAppCar, toDbCarData } from "@/lib/car-mapper";
-import { requireAdmin, requireUser } from "@/lib/auth";
+import { planFeatureDenied, requireAdmin, requireUser } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
 import {
   eventsFromCarChange,
@@ -153,6 +153,10 @@ export async function importInventoryAction(
   formData: FormData
 ): Promise<ImportInventoryResult> {
   const user = await requireUser();
+  const denied = planFeatureDenied(user, "import");
+  if (denied) {
+    return { ok: false, error: denied };
+  }
   const file = formData.get("file");
 
   if (!(file instanceof File)) {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { logoutAction, listUsersAction } from "@/app/actions/auth";
 import { requireAdmin } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
+import { planLabel, planMaxUsers } from "@/lib/plans";
 import { AdminUsersPanel } from "@/components/AdminUsersPanel";
 
 export const dynamic = "force-dynamic";
@@ -45,6 +46,8 @@ export default async function AdminPage() {
 
       <AdminUsersPanel
         currentUserId={admin.id}
+        planName={planLabel(admin.organizationPlan)}
+        maxUsers={planMaxUsers(admin.organizationPlan)}
         users={users.map((u) => ({
           ...u,
           createdAt: u.createdAt.toISOString(),

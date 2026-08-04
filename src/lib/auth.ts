@@ -5,6 +5,14 @@ import { readSessionUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-types";
 import { ensureOrganizations, PEARSON_ORG } from "@/lib/tenant";
 import { boardPath } from "@/lib/paths";
+import {
+  DEFAULT_PLAN_ID,
+  featureUpgradeHint,
+  isPlanId,
+  planHasFeature,
+  type PlanFeature,
+  type PlanId,
+} from "@/lib/plans";
 
 export type { SessionUser };
 
@@ -96,13 +104,24 @@ export async function ensureSunriseDemoAdmin() {
   });
 }
 
+async function withFreshPlan(user: SessionUser): Promise<SessionUser> {
+  const org = await prisma.organization.findUnique({
+    where: { id: user.organizationId },
+    select: { plan: true },
+  });
+  const plan: PlanId =
+    org?.plan && isPlanId(org.plan) ? org.plan : DEFAULT_PLAN_ID;
+  if (user.organizationPlan === plan) return user;
+  return { ...user, organizationPlan: plan };
+}
+
 export async function requireUser(): Promise<SessionUser> {
   await ensureBootstrapAdmin();
   const user = await readSessionUser();
   if (!user) {
     redirect("/login");
   }
-  return user;
+  return withFreshPlan(user);
 }
 
 export async function requireAdmin(): Promise<SessionUser> {
@@ -119,5 +138,27 @@ export async function getOptionalUser(): Promise<SessionUser | null> {
   } catch {
     // Allow login page to render with a setup message if admin env is missing.
   }
-  return readSessionUser();
+  const user = await readSessionUser();
+  if (!user) return null;
+  return withFreshPlan(user);
+}
+
+/** Redirect away from gated pages when the org plan lacks a feature. */
+export async function requirePlanFeature(
+  feature: PlanFeature
+): Promise<SessionUser> {
+  const user = await requireUser();
+  if (!planHasFeature(user.organizationPlan, feature)) {
+    redirect(boardPath(user.organizationSlug));
+  }
+  return user;
+}
+
+/** For server actions: return an error message when the plan blocks a feature. */
+export function planFeatureDenied(
+  user: SessionUser,
+  feature: PlanFeature
+): string | null {
+  if (planHasFeature(user.organizationPlan, feature)) return null;
+  return featureUpgradeHint(feature);
 }

@@ -25,10 +25,15 @@ const labelClass = "text-xs font-semibold text-brand/70";
 export function AdminUsersPanel({
   users,
   currentUserId,
+  planName,
+  maxUsers,
 }: {
   users: ManagedUser[];
   currentUserId: string;
+  planName: string;
+  maxUsers: number;
 }) {
+  const atSeatLimit = users.length >= maxUsers;
   const router = useRouter();
   const [createState, createAction, creating] = useActionState(
     createUserAction,
@@ -60,12 +65,21 @@ export function AdminUsersPanel({
         <p className="mt-1 text-sm text-slate-500">
           Add people who can sign in to the inventory board.
         </p>
+        <p className="mt-2 text-sm font-medium text-brand/70">
+          {planName} plan · {users.length} of {maxUsers} user logins used
+        </p>
       </div>
 
       <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
         <h2 className="mb-3 text-sm font-bold uppercase tracking-wider text-slate-400">
           Grant access
         </h2>
+        {atSeatLimit && (
+          <p className="mb-3 rounded-lg bg-amber-50 px-3 py-2 text-sm font-medium text-amber-900">
+            You&apos;ve reached the {maxUsers}-user limit on {planName}. Upgrade
+            your plan to add more logins.
+          </p>
+        )}
         <form action={createAction} className="grid gap-3 sm:grid-cols-2">
           <div className="flex flex-col gap-1">
             <label className={labelClass} htmlFor="name">
@@ -125,7 +139,7 @@ export function AdminUsersPanel({
             )}
             <button
               type="submit"
-              disabled={creating}
+              disabled={creating || atSeatLimit}
               className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
             >
               {creating ? "Adding…" : "Add user"}

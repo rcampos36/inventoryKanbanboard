@@ -105,7 +105,13 @@ export async function registerDealerAction(
   const passwordHash = await bcrypt.hash(password, 12);
 
   let organization: {
-    org: { id: string; name: string; slug: string; brand: string };
+    org: {
+      id: string;
+      name: string;
+      slug: string;
+      brand: string;
+      plan: typeof plan;
+    };
     admin: {
       id: string;
       email: string;
@@ -193,6 +199,7 @@ export async function registerDealerAction(
     organizationName: organization.org.name,
     organizationSlug: organization.org.slug,
     organizationBrand: organization.org.brand,
+    organizationPlan: organization.org.plan,
   });
   await setSessionCookie(token);
   redirect(boardPath(organization.org.slug));

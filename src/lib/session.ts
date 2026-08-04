@@ -5,6 +5,7 @@ import {
   SESSION_MAX_AGE_SECONDS,
   type SessionUser,
 } from "@/lib/session-types";
+import { DEFAULT_PLAN_ID, isPlanId } from "@/lib/plans";
 
 function getSecretKey() {
   const secret = process.env.AUTH_SECRET;
@@ -25,6 +26,7 @@ export async function createSessionToken(user: SessionUser): Promise<string> {
     organizationName: user.organizationName,
     organizationSlug: user.organizationSlug,
     organizationBrand: user.organizationBrand,
+    organizationPlan: user.organizationPlan,
   })
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(user.id)
@@ -61,6 +63,11 @@ export async function readSessionUser(): Promise<SessionUser | null> {
       typeof payload.organizationBrand === "string"
         ? payload.organizationBrand
         : "Mazda";
+    const organizationPlan =
+      typeof payload.organizationPlan === "string" &&
+      isPlanId(payload.organizationPlan)
+        ? payload.organizationPlan
+        : DEFAULT_PLAN_ID;
     if (
       !id ||
       !email ||
@@ -81,6 +88,7 @@ export async function readSessionUser(): Promise<SessionUser | null> {
       organizationName,
       organizationSlug,
       organizationBrand,
+      organizationPlan,
     };
   } catch {
     return null;

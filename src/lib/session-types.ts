@@ -1,3 +1,5 @@
+import type { PlanId } from "@/lib/plans";
+
 export type SessionUser = {
   id: string;
   email: string;
@@ -7,6 +9,8 @@ export type SessionUser = {
   organizationName: string;
   organizationSlug: string;
   organizationBrand: string;
+  /** Organization subscription tier; may be refreshed from DB for older sessions. */
+  organizationPlan: PlanId;
 };
 
 export const SESSION_COOKIE = "ikb_session";

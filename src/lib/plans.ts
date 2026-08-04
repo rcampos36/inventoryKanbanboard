@@ -1,8 +1,31 @@
-/** Subscription plans selectable at registration (Stripe wiring comes later). */
+/** Subscription plans selectable at registration (billing can attach later). */
 
 export const PLAN_IDS = ["starter", "professional", "enterprise"] as const;
 
 export type PlanId = (typeof PLAN_IDS)[number];
+
+/** Gated product capabilities. */
+export const PLAN_FEATURES = [
+  "reports",
+  "import",
+  "managerDemos",
+  "intake",
+] as const;
+
+export type PlanFeature = (typeof PLAN_FEATURES)[number];
+
+/** Board panes that can be plan-restricted. */
+export const PLAN_BOARD_SECTIONS = [
+  "inventory",
+  "sales",
+  "dailySales",
+  "workingDeals",
+  "managers",
+  "overnight",
+  "intake",
+] as const;
+
+export type PlanBoardSection = (typeof PLAN_BOARD_SECTIONS)[number];
 
 export type PlanDefinition = {
   id: PlanId;
@@ -11,7 +34,20 @@ export type PlanDefinition = {
   blurb: string;
   features: string[];
   highlighted?: boolean;
+  maxUsers: number;
+  entitlements: readonly PlanFeature[];
+  boardSections: readonly PlanBoardSection[];
 };
+
+const STARTER_SECTIONS = [
+  "inventory",
+  "sales",
+  "dailySales",
+  "workingDeals",
+  "overnight",
+] as const satisfies readonly PlanBoardSection[];
+
+const FULL_BOARD_SECTIONS = PLAN_BOARD_SECTIONS;
 
 export const PLANS: PlanDefinition[] = [
   {
@@ -25,6 +61,9 @@ export const PLANS: PlanDefinition[] = [
       "Inventory + Daily Sales + Sold by",
       "Working deals & overnight demos",
     ],
+    maxUsers: 5,
+    entitlements: [],
+    boardSections: STARTER_SECTIONS,
   },
   {
     id: "professional",
@@ -36,9 +75,13 @@ export const PLANS: PlanDefinition[] = [
       "Up to 20 user logins",
       "Reports & sales history",
       "Inventory file import",
+      "Manager demos & intake lanes",
       "Priority email support",
     ],
     highlighted: true,
+    maxUsers: 20,
+    entitlements: ["reports", "import", "managerDemos", "intake"],
+    boardSections: FULL_BOARD_SECTIONS,
   },
   {
     id: "enterprise",
@@ -52,6 +95,9 @@ export const PLANS: PlanDefinition[] = [
       "SSO (coming later)",
       "Onboarding support",
     ],
+    maxUsers: 100,
+    entitlements: ["reports", "import", "managerDemos", "intake"],
+    boardSections: FULL_BOARD_SECTIONS,
   },
 ];
 
@@ -67,6 +113,44 @@ export function parsePlanId(value: unknown): PlanId | null {
   return isPlanId(normalized) ? normalized : null;
 }
 
+export function getPlan(planId: PlanId): PlanDefinition {
+  return PLANS.find((plan) => plan.id === planId) ?? PLANS[1]!;
+}
+
 export function planLabel(planId: PlanId): string {
-  return PLANS.find((plan) => plan.id === planId)?.name ?? planId;
+  return getPlan(planId).name;
+}
+
+export function planHasFeature(planId: PlanId, feature: PlanFeature): boolean {
+  return getPlan(planId).entitlements.includes(feature);
+}
+
+export function planMaxUsers(planId: PlanId): number {
+  return getPlan(planId).maxUsers;
+}
+
+export function planAllowsBoardSection(
+  planId: PlanId,
+  section: PlanBoardSection
+): boolean {
+  return getPlan(planId).boardSections.includes(section);
+}
+
+export function planAllowedBoardSections(
+  planId: PlanId
+): readonly PlanBoardSection[] {
+  return getPlan(planId).boardSections;
+}
+
+export function featureUpgradeHint(feature: PlanFeature): string {
+  switch (feature) {
+    case "reports":
+      return "Reports are available on Professional and Enterprise plans.";
+    case "import":
+      return "Inventory file import is available on Professional and Enterprise plans.";
+    case "managerDemos":
+      return "Manager demos are available on Professional and Enterprise plans.";
+    case "intake":
+      return "Incoming, DX, and loaner lanes are available on Professional and Enterprise plans.";
+  }
 }

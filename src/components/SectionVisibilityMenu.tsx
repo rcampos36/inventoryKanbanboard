@@ -57,16 +57,37 @@ export function saveSectionVisibility(visibility: SectionVisibility) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(visibility));
 }
 
+/** Force plan-gated sections off; keep at least one allowed section on. */
+export function applyPlanSectionAccess(
+  visibility: SectionVisibility,
+  allowedSections: readonly BoardSection[]
+): SectionVisibility {
+  const allowed = new Set(allowedSections);
+  const next: SectionVisibility = { ...visibility };
+  for (const section of BOARD_SECTIONS) {
+    if (!allowed.has(section)) next[section] = false;
+  }
+  if (allowedSections.length > 0 && allowedSections.every((id) => !next[id])) {
+    next[allowedSections[0]!] = true;
+  }
+  return next;
+}
+
 export function SectionVisibilityMenu({
   visibility,
   onChange,
+  allowedSections = BOARD_SECTIONS,
 }: {
   visibility: SectionVisibility;
   onChange: (next: SectionVisibility) => void;
+  allowedSections?: readonly BoardSection[];
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const hiddenCount = BOARD_SECTIONS.filter((id) => !visibility[id]).length;
+  const menuSections = BOARD_SECTIONS.filter((id) =>
+    allowedSections.includes(id)
+  );
+  const hiddenCount = menuSections.filter((id) => !visibility[id]).length;
 
   useEffect(() => {
     if (!open) return;
@@ -85,9 +106,21 @@ export function SectionVisibilityMenu({
   }, [open]);
 
   function toggle(section: BoardSection) {
-    const next = { ...visibility, [section]: !visibility[section] };
-    // Keep at least one section visible.
-    if (BOARD_SECTIONS.every((id) => !next[id])) return;
+    if (!allowedSections.includes(section)) return;
+    const next = applyPlanSectionAccess(
+      { ...visibility, [section]: !visibility[section] },
+      allowedSections
+    );
+    // Keep at least one allowed section visible.
+    if (menuSections.every((id) => !next[id])) return;
+    onChange(next);
+  }
+
+  function showAllAllowed() {
+    const next = { ...DEFAULT_SECTION_VISIBILITY };
+    for (const section of BOARD_SECTIONS) {
+      next[section] = allowedSections.includes(section);
+    }
     onChange(next);
   }
 
@@ -117,7 +150,7 @@ export function SectionVisibilityMenu({
             Show on board
           </p>
           <ul className="flex flex-col gap-0.5">
-            {BOARD_SECTIONS.map((section) => (
+            {menuSections.map((section) => (
               <li key={section}>
                 <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-2 text-sm text-brand hover:bg-peach/30">
                   <input
@@ -134,7 +167,7 @@ export function SectionVisibilityMenu({
           {hiddenCount > 0 && (
             <button
               type="button"
-              onClick={() => onChange({ ...DEFAULT_SECTION_VISIBILITY })}
+              onClick={showAllAllowed}
               className="mt-1 w-full rounded-lg px-2 py-1.5 text-xs font-semibold text-brand/70 hover:bg-slate-50"
             >
               Show all
