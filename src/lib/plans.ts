@@ -17,7 +17,7 @@ export const PLANS: PlanDefinition[] = [
   {
     id: "starter",
     name: "Starter",
-    priceLabel: "$99/mo",
+    priceLabel: "$299/mo",
     blurb: "One rooftop getting organized on the board.",
     features: [
       "1 dealership board",
@@ -29,7 +29,7 @@ export const PLANS: PlanDefinition[] = [
   {
     id: "professional",
     name: "Professional",
-    priceLabel: "$199/mo",
+    priceLabel: "$599/mo",
     blurb: "Full sales-tower visibility for an active store.",
     features: [
       "Everything in Starter",
