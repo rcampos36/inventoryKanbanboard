@@ -153,23 +153,23 @@ export default function TermsOfUsePage() {
                 third parties
               </li>
               <li>
-                Use the public demo board as a production system of record for
-                real dealership operations
+                Use the demo board as a production system of record for real
+                dealership operations
               </li>
             </ul>
           </section>
 
           <section className="space-y-3">
             <h2 className="font-[family-name:var(--font-syne)] text-lg font-bold text-brand">
-              6. Public interactive demo
+              6. Interactive demo
             </h2>
             <p>
-              The Service may include a public interactive demo (for example at
-              /demo) with sample inventory for sales and evaluation purposes.
-              Demo board activity is in-memory / non-production and is not a
-              substitute for a registered dealership workspace. Do not enter real
-              customer personal information, credentials, or confidential store
-              data into the public demo.
+              The Service may include a password-protected interactive demo (for
+              example at /demo) with sample inventory for sales and evaluation
+              purposes. Demo board activity is in-memory / non-production and is
+              not a substitute for a registered dealership workspace. Do not
+              enter real customer personal information, credentials, or
+              confidential store data into the demo.
             </p>
           </section>
 

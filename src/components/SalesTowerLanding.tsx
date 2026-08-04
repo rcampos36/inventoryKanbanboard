@@ -91,12 +91,6 @@ export function SalesTowerLanding({
               Schedule a Demo
             </ScheduleDemoButton>
             <Link
-              href="/demo"
-              className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
-            >
-              Try live board
-            </Link>
-            <Link
               href={primaryHref}
               className="rounded-full border border-peach/50 px-6 py-3 text-sm font-semibold text-sand transition hover:border-peach hover:bg-peach/10"
             >

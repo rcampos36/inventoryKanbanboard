@@ -22,12 +22,6 @@ export default async function AdminPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link
-            href="/demo"
-            className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
-          >
-            Sales demo board
-          </Link>
-          <Link
             href={boardPath(admin.organizationSlug)}
             className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
           >
