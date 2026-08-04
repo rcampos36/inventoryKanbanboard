@@ -86,6 +86,7 @@ export async function registerDealerAction(
     "admin",
     "dashboard",
     "demo",
+    "terms",
     "api",
   ]) {
     usedSlugs.add(reserved);

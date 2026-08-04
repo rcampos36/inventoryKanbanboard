@@ -210,6 +210,14 @@ export function SalesTowerLanding({
             <p className="mt-1 text-sm text-[var(--salestower-muted)]">
               {content.footerTagline}
             </p>
+            <p className="mt-2 text-sm">
+              <Link
+                href="/terms"
+                className="font-semibold text-brand/70 underline decoration-peach/70 underline-offset-2 hover:text-brand"
+              >
+                Terms of Use
+              </Link>
+            </p>
           </div>
           <ScheduleDemoButton className="rounded-full border border-brand/25 bg-[var(--salestower-surface)] px-5 py-2.5 text-sm font-bold text-brand transition hover:bg-peach/40">
             Schedule a Demo
