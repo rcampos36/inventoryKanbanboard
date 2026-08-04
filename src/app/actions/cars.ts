@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { toAppCar, toDbCarData } from "@/lib/car-mapper";
-import { requireUser } from "@/lib/auth";
+import { requireAdmin, requireUser } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
 import {
   eventsFromCarChange,
@@ -11,10 +11,34 @@ import {
   recordInventoryAdded,
 } from "@/lib/board-events";
 import { parseInventoryFile } from "@/lib/inventory-import";
-import type { Car } from "@/lib/types";
+import { todayIsoDate, type Car } from "@/lib/types";
+
+/** Pull any future-dated sales back to today (End day used to stamp tomorrow). */
+async function clampFutureSaleDates(organizationId: string): Promise<void> {
+  const today = todayIsoDate();
+  await prisma.car.updateMany({
+    where: {
+      organizationId,
+      soldAt: { gt: today },
+    },
+    data: { soldAt: today },
+  });
+  await prisma.boardEvent.updateMany({
+    where: {
+      organizationId,
+      type: "sale",
+      occurredAt: { gt: today },
+    },
+    data: {
+      occurredAt: today,
+      monthKey: today.slice(0, 7),
+    },
+  });
+}
 
 export async function getCars(): Promise<Car[]> {
   const user = await requireUser();
+  await clampFutureSaleDates(user.organizationId);
   const rows = await prisma.car.findMany({
     where: { organizationId: user.organizationId },
     orderBy: [{ position: "asc" }, { createdAt: "asc" }],
@@ -103,7 +127,7 @@ export async function updateCarsAction(cars: Car[]): Promise<void> {
 }
 
 export async function clearAllCarsAction(): Promise<number> {
-  const user = await requireUser();
+  const user = await requireAdmin();
   const result = await prisma.car.deleteMany({
     where: { organizationId: user.organizationId },
   });

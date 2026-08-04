@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { getMonthlyReportAction } from "@/app/actions/reports";
 import { requireUser } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
-import { formatSaleCount } from "@/lib/types";
+import { formatSaleCount, formatShortDate } from "@/lib/types";
 import { ReportsMonthPicker } from "@/components/ReportsMonthPicker";
 
 export const dynamic = "force-dynamic";
@@ -152,6 +152,66 @@ export default async function ReportsPage({
                 </table>
               )}
             </div>
+          </div>
+        </section>
+
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-brand/55">
+            Sales by date · {report.monthLabel}
+          </h2>
+          <div className="mt-3 overflow-hidden rounded-2xl border border-peach/55 bg-[var(--salestower-surface)]">
+            {report.saleDetails.length === 0 ? (
+              <EmptyRow text="No sales recorded this month." />
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[40rem] text-left text-sm">
+                  <thead className="border-b border-peach/40 text-xs uppercase tracking-wider text-brand/55">
+                    <tr>
+                      <th className="px-4 py-3 font-bold">Date</th>
+                      <th className="px-4 py-3 font-bold">Stock</th>
+                      <th className="px-4 py-3 font-bold">Vehicle</th>
+                      <th className="px-4 py-3 font-bold">Sold by</th>
+                      <th className="px-4 py-3 font-bold">Units</th>
+                      <th className="px-4 py-3 font-bold">Price</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {report.saleDetails.map((row) => (
+                      <tr
+                        key={row.id}
+                        className="border-b border-peach/25 last:border-0"
+                      >
+                        <td className="whitespace-nowrap px-4 py-3 font-semibold text-brand">
+                          {formatShortDate(row.occurredAt)}
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs font-bold text-brand/80">
+                          #{row.stockNumber}
+                        </td>
+                        <td className="px-4 py-3 text-brand/80">
+                          <span className="font-semibold text-brand">
+                            {row.vehicle}
+                          </span>
+                          {row.condition !== "—" && (
+                            <span className="ml-2 text-xs text-brand/50">
+                              {row.condition}
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-brand/80">
+                          {row.salesperson}
+                        </td>
+                        <td className="px-4 py-3 text-brand/80">
+                          {formatSaleCount(row.units)}
+                        </td>
+                        <td className="px-4 py-3 text-brand/80">
+                          {row.price != null ? money(row.price) : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </section>
 

@@ -8,7 +8,6 @@ import {
 import { CarCard } from "./CarCard";
 import { getModelColor } from "@/lib/colors";
 import {
-  formatSaleCount,
   salespersonContainerId,
   type Car,
   type Salesperson,
@@ -17,7 +16,6 @@ import {
 interface TodaySalesColumnProps {
   salesperson: Salesperson;
   cars: Car[];
-  saleCount: number;
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onEditExteriorColor?: (carId: string) => void;
@@ -39,7 +37,6 @@ function initials(name: string): string {
 export function TodaySalesColumn({
   salesperson,
   cars,
-  saleCount,
   onMove,
   onEditCheckoutDates,
   onEditExteriorColor,
@@ -66,10 +63,6 @@ export function TodaySalesColumn({
           <h3 className="truncate text-sm font-bold leading-tight text-brand">
             {salesperson.name}
           </h3>
-          <p className="truncate text-[10px] leading-tight text-brand/60">
-            {formatSaleCount(saleCount)}{" "}
-            {saleCount === 1 ? "sale" : "sales"}
-          </p>
         </div>
       </div>
 

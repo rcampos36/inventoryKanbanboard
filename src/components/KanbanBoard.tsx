@@ -29,6 +29,7 @@ import {
   carInvolvesSalesperson,
   currentMonthKey,
   formatMonthLabel,
+  formatSaleCount,
   formatShortDate,
   isCheckoutAssignment,
   managerContainerId,
@@ -40,6 +41,8 @@ import {
   workingDealContainerId,
   addDaysIsoDate,
   todayIsoDate,
+  clampSaleDate,
+  msUntilNextLocalMidnight,
   tomorrowIsoDate,
   type Car,
   type CheckoutDates,
@@ -94,6 +97,7 @@ import {
   SectionVisibilityMenu,
   type SectionVisibility,
 } from "./SectionVisibilityMenu";
+import { loadDemoMode, saveDemoMode } from "@/lib/demo-mode";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -155,6 +159,7 @@ interface KanbanBoardProps {
   initialManagers: Manager[];
   organizationName?: string;
   organizationBrand?: string;
+  isAdmin?: boolean;
   headerActions?: React.ReactNode;
 }
 
@@ -166,6 +171,7 @@ export function KanbanBoard({
   initialManagers,
   organizationName,
   organizationBrand = "Mazda",
+  isAdmin = false,
   headerActions,
 }: KanbanBoardProps) {
   const brand = organizationBrand;
@@ -189,7 +195,22 @@ export function KanbanBoard({
   const [clearingBoard, setClearingBoard] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [salesMonth, setSalesMonth] = useState(currentMonthKey);
+  /** First sales day that is still open — sales before this belong in Sold by. */
   const [salesDay, setSalesDay] = useState(initialSalesDay);
+  const salesDayRef = useRef(salesDay);
+  salesDayRef.current = salesDay;
+  /** Date shown in Daily Sales (picker). Does not reopen closed days. */
+  const [viewSalesDay, setViewSalesDay] = useState(() =>
+    clampSaleDate(initialSalesDay)
+  );
+  /** Local calendar day — drives when "today's" sales move to Sold by at midnight. */
+  const [calendarDay, setCalendarDay] = useState(todayIsoDate);
+  const [demoMode, setDemoMode] = useState(false);
+  const demoModeRef = useRef(false);
+  /** Sold cars already on the board when demo started — hidden until demo exits. */
+  const [demoHiddenSoldIds, setDemoHiddenSoldIds] = useState<Set<string>>(
+    () => new Set()
+  );
   const [savingSalesDay, setSavingSalesDay] = useState(false);
   const [boardTitle, setBoardTitle] = useState(initialBoardTitle);
   const [editingTitle, setEditingTitle] = useState(false);
@@ -225,6 +246,9 @@ export function KanbanBoard({
   useEffect(() => {
     setMounted(true);
     setSectionVisibility(loadSectionVisibility());
+    if (loadDemoMode()) {
+      enableDemoMode();
+    }
   }, []);
 
   function updateSectionVisibility(next: SectionVisibility) {
@@ -232,39 +256,152 @@ export function KanbanBoard({
     saveSectionVisibility(next);
   }
 
-  // Overnight (or anytime the calendar date changes): roll the sales day forward.
-  useEffect(() => {
-    let lastCalendarDay = todayIsoDate();
+  function snapshotSoldCarIds(): Set<string> {
+    const ids = new Set<string>();
+    for (const person of salespeople) {
+      for (const car of board[salespersonContainerId(person.id)] ?? []) {
+        ids.add(car.id);
+      }
+    }
+    return ids;
+  }
 
-    function syncCalendarDay() {
-      const now = todayIsoDate();
-      if (now !== lastCalendarDay) {
-        lastCalendarDay = now;
-        void persistSalesDay(now);
+  function enableDemoMode() {
+    const today = todayIsoDate();
+    setDemoHiddenSoldIds(snapshotSoldCarIds());
+    setDemoMode(true);
+    demoModeRef.current = true;
+    saveDemoMode(true);
+    setCalendarDay(today);
+    setViewSalesDay(today);
+  }
+
+  function disableDemoMode() {
+    const today = todayIsoDate();
+    restampDemoSales(today);
+    setDemoMode(false);
+    demoModeRef.current = false;
+    saveDemoMode(false);
+    setDemoHiddenSoldIds(new Set());
+    setCalendarDay(today);
+    setViewSalesDay(today);
+  }
+
+  function setDemoModeEnabled(enabled: boolean) {
+    if (enabled) enableDemoMode();
+    else disableDemoMode();
+  }
+
+  /** Demo: jump the calendar forward so open-day sales slide into Sold by. */
+  function advanceDemoDay() {
+    const next = addDaysIsoDate(calendarDay, 1);
+    setCalendarDay(next);
+    setViewSalesDay(next);
+  }
+
+  function restampDemoSales(toDay: string) {
+    setBoard((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      for (const person of salespeople) {
+        const key = salespersonContainerId(person.id);
+        const cars = prev[key] ?? [];
+        const updated = cars.map((car) => {
+          if (demoHiddenSoldIds.has(car.id) || !car.salespersonId) return car;
+          if (car.soldAt === toDay) return car;
+          changed = true;
+          return { ...car, soldAt: toDay };
+        });
+        next[key] = updated;
+      }
+      return changed ? next : prev;
+    });
+  }
+
+  function resetDemoDay() {
+    const today = todayIsoDate();
+    setCalendarDay(today);
+    setViewSalesDay(today);
+    restampDemoSales(today);
+  }
+
+  // Auto End day at local midnight (and whenever the open day is behind).
+  useEffect(() => {
+    let midnightTimeoutId = 0;
+    let rolling = false;
+
+    async function rollOpenSalesDayIfPast() {
+      // Demo mode owns the calendar so presenters can advance days manually.
+      if (demoModeRef.current) return;
+      const today = todayIsoDate();
+      setCalendarDay((prev) => (prev !== today ? today : prev));
+      if (salesDayRef.current >= today || rolling) return;
+      rolling = true;
+      try {
+        await persistSalesDay(today);
+      } finally {
+        rolling = false;
       }
     }
 
-    const intervalId = window.setInterval(syncCalendarDay, 30_000);
-    window.addEventListener("focus", syncCalendarDay);
-    document.addEventListener("visibilitychange", syncCalendarDay);
+    function onFocusOrVisible() {
+      void rollOpenSalesDayIfPast();
+    }
+
+    function scheduleMidnightRoll() {
+      window.clearTimeout(midnightTimeoutId);
+      midnightTimeoutId = window.setTimeout(() => {
+        void rollOpenSalesDayIfPast();
+        scheduleMidnightRoll();
+      }, msUntilNextLocalMidnight() + 500);
+    }
+
+    void rollOpenSalesDayIfPast();
+    scheduleMidnightRoll();
+    const intervalId = window.setInterval(() => {
+      void rollOpenSalesDayIfPast();
+    }, 60_000);
+    window.addEventListener("focus", onFocusOrVisible);
+    document.addEventListener("visibilitychange", onFocusOrVisible);
     return () => {
+      window.clearTimeout(midnightTimeoutId);
       window.clearInterval(intervalId);
-      window.removeEventListener("focus", syncCalendarDay);
-      document.removeEventListener("visibilitychange", syncCalendarDay);
+      window.removeEventListener("focus", onFocusOrVisible);
+      document.removeEventListener("visibilitychange", onFocusOrVisible);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- uses salesDayRef for the open day
   }, []);
 
   async function persistSalesDay(nextDay: string) {
+    const today = todayIsoDate();
+    // Open day may move to tomorrow after End day, but the picker/stamp
+    // date must never sit in the future.
+    const viewDay = nextDay > today ? today : nextDay;
     setSalesDay(nextDay);
+    setViewSalesDay(viewDay);
+    salesDayRef.current = nextDay;
     setSavingSalesDay(true);
     try {
       const saved = await setOpenSalesDayAction(nextDay);
       setSalesDay(saved);
+      setViewSalesDay(saved > today ? today : saved);
+      salesDayRef.current = saved;
     } catch (error) {
       console.error("Failed to save sales day", error);
     } finally {
       setSavingSalesDay(false);
     }
+  }
+
+  /** Close the open sales day. In demo mode, advances the simulated calendar too. */
+  function endSalesDay() {
+    if (demoModeRef.current) {
+      advanceDemoDay();
+      return;
+    }
+    const today = todayIsoDate();
+    const next = addDaysIsoDate(salesDayRef.current, 1);
+    void persistSalesDay(next < today ? today : next);
   }
 
   function startEditingTitle() {
@@ -352,10 +489,12 @@ export function KanbanBoard({
   }, []);
 
   const allSoldCars = useMemo(() => {
-    return salespeople.flatMap(
+    const sold = salespeople.flatMap(
       (person) => board[salespersonContainerId(person.id)] ?? []
     );
-  }, [board, salespeople]);
+    if (!demoMode || demoHiddenSoldIds.size === 0) return sold;
+    return sold.filter((car) => !demoHiddenSoldIds.has(car.id));
+  }, [board, salespeople, demoMode, demoHiddenSoldIds]);
 
   const rankedSalespeople = useMemo(() => {
     const scored = salespeople.map((person) => {
@@ -365,8 +504,11 @@ export function KanbanBoard({
           monthKeyFromDate(car.soldAt) === salesMonth &&
           carInvolvesSalesperson(car, person.id)
       );
-      // Open sales day stays in Daily Sales until End day / overnight rollover.
-      const monthCars = monthCarsAll.filter((car) => car.soldAt !== salesDay);
+      // Sold by only shows days before the active calendar day. In normal mode
+      // that is real today; in demo mode End day / Advance day moves the calendar.
+      const monthCars = monthCarsAll.filter(
+        (car) => car.soldAt && car.soldAt < calendarDay
+      );
       const count = monthCarsAll.reduce(
         (sum, car) => sum + saleCreditFor(car, person.id),
         0
@@ -383,13 +525,21 @@ export function KanbanBoard({
       ...entry,
       rank: index + 1,
     }));
-  }, [allSoldCars, salesMonth, salesDay, salespeople]);
+  }, [allSoldCars, salesMonth, calendarDay, salespeople]);
+
+  const monthSalesTotal = useMemo(
+    () => rankedSalespeople.reduce((sum, row) => sum + row.count, 0),
+    [rankedSalespeople]
+  );
+
+  const dailySalesDay = viewSalesDay > calendarDay ? calendarDay : viewSalesDay;
 
   const todaySalesByPerson = useMemo(() => {
     return salespeople.map((person) => {
       const todayCars = allSoldCars.filter(
         (car) =>
-          car.soldAt === salesDay && carInvolvesSalesperson(car, person.id)
+          car.soldAt === dailySalesDay &&
+          carInvolvesSalesperson(car, person.id)
       );
       const saleCount = todayCars.reduce(
         (sum, car) => sum + saleCreditFor(car, person.id),
@@ -397,7 +547,12 @@ export function KanbanBoard({
       );
       return { person, todayCars, saleCount };
     });
-  }, [allSoldCars, salesDay, salespeople]);
+  }, [allSoldCars, dailySalesDay, salespeople]);
+
+  const todaySalesTotal = useMemo(
+    () => todaySalesByPerson.reduce((sum, row) => sum + row.saleCount, 0),
+    [todaySalesByPerson]
+  );
 
   const dueOvernightDemos = useMemo(() => {
     const today = todayIsoDate();
@@ -417,10 +572,6 @@ export function KanbanBoard({
   }, [board, salespeople]);
 
   const halfDealFound = halfDealCarId ? findCar(halfDealCarId) : null;
-
-  function endSalesDay() {
-    void persistSalesDay(addDaysIsoDate(salesDay, 1));
-  }
 
   function findContainer(id: string): string | undefined {
     if (id in board) return id;
@@ -463,7 +614,8 @@ export function KanbanBoard({
         activeItems[activeIndex],
         overContainer,
         undefined,
-        salesDay
+        dailySalesDay,
+        calendarDay
       );
       const overIndex = overItems.findIndex((c) => c.id === overId);
       const insertAt = overIndex >= 0 ? overIndex : overItems.length;
@@ -520,7 +672,8 @@ export function KanbanBoard({
       car,
       targetContainerId,
       checkoutDates,
-      salesDay
+      dailySalesDay,
+      calendarDay
     );
     setBoard((prev) => ({
       ...prev,
@@ -557,7 +710,13 @@ export function KanbanBoard({
     const found = findCar(carId);
     if (!found) return;
 
-    const moved = applyHalfDeal(found.car, primaryId, partnerId, salesDay);
+    const moved = applyHalfDeal(
+      found.car,
+      primaryId,
+      partnerId,
+      dailySalesDay,
+      calendarDay
+    );
     const target = salespersonContainerId(primaryId);
     const source = found.containerId;
 
@@ -943,7 +1102,7 @@ export function KanbanBoard({
               {totalCount} vehicles · {salespeople.length} salespeople
               <span className="hidden sm:inline">
                 {" "}
-                · {inventoryColumns.length} columns · {managers.length} managers
+                · {managers.length} managers
               </span>
             </p>
           </div>
@@ -995,14 +1154,30 @@ export function KanbanBoard({
 
             <button
               type="button"
-              onClick={() => setClearConfirmOpen(true)}
-              disabled={totalCount === 0}
-              className="rounded-lg border border-rose-300/80 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
-              title="Remove every vehicle from the board"
+              onClick={() => setDemoModeEnabled(!demoMode)}
+              className={[
+                "rounded-lg border px-3 py-2 text-sm font-semibold",
+                demoMode
+                  ? "border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200"
+                  : "border-peach/70 bg-[var(--salestower-surface)] text-brand hover:bg-peach/40",
+              ].join(" ")}
+              title="Demo mode lets you advance the day to show sales moving into Sold by"
             >
-              <span className="sm:hidden">Reset</span>
-              <span className="hidden sm:inline">Start from zero</span>
+              {demoMode ? "Demo on" : "Demo"}
             </button>
+
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => setClearConfirmOpen(true)}
+                disabled={totalCount === 0}
+                className="rounded-lg border border-rose-300/80 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
+                title="Remove every vehicle from the board"
+              >
+                <span className="sm:hidden">Reset</span>
+                <span className="hidden sm:inline">Start from zero</span>
+              </button>
+            )}
 
             <button
               type="button"
@@ -1066,6 +1241,52 @@ export function KanbanBoard({
           </div>
         )}
       </header>
+
+      {demoMode && (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-amber-300/80 bg-amber-100 px-3 py-2.5 text-amber-950 sm:px-6">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-amber-800/80">
+              Demo mode
+            </p>
+            <p className="text-sm font-semibold">
+              Simulated date · {formatShortDate(calendarDay)}
+              {calendarDay !== todayIsoDate() ? (
+                <span className="ml-1.5 font-medium text-amber-800/80">
+                  (real today is {formatShortDate(todayIsoDate())})
+                </span>
+              ) : null}
+            </p>
+            <p className="mt-0.5 text-xs text-amber-900/70">
+              Existing sales are hidden. Move vehicles into Daily Sales, then
+              press End day to show them moving into Sold by.
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={advanceDemoDay}
+              className="rounded-lg bg-amber-900 px-3 py-2 text-sm font-semibold text-amber-50 hover:bg-amber-950"
+            >
+              End day →
+            </button>
+            <button
+              type="button"
+              onClick={resetDemoDay}
+              disabled={calendarDay === todayIsoDate()}
+              className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Reset date
+            </button>
+            <button
+              type="button"
+              onClick={() => setDemoModeEnabled(false)}
+              className="rounded-lg px-3 py-2 text-sm font-semibold text-amber-900/70 hover:bg-amber-200/60"
+            >
+              Exit demo
+            </button>
+          </div>
+        </div>
+      )}
 
       <DndContext
         id="inventory-kanban"
@@ -1156,6 +1377,10 @@ export function KanbanBoard({
               <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                 <h2 className="text-xs font-bold uppercase tracking-wider text-peach">
                   Sales Team · Sold by
+                  <span className="ml-2 normal-case tracking-normal text-sand">
+                    · {formatSaleCount(monthSalesTotal)}{" "}
+                    {monthSalesTotal === 1 ? "sale" : "sales"}
+                  </span>
                 </h2>
                 <div className="flex flex-wrap items-center gap-2">
                   <form
@@ -1227,26 +1452,35 @@ export function KanbanBoard({
               <div className={sectionVisibility.sales ? "mt-5" : undefined}>
                 <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
                   <h3 className="text-xs font-bold uppercase tracking-wider text-peach">
-                    Daily Sales · {formatShortDate(salesDay)}
+                    Daily Sales · {formatShortDate(dailySalesDay)}
+                    <span className="ml-2 normal-case tracking-normal text-sand">
+                      · {formatSaleCount(todaySalesTotal)}{" "}
+                      {todaySalesTotal === 1 ? "sale" : "sales"}
+                    </span>
                   </h3>
                   <div className="flex flex-wrap items-center gap-2">
                     <label className="flex items-center gap-2 text-xs font-semibold text-brand/70">
                       Date
                       <input
                         type="date"
-                        value={salesDay}
+                        value={dailySalesDay}
                         disabled={savingSalesDay}
                         onChange={(e) => {
-                          if (e.target.value)
-                            void persistSalesDay(e.target.value);
+                          if (!e.target.value) return;
+                          setViewSalesDay(
+                            demoMode
+                              ? e.target.value
+                              : clampSaleDate(e.target.value)
+                          );
                         }}
+                        max={calendarDay}
                         className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15 disabled:opacity-60"
                       />
                     </label>
                     <button
                       type="button"
                       disabled={savingSalesDay}
-                      onClick={() => void persistSalesDay(todayIsoDate())}
+                      onClick={() => setViewSalesDay(calendarDay)}
                       className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-1.5 text-xs font-semibold text-brand/80 hover:bg-peach/30 disabled:opacity-60"
                     >
                       Today
@@ -1256,25 +1490,31 @@ export function KanbanBoard({
                       disabled={savingSalesDay}
                       onClick={endSalesDay}
                       className="rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
-                      title="Close this sales day and move these sales into each team member's monthly column"
+                      title={
+                        demoMode
+                          ? "End the simulated day and move Daily Sales into Sold by"
+                          : "Mark the open sales day complete. Today's dated sales stay in Daily Sales until midnight."
+                      }
                     >
                       {savingSalesDay ? "Saving…" : "End day"}
                     </button>
                   </div>
                 </div>
                 <p className="mb-3 text-xs text-sand/70">
-                  Drop sales here for this date. End day (or overnight) moves
-                  them into the monthly columns above.
+                  {demoMode
+                    ? "Demo: move cars here, then press End day anytime to send them into Sold by."
+                    : dailySalesDay === calendarDay
+                      ? "Today's sales stay here until midnight, then move into Sold by above."
+                      : `Viewing ${formatShortDate(dailySalesDay)} — today's sales stay in Daily Sales until midnight.`}
                 </p>
                 <div>
                   <TeamLaneScroll count={todaySalesByPerson.length}>
                     {todaySalesByPerson.map(
-                      ({ person, todayCars, saleCount }) => (
+                      ({ person, todayCars }) => (
                         <TeamLaneItem key={person.id}>
                           <TodaySalesColumn
                             salesperson={person}
                             cars={todayCars}
-                            saleCount={saleCount}
                             onMove={requestMove}
                             onEditExteriorColor={setExteriorColorCarId}
                             onRequestHalfDeal={setHalfDealCarId}
@@ -1542,17 +1782,19 @@ export function KanbanBoard({
         }}
       />
 
-      <ConfirmClearBoardModal
-        open={clearConfirmOpen}
-        vehicleCount={totalCount}
-        busy={clearingBoard}
-        onClose={() => {
-          if (!clearingBoard) setClearConfirmOpen(false);
-        }}
-        onConfirm={() => {
-          void handleClearAllCars();
-        }}
-      />
+      {isAdmin && (
+        <ConfirmClearBoardModal
+          open={clearConfirmOpen}
+          vehicleCount={totalCount}
+          busy={clearingBoard}
+          onClose={() => {
+            if (!clearingBoard) setClearConfirmOpen(false);
+          }}
+          onConfirm={() => {
+            void handleClearAllCars();
+          }}
+        />
+      )}
     </div>
     </ManagersProvider>
     </SalespeopleProvider>

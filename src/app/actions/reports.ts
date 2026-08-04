@@ -40,6 +40,17 @@ export type InventoryMovementSummary = {
   reversed: number;
 };
 
+export type SaleDetailRow = {
+  id: string;
+  occurredAt: string;
+  stockNumber: string;
+  vehicle: string;
+  condition: string;
+  salesperson: string;
+  units: number;
+  price: number | null;
+};
+
 export type MonthlyReport = {
   monthKey: string;
   monthLabel: string;
@@ -47,6 +58,7 @@ export type MonthlyReport = {
   sales: SalesSummary;
   topModels: ModelSalesRow[];
   teamSales: TeamSalesRow[];
+  saleDetails: SaleDetailRow[];
   inventory: InventoryMovementSummary;
 };
 
@@ -210,6 +222,37 @@ export async function getMonthlyReportAction(
     }))
     .sort((a, b) => b.units - a.units || b.revenue - a.revenue);
 
+  const saleDetails: SaleDetailRow[] = netSales
+    .map((event) => {
+      const people = participants(event)
+        .map((id) => nameById.get(id) ?? id)
+        .filter(Boolean);
+      const parts = [event.make, event.model, event.trim]
+        .map((p) => p?.trim())
+        .filter(Boolean);
+      return {
+        id: event.id,
+        occurredAt: event.occurredAt,
+        stockNumber: event.stockNumber?.trim() || "—",
+        vehicle: parts.join(" ") || "Unknown vehicle",
+        condition:
+          event.condition === "new"
+            ? "New"
+            : event.condition === "used"
+              ? "Used"
+              : "—",
+        salesperson: people.length > 0 ? people.join(" · ") : "Unassigned",
+        units: 1,
+        price: event.price,
+      };
+    })
+    .sort((a, b) => {
+      if (a.occurredAt !== b.occurredAt) {
+        return b.occurredAt.localeCompare(a.occurredAt);
+      }
+      return a.stockNumber.localeCompare(b.stockNumber);
+    });
+
   const inventory: InventoryMovementSummary = {
     added: events.filter((e) => e.type === "inventory_added").length,
     moved: events.filter((e) => e.type === "inventory_moved").length,
@@ -224,6 +267,7 @@ export async function getMonthlyReportAction(
     sales,
     topModels,
     teamSales,
+    saleDetails,
     inventory,
   };
 }

@@ -24,6 +24,7 @@ import { overnightDueStatus } from "@/lib/suggest-column";
 import { useBoardConfig } from "./BoardConfigContext";
 import { useManagers } from "./ManagersContext";
 import { useSalespeople } from "./SalespeopleContext";
+import { SaleDetailsModal } from "./SaleDetailsModal";
 
 interface CarCardProps {
   car: Car;
@@ -74,6 +75,7 @@ export function CarCard({
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [saleDetailsOpen, setSaleDetailsOpen] = useState(false);
   const [menuStyle, setMenuStyle] = useState<React.CSSProperties>({});
 
   const {
@@ -198,28 +200,48 @@ export function CarCard({
           #{car.stockNumber}
         </span>
         <div className="flex shrink-0 items-center gap-1.5">
-          <span
-            className={[
-              "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-              isSold
+          {isSold && !overlay ? (
+            <button
+              type="button"
+              onPointerDown={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setSaleDetailsOpen(true);
+              }}
+              className={[
+                "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                "bg-white/80 text-black hover:bg-white",
+              ].join(" ")}
+              title={
+                car.soldAt
+                  ? `Sold ${formatShortDate(car.soldAt)} — click for details`
+                  : "Sale details"
+              }
+            >
+              {halfDeal ? "½ Deal" : "Sold"}
+            </button>
+          ) : (
+            <span
+              className={[
+                "rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                isSold
+                  ? "bg-white/80 text-black"
+                  : working
+                    ? "bg-white/80 text-black"
+                    : "bg-white/70 text-black",
+              ].join(" ")}
+            >
+              {isSold
                 ? halfDeal
-                  ? "bg-white/80 text-black"
-                  : "bg-white/80 text-black"
+                  ? "½ Deal"
+                  : "Sold"
                 : working
-                  ? "bg-white/80 text-black"
-                  : "bg-white/70 text-black",
-            ].join(" ")}
-          >
-            {isSold
-              ? halfDeal
-                ? "½ Deal"
-                : "Sold"
-              : working
-                ? "Working"
-                : isNew
-                  ? "New"
-                  : "Used"}
-          </span>
+                  ? "Working"
+                  : isNew
+                    ? "New"
+                    : "Used"}
+            </span>
+          )}
 
           {!overlay && onMove && (
             <button
@@ -300,6 +322,21 @@ export function CarCard({
         <div className="truncate rounded-lg bg-white/70 px-2 py-1.5 text-[11px] font-bold text-black">
           {primary.name} · {partner.name}
         </div>
+      )}
+
+      {isSold && car.soldAt && (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (!overlay) setSaleDetailsOpen(true);
+          }}
+          className="truncate text-left text-[11px] font-semibold text-black/75 hover:text-black"
+          title="Sale date"
+        >
+          Sold {formatShortDate(car.soldAt)}
+        </button>
       )}
 
       {isCheckout && car.outDate && car.returnDate && (
@@ -532,6 +569,18 @@ export function CarCard({
           </div>,
           document.body
         )}
+
+      {!overlay && (
+        <SaleDetailsModal
+          open={saleDetailsOpen}
+          stockNumber={car.stockNumber}
+          soldAt={car.soldAt}
+          salespersonName={primary?.name}
+          partnerName={partner?.name}
+          halfDeal={halfDeal}
+          onClose={() => setSaleDetailsOpen(false)}
+        />
+      )}
     </div>
   );
 }

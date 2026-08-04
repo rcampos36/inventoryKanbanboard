@@ -42,6 +42,7 @@ export default async function DealerBoardPage({ params }: DealerBoardPageProps) 
         initialBoardTitle={settings.boardTitle}
         organizationName={user.organizationName}
         organizationBrand={user.organizationBrand}
+        isAdmin={user.role === "ADMIN"}
         headerActions={<AppHeaderActions user={user} />}
       />
     </main>

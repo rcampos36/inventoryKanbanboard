@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import { monthKeyFromDate, todayIsoDate, type Car } from "@/lib/types";
+import { monthKeyFromDate, todayIsoDate, clampSaleDate, type Car } from "@/lib/types";
 import type { Car as DbCar } from "@/generated/prisma/client";
 
 export type BoardEventType =
@@ -54,7 +54,7 @@ function snapshotFromDbCar(car: DbCar) {
 }
 
 export async function recordBoardEvent(input: EventInput) {
-  const occurredAt = input.occurredAt ?? todayIsoDate();
+  const occurredAt = clampSaleDate(input.occurredAt ?? todayIsoDate());
   await prisma.boardEvent.create({
     data: {
       organizationId: input.organizationId,
@@ -80,7 +80,7 @@ export async function recordBoardEvents(inputs: EventInput[]) {
   if (inputs.length === 0) return;
   await prisma.boardEvent.createMany({
     data: inputs.map((input) => {
-      const occurredAt = input.occurredAt ?? todayIsoDate();
+      const occurredAt = clampSaleDate(input.occurredAt ?? todayIsoDate());
       return {
         organizationId: input.organizationId,
         type: input.type,

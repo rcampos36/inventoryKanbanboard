@@ -71,9 +71,11 @@ export function SalespersonColumn({
           <h3 className="truncate text-sm font-bold leading-tight text-brand">
             {salesperson.name}
           </h3>
-          <p className="truncate text-[10px] leading-tight text-brand/60">
+          <p className="truncate text-sm font-bold leading-tight tabular-nums text-brand">
             {formatSaleCount(monthSoldCount)}{" "}
-            {monthSoldCount === 1 ? "sale" : "sales"}
+            <span className="text-[10px] font-medium text-brand/60">
+              {monthSoldCount === 1 ? "sale" : "sales"}
+            </span>
           </p>
         </div>
         {onDelete && (

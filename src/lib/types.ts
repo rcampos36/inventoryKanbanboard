@@ -158,9 +158,36 @@ export function carContainerId(car: Car): string {
   return car.columnId;
 }
 
-/** Today's date as YYYY-MM-DD. */
+/** Today's date as YYYY-MM-DD in the local timezone. */
 export function todayIsoDate(): string {
-  return new Date().toISOString().slice(0, 10);
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+/** Clamp a sale date so it is never after `asOf` (defaults to today). */
+export function clampSaleDate(
+  isoDate?: string | null,
+  asOf: string = todayIsoDate()
+): string {
+  if (!isoDate) return asOf;
+  return isoDate > asOf ? asOf : isoDate;
+}
+
+/** Milliseconds until the next local midnight (with a small buffer). */
+export function msUntilNextLocalMidnight(now = new Date()): number {
+  const next = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() + 1,
+    0,
+    0,
+    0,
+    0
+  );
+  return Math.max(0, next.getTime() - now.getTime());
 }
 
 /** Tomorrow's date as YYYY-MM-DD. */
@@ -203,7 +230,8 @@ export function applyContainerLocation(
   car: Car,
   containerId: string,
   checkoutDates?: CheckoutDates,
-  saleDate?: string
+  saleDate?: string,
+  asOf?: string
 ): Car {
   const location = containerToLocation(containerId);
   const next: Car = { ...car, ...location };
@@ -213,10 +241,13 @@ export function applyContainerLocation(
   const isCheckout = needsCheckoutDates(containerId);
 
   if (isSold) {
-    // Newly sold: use the active sales day (or today). Keep date on reassignment.
+    // Newly sold: use the active sales day (or today). Never stamp past `asOf`.
+    const stamp = clampSaleDate(saleDate, asOf);
     next.soldAt = wasSold
-      ? (car.soldAt ?? saleDate ?? todayIsoDate())
-      : (saleDate ?? todayIsoDate());
+      ? car.soldAt
+        ? clampSaleDate(car.soldAt, asOf)
+        : stamp
+      : stamp;
     // Full-deal assign clears any prior half-deal partner.
     next.coSalespersonId = undefined;
   } else {
@@ -293,17 +324,20 @@ export function applyHalfDeal(
   car: Car,
   primaryId: string,
   partnerId: string,
-  saleDate?: string
+  saleDate?: string,
+  asOf?: string
 ): Car {
   if (primaryId === partnerId) {
     return applyContainerLocation(
       car,
       salespersonContainerId(primaryId),
       undefined,
-      saleDate
+      saleDate,
+      asOf
     );
   }
   const wasSold = Boolean(car.salespersonId);
+  const stamp = clampSaleDate(saleDate, asOf);
   return {
     ...car,
     columnId: "sold",
@@ -317,8 +351,10 @@ export function applyHalfDeal(
     tagNumber: undefined,
     homeColumnId: undefined,
     soldAt: wasSold
-      ? (car.soldAt ?? saleDate ?? todayIsoDate())
-      : (saleDate ?? todayIsoDate()),
+      ? car.soldAt
+        ? clampSaleDate(car.soldAt, asOf)
+        : stamp
+      : stamp,
   };
 }
 

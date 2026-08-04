@@ -1,5 +1,5 @@
 import type { Car as DbCar } from "@/generated/prisma/client";
-import type { Car, CarCondition } from "@/lib/types";
+import { clampSaleDate, type Car, type CarCondition } from "@/lib/types";
 
 export function toAppCar(row: DbCar): Car {
   return {
@@ -13,7 +13,7 @@ export function toAppCar(row: DbCar): Car {
     columnId: row.columnId,
     salespersonId: row.salespersonId ?? undefined,
     coSalespersonId: row.coSalespersonId ?? undefined,
-    soldAt: row.soldAt ?? undefined,
+    soldAt: row.soldAt ? clampSaleDate(row.soldAt) : undefined,
     managerId: row.managerId ?? undefined,
     workingDealId: row.workingDealId ?? undefined,
     overnightId: row.overnightId ?? undefined,
@@ -37,7 +37,7 @@ export function toDbCarData(car: Car) {
     columnId: car.columnId,
     salespersonId: car.salespersonId ?? null,
     coSalespersonId: car.coSalespersonId ?? null,
-    soldAt: car.soldAt ?? null,
+    soldAt: car.soldAt ? clampSaleDate(car.soldAt) : null,
     managerId: car.managerId ?? null,
     workingDealId: car.workingDealId ?? null,
     overnightId: car.overnightId ?? null,
