@@ -4,6 +4,7 @@ export const RESERVED_PATH_SLUGS = new Set([
   "register",
   "admin",
   "dashboard",
+  "demo",
   "api",
   "favicon.ico",
 ]);

@@ -80,7 +80,14 @@ export async function registerDealerAction(
     select: { slug: true },
   });
   const usedSlugs = new Set(existingSlugs.map((row) => row.slug));
-  for (const reserved of ["login", "register", "admin", "dashboard", "api"]) {
+  for (const reserved of [
+    "login",
+    "register",
+    "admin",
+    "dashboard",
+    "demo",
+    "api",
+  ]) {
     usedSlugs.add(reserved);
   }
   let slug = uniqueSlug(dealershipName, usedSlugs, "dealership");

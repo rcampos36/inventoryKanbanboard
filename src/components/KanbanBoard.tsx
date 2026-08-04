@@ -97,7 +97,6 @@ import {
   SectionVisibilityMenu,
   type SectionVisibility,
 } from "./SectionVisibilityMenu";
-import { loadDemoMode, saveDemoMode } from "@/lib/demo-mode";
 
 type Board = Record<string, Car[]>;
 type ConditionFilter = "all" | "new" | "used";
@@ -139,18 +138,6 @@ function personContainerIds(personId: string): string[] {
   ];
 }
 
-function persistCar(car: Car) {
-  void updateCarAction(car).catch((error) => {
-    console.error("Failed to save vehicle", error);
-  });
-}
-
-function persistCars(cars: Car[]) {
-  void updateCarsAction(cars).catch((error) => {
-    console.error("Failed to save vehicle order", error);
-  });
-}
-
 interface KanbanBoardProps {
   initialCars: Car[];
   initialSalesDay: string;
@@ -161,6 +148,11 @@ interface KanbanBoardProps {
   organizationBrand?: string;
   isAdmin?: boolean;
   headerActions?: React.ReactNode;
+  /**
+   * Public sales-demo board: in-memory only, no DB writes.
+   * End day advances the simulated calendar so sales move into Sold by.
+   */
+  sandbox?: boolean;
 }
 
 export function KanbanBoard({
@@ -173,6 +165,7 @@ export function KanbanBoard({
   organizationBrand = "Mazda",
   isAdmin = false,
   headerActions,
+  sandbox = false,
 }: KanbanBoardProps) {
   const brand = organizationBrand;
   const modelColumns = useMemo(() => getModelColumns(brand), [brand]);
@@ -205,13 +198,21 @@ export function KanbanBoard({
   );
   /** Local calendar day — drives when "today's" sales move to Sold by at midnight. */
   const [calendarDay, setCalendarDay] = useState(todayIsoDate);
-  const [demoMode, setDemoMode] = useState(false);
-  const demoModeRef = useRef(false);
-  /** Sold cars already on the board when demo started — hidden until demo exits. */
-  const [demoHiddenSoldIds, setDemoHiddenSoldIds] = useState<Set<string>>(
-    () => new Set()
-  );
   const [savingSalesDay, setSavingSalesDay] = useState(false);
+
+  function persistCar(car: Car) {
+    if (sandbox) return;
+    void updateCarAction(car).catch((error) => {
+      console.error("Failed to save vehicle", error);
+    });
+  }
+
+  function persistCars(cars: Car[]) {
+    if (sandbox) return;
+    void updateCarsAction(cars).catch((error) => {
+      console.error("Failed to save vehicle order", error);
+    });
+  }
   const [boardTitle, setBoardTitle] = useState(initialBoardTitle);
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState(initialBoardTitle);
@@ -246,9 +247,6 @@ export function KanbanBoard({
   useEffect(() => {
     setMounted(true);
     setSectionVisibility(loadSectionVisibility());
-    if (loadDemoMode()) {
-      enableDemoMode();
-    }
   }, []);
 
   function updateSectionVisibility(next: SectionVisibility) {
@@ -256,83 +254,38 @@ export function KanbanBoard({
     saveSectionVisibility(next);
   }
 
-  function snapshotSoldCarIds(): Set<string> {
-    const ids = new Set<string>();
-    for (const person of salespeople) {
-      for (const car of board[salespersonContainerId(person.id)] ?? []) {
-        ids.add(car.id);
-      }
-    }
-    return ids;
-  }
-
-  function enableDemoMode() {
-    const today = todayIsoDate();
-    setDemoHiddenSoldIds(snapshotSoldCarIds());
-    setDemoMode(true);
-    demoModeRef.current = true;
-    saveDemoMode(true);
-    setCalendarDay(today);
-    setViewSalesDay(today);
-  }
-
-  function disableDemoMode() {
-    const today = todayIsoDate();
-    restampDemoSales(today);
-    setDemoMode(false);
-    demoModeRef.current = false;
-    saveDemoMode(false);
-    setDemoHiddenSoldIds(new Set());
-    setCalendarDay(today);
-    setViewSalesDay(today);
-  }
-
-  function setDemoModeEnabled(enabled: boolean) {
-    if (enabled) enableDemoMode();
-    else disableDemoMode();
-  }
-
-  /** Demo: jump the calendar forward so open-day sales slide into Sold by. */
-  function advanceDemoDay() {
+  /** Sandbox: jump the calendar forward so Daily Sales move into Sold by. */
+  function advanceSandboxDay() {
     const next = addDaysIsoDate(calendarDay, 1);
     setCalendarDay(next);
     setViewSalesDay(next);
+    setSalesDay(next);
+    salesDayRef.current = next;
   }
 
-  function restampDemoSales(toDay: string) {
-    setBoard((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      for (const person of salespeople) {
-        const key = salespersonContainerId(person.id);
-        const cars = prev[key] ?? [];
-        const updated = cars.map((car) => {
-          if (demoHiddenSoldIds.has(car.id) || !car.salespersonId) return car;
-          if (car.soldAt === toDay) return car;
-          changed = true;
-          return { ...car, soldAt: toDay };
-        });
-        next[key] = updated;
-      }
-      return changed ? next : prev;
-    });
-  }
-
-  function resetDemoDay() {
+  function resetSandboxBoard() {
     const today = todayIsoDate();
+    setBoard(
+      groupCars(initialCars, initialSalespeople, initialManagers, brand)
+    );
+    setSalespeople(initialSalespeople);
+    setManagers(initialManagers);
     setCalendarDay(today);
     setViewSalesDay(today);
-    restampDemoSales(today);
+    setSalesDay(today);
+    salesDayRef.current = today;
+    setSalesMonth(currentMonthKey());
+    setQuery("");
+    setConditionFilter("all");
   }
 
   // Auto End day at local midnight (and whenever the open day is behind).
   useEffect(() => {
+    if (sandbox) return;
     let midnightTimeoutId = 0;
     let rolling = false;
 
     async function rollOpenSalesDayIfPast() {
-      // Demo mode owns the calendar so presenters can advance days manually.
-      if (demoModeRef.current) return;
       const today = todayIsoDate();
       setCalendarDay((prev) => (prev !== today ? today : prev));
       if (salesDayRef.current >= today || rolling) return;
@@ -370,16 +323,18 @@ export function KanbanBoard({
       document.removeEventListener("visibilitychange", onFocusOrVisible);
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- uses salesDayRef for the open day
-  }, []);
+  }, [sandbox]);
 
   async function persistSalesDay(nextDay: string) {
     const today = todayIsoDate();
     // Open day may move to tomorrow after End day, but the picker/stamp
-    // date must never sit in the future.
-    const viewDay = nextDay > today ? today : nextDay;
+    // date must never sit in the future (except in the sales sandbox).
+    const viewDay =
+      sandbox || nextDay <= today ? nextDay : today;
     setSalesDay(nextDay);
     setViewSalesDay(viewDay);
     salesDayRef.current = nextDay;
+    if (sandbox) return;
     setSavingSalesDay(true);
     try {
       const saved = await setOpenSalesDayAction(nextDay);
@@ -393,10 +348,10 @@ export function KanbanBoard({
     }
   }
 
-  /** Close the open sales day. In demo mode, advances the simulated calendar too. */
+  /** Close the open sales day. Sandbox advances the simulated calendar too. */
   function endSalesDay() {
-    if (demoModeRef.current) {
-      advanceDemoDay();
+    if (sandbox) {
+      advanceSandboxDay();
       return;
     }
     const today = todayIsoDate();
@@ -411,6 +366,12 @@ export function KanbanBoard({
 
   async function saveBoardTitle() {
     const next = titleDraft.trim() || DEFAULT_BOARD_TITLE;
+    if (sandbox) {
+      setBoardTitle(next);
+      setEditingTitle(false);
+      if (typeof document !== "undefined") document.title = next;
+      return;
+    }
     setSavingTitle(true);
     try {
       const saved = await setBoardTitleAction(next);
@@ -489,12 +450,10 @@ export function KanbanBoard({
   }, []);
 
   const allSoldCars = useMemo(() => {
-    const sold = salespeople.flatMap(
+    return salespeople.flatMap(
       (person) => board[salespersonContainerId(person.id)] ?? []
     );
-    if (!demoMode || demoHiddenSoldIds.size === 0) return sold;
-    return sold.filter((car) => !demoHiddenSoldIds.has(car.id));
-  }, [board, salespeople, demoMode, demoHiddenSoldIds]);
+  }, [board, salespeople]);
 
   const rankedSalespeople = useMemo(() => {
     const scored = salespeople.map((person) => {
@@ -504,8 +463,8 @@ export function KanbanBoard({
           monthKeyFromDate(car.soldAt) === salesMonth &&
           carInvolvesSalesperson(car, person.id)
       );
-      // Sold by only shows days before the active calendar day. In normal mode
-      // that is real today; in demo mode End day / Advance day moves the calendar.
+      // Sold by only shows days before the active calendar day. In the sandbox,
+      // End day moves that calendar so presenters can show the rollover live.
       const monthCars = monthCarsAll.filter(
         (car) => car.soldAt && car.soldAt < calendarDay
       );
@@ -783,6 +742,22 @@ export function KanbanBoard({
     setSavingSalesperson(true);
     setSalespersonError(null);
     try {
+      if (sandbox) {
+        const person = {
+          id: `demo-sp-${crypto.randomUUID()}`,
+          name,
+        };
+        setSalespeople((prev) => [...prev, person]);
+        setBoard((prev) => {
+          const next = { ...prev };
+          for (const id of personContainerIds(person.id)) {
+            next[id] ??= [];
+          }
+          return next;
+        });
+        setNewSalespersonName("");
+        return;
+      }
       const result = await createSalespersonAction(name);
       if (!result.ok) {
         setSalespersonError(result.error);
@@ -811,10 +786,12 @@ export function KanbanBoard({
     if (!window.confirm(`Remove ${person.name} from the sales team?`)) return;
     setSalespersonError(null);
     try {
-      const result = await deleteSalespersonAction(personId);
-      if (!result.ok) {
-        setSalespersonError(result.error);
-        return;
+      if (!sandbox) {
+        const result = await deleteSalespersonAction(personId);
+        if (!result.ok) {
+          setSalespersonError(result.error);
+          return;
+        }
       }
       setSalespeople((prev) => prev.filter((s) => s.id !== personId));
       setBoard((prev) => {
@@ -837,6 +814,19 @@ export function KanbanBoard({
     setSavingManager(true);
     setManagerError(null);
     try {
+      if (sandbox) {
+        const manager = {
+          id: `demo-mgr-${crypto.randomUUID()}`,
+          name,
+        };
+        setManagers((prev) => [...prev, manager]);
+        setBoard((prev) => ({
+          ...prev,
+          [managerContainerId(manager.id)]: [],
+        }));
+        setNewManagerName("");
+        return;
+      }
       const result = await createManagerAction(name);
       if (!result.ok) {
         setManagerError(result.error);
@@ -862,10 +852,12 @@ export function KanbanBoard({
     if (!window.confirm(`Remove ${manager.name} from managers?`)) return;
     setManagerError(null);
     try {
-      const result = await deleteManagerAction(managerId);
-      if (!result.ok) {
-        setManagerError(result.error);
-        return;
+      if (!sandbox) {
+        const result = await deleteManagerAction(managerId);
+        if (!result.ok) {
+          setManagerError(result.error);
+          return;
+        }
       }
       setManagers((prev) => prev.filter((m) => m.id !== managerId));
       setBoard((prev) => {
@@ -971,6 +963,15 @@ export function KanbanBoard({
 
   async function handleAddCar(car: Omit<Car, "id">) {
     try {
+      if (sandbox) {
+        const created: Car = { ...car, id: `demo-car-${crypto.randomUUID()}` };
+        const columnId = carContainerId(created);
+        setBoard((prev) => ({
+          ...prev,
+          [columnId]: [...(prev[columnId] ?? []), created],
+        }));
+        return;
+      }
       const created = await createCarAction(car);
       setBoard((prev) => ({
         ...prev,
@@ -984,7 +985,9 @@ export function KanbanBoard({
   async function handleClearAllCars() {
     setClearingBoard(true);
     try {
-      await clearAllCarsAction();
+      if (!sandbox) {
+        await clearAllCarsAction();
+      }
       setBoard(groupCars([], salespeople, managers, brand));
       setClearConfirmOpen(false);
     } catch (error) {
@@ -1152,42 +1155,38 @@ export function KanbanBoard({
               onChange={updateSectionVisibility}
             />
 
-            <button
-              type="button"
-              onClick={() => setDemoModeEnabled(!demoMode)}
-              className={[
-                "rounded-lg border px-3 py-2 text-sm font-semibold",
-                demoMode
-                  ? "border-amber-400 bg-amber-100 text-amber-950 hover:bg-amber-200"
-                  : "border-peach/70 bg-[var(--salestower-surface)] text-brand hover:bg-peach/40",
-              ].join(" ")}
-              title="Demo mode lets you advance the day to show sales moving into Sold by"
-            >
-              {demoMode ? "Demo on" : "Demo"}
-            </button>
-
-            {isAdmin && (
+            {(isAdmin || sandbox) && (
               <button
                 type="button"
-                onClick={() => setClearConfirmOpen(true)}
-                disabled={totalCount === 0}
+                onClick={() =>
+                  sandbox ? resetSandboxBoard() : setClearConfirmOpen(true)
+                }
+                disabled={!sandbox && totalCount === 0}
                 className="rounded-lg border border-rose-300/80 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-40"
-                title="Remove every vehicle from the board"
+                title={
+                  sandbox
+                    ? "Reset the demo board to the starting inventory"
+                    : "Remove every vehicle from the board"
+                }
               >
                 <span className="sm:hidden">Reset</span>
-                <span className="hidden sm:inline">Start from zero</span>
+                <span className="hidden sm:inline">
+                  {sandbox ? "Reset demo" : "Start from zero"}
+                </span>
               </button>
             )}
 
-            <button
-              type="button"
-              onClick={() => setImportOpen(true)}
-              className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/40"
-              title="Import vehicles from a spreadsheet"
-            >
-              <span className="sm:hidden">Import</span>
-              <span className="hidden sm:inline">Import file</span>
-            </button>
+            {!sandbox && (
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/40"
+                title="Import vehicles from a spreadsheet"
+              >
+                <span className="sm:hidden">Import</span>
+                <span className="hidden sm:inline">Import file</span>
+              </button>
+            )}
 
             <button
               onClick={() => setModalOpen(true)}
@@ -1242,47 +1241,34 @@ export function KanbanBoard({
         )}
       </header>
 
-      {demoMode && (
+      {sandbox && (
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-amber-300/80 bg-amber-100 px-3 py-2.5 text-amber-950 sm:px-6">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-wider text-amber-800/80">
-              Demo mode
+              Sales demo
             </p>
             <p className="text-sm font-semibold">
               Simulated date · {formatShortDate(calendarDay)}
-              {calendarDay !== todayIsoDate() ? (
-                <span className="ml-1.5 font-medium text-amber-800/80">
-                  (real today is {formatShortDate(todayIsoDate())})
-                </span>
-              ) : null}
             </p>
             <p className="mt-0.5 text-xs text-amber-900/70">
-              Existing sales are hidden. Move vehicles into Daily Sales, then
-              press End day to show them moving into Sold by.
+              Sample inventory only — nothing is saved. Move cars into Daily
+              Sales, then press End day to show them moving into Sold by.
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={advanceDemoDay}
+              onClick={advanceSandboxDay}
               className="rounded-lg bg-amber-900 px-3 py-2 text-sm font-semibold text-amber-50 hover:bg-amber-950"
             >
               End day →
             </button>
             <button
               type="button"
-              onClick={resetDemoDay}
-              disabled={calendarDay === todayIsoDate()}
-              className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-white disabled:cursor-not-allowed disabled:opacity-40"
+              onClick={resetSandboxBoard}
+              className="rounded-lg border border-amber-400 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-950 hover:bg-white"
             >
-              Reset date
-            </button>
-            <button
-              type="button"
-              onClick={() => setDemoModeEnabled(false)}
-              className="rounded-lg px-3 py-2 text-sm font-semibold text-amber-900/70 hover:bg-amber-200/60"
-            >
-              Exit demo
+              Reset demo
             </button>
           </div>
         </div>
@@ -1468,7 +1454,7 @@ export function KanbanBoard({
                         onChange={(e) => {
                           if (!e.target.value) return;
                           setViewSalesDay(
-                            demoMode
+                            sandbox
                               ? e.target.value
                               : clampSaleDate(e.target.value)
                           );
@@ -1491,7 +1477,7 @@ export function KanbanBoard({
                       onClick={endSalesDay}
                       className="rounded-lg bg-brand px-2.5 py-1.5 text-xs font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
                       title={
-                        demoMode
+                        sandbox
                           ? "End the simulated day and move Daily Sales into Sold by"
                           : "Mark the open sales day complete. Today's dated sales stay in Daily Sales until midnight."
                       }
@@ -1501,8 +1487,8 @@ export function KanbanBoard({
                   </div>
                 </div>
                 <p className="mb-3 text-xs text-sand/70">
-                  {demoMode
-                    ? "Demo: move cars here, then press End day anytime to send them into Sold by."
+                  {sandbox
+                    ? "Move cars here, then press End day anytime to send them into Sold by."
                     : dailySalesDay === calendarDay
                       ? "Today's sales stay here until midnight, then move into Sold by above."
                       : `Viewing ${formatShortDate(dailySalesDay)} — today's sales stay in Daily Sales until midnight.`}
