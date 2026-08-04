@@ -35,6 +35,13 @@ export async function registerDealerAction(
 ): Promise<AuthFormState> {
   const dealershipName = String(formData.get("dealershipName") ?? "").trim();
   const brandRaw = String(formData.get("brand") ?? "").trim();
+  const dealerNumber = String(formData.get("dealerNumber") ?? "").trim();
+  const phone = String(formData.get("phone") ?? "").trim();
+  const addressLine1 = String(formData.get("addressLine1") ?? "").trim();
+  const addressLine2 = String(formData.get("addressLine2") ?? "").trim();
+  const city = String(formData.get("city") ?? "").trim();
+  const state = String(formData.get("state") ?? "").trim();
+  const postalCode = String(formData.get("postalCode") ?? "").trim();
   const adminName = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "")
     .trim()
@@ -50,6 +57,24 @@ export async function registerDealerAction(
   }
   if (!plan) {
     return { error: "Please select a subscription plan." };
+  }
+  if (!dealerNumber) {
+    return { error: "Dealer number is required." };
+  }
+  if (!phone) {
+    return { error: "Dealership phone is required." };
+  }
+  if (!addressLine1) {
+    return { error: "Street address is required." };
+  }
+  if (!city) {
+    return { error: "City is required." };
+  }
+  if (!state) {
+    return { error: "State is required." };
+  }
+  if (!postalCode) {
+    return { error: "ZIP code is required." };
   }
   if (!brandRaw) {
     return { error: "Franchise brand is required." };
@@ -129,6 +154,13 @@ export async function registerDealerAction(
           brand,
           plan,
           planStatus: "trialing",
+          dealerNumber,
+          phone,
+          addressLine1,
+          addressLine2: addressLine2 || null,
+          city,
+          state,
+          postalCode,
         },
       });
 

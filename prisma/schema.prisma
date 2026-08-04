@@ -32,6 +32,14 @@ model Organization {
   /** Selected subscription tier (Stripe billing can attach later). */
   plan      PlanId   @default(professional)
   planStatus PlanStatus @default(trialing)
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  postalCode   String?
+  phone        String?
+  /** Manufacturer / OEM dealer code when provided at registration. */
+  dealerNumber String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

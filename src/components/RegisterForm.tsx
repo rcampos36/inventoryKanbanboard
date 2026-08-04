@@ -187,6 +187,104 @@ export function RegisterForm({ brands }: { brands: string[] }) {
               keeps shared Used / Other lanes.
             </p>
           </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass} htmlFor="dealerNumber">
+              Dealer number
+            </label>
+            <input
+              id="dealerNumber"
+              name="dealerNumber"
+              required
+              placeholder="OEM / manufacturer dealer code"
+              className={inputClass}
+              suppressHydrationWarning
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass} htmlFor="phone">
+              Dealership phone
+            </label>
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              required
+              autoComplete="tel"
+              placeholder="(555) 555-5555"
+              className={inputClass}
+              suppressHydrationWarning
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass} htmlFor="addressLine1">
+              Street address
+            </label>
+            <input
+              id="addressLine1"
+              name="addressLine1"
+              required
+              autoComplete="address-line1"
+              placeholder="123 Main Street"
+              className={inputClass}
+              suppressHydrationWarning
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass} htmlFor="addressLine2">
+              Address line 2{" "}
+              <span className="font-medium text-brand/50">(optional)</span>
+            </label>
+            <input
+              id="addressLine2"
+              name="addressLine2"
+              autoComplete="address-line2"
+              placeholder="Suite, unit, etc."
+              className={inputClass}
+              suppressHydrationWarning
+            />
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="flex flex-col gap-1 sm:col-span-1">
+              <label className={labelClass} htmlFor="city">
+                City
+              </label>
+              <input
+                id="city"
+                name="city"
+                required
+                autoComplete="address-level2"
+                className={inputClass}
+                suppressHydrationWarning
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass} htmlFor="state">
+                State
+              </label>
+              <input
+                id="state"
+                name="state"
+                required
+                autoComplete="address-level1"
+                placeholder="FL"
+                className={inputClass}
+                suppressHydrationWarning
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass} htmlFor="postalCode">
+                ZIP
+              </label>
+              <input
+                id="postalCode"
+                name="postalCode"
+                required
+                autoComplete="postal-code"
+                className={inputClass}
+                suppressHydrationWarning
+              />
+            </div>
+          </div>
         </fieldset>
 
         <fieldset className="flex flex-col gap-3">
