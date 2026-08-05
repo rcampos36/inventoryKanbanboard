@@ -8,6 +8,12 @@ import {
   resolveFromAddress,
   resolveToAddress,
 } from "@/lib/mail";
+import {
+  demoTimeLabel,
+  formatPreferredDemoDate,
+  isDemoTimeSlot,
+  isValidPreferredDemoDate,
+} from "@/lib/demo-schedule";
 import { PEARSON_ORG_ID } from "@/lib/tenant";
 import { boardPath } from "@/lib/paths";
 import { redirect } from "next/navigation";
@@ -25,6 +31,8 @@ export async function scheduleDemoAction(
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const dealership = String(formData.get("dealership") ?? "").trim();
   const phone = String(formData.get("phone") ?? "").trim();
+  const preferredDate = String(formData.get("preferredDate") ?? "").trim();
+  const preferredTime = String(formData.get("preferredTime") ?? "").trim();
   const message = String(formData.get("message") ?? "").trim();
   const website = String(formData.get("website") ?? "").trim(); // honeypot
 
@@ -41,6 +49,14 @@ export async function scheduleDemoAction(
   if (!dealership) {
     return { ok: false, error: "Please enter your dealership name." };
   }
+  if (!isValidPreferredDemoDate(preferredDate)) {
+    return { ok: false, error: "Please choose a preferred demo date from today onward." };
+  }
+  if (!isDemoTimeSlot(preferredTime)) {
+    return { ok: false, error: "Please choose a preferred time between 9:00 AM and 5:00 PM." };
+  }
+
+  const preferredSlotLabel = `${formatPreferredDemoDate(preferredDate)} at ${demoTimeLabel(preferredTime)}`;
 
   let emailSent = false;
   let emailError: string | null = null;
@@ -64,6 +80,7 @@ export async function scheduleDemoAction(
         `Email: ${email}`,
         `Dealership: ${dealership}`,
         `Phone: ${phone || "(not provided)"}`,
+        `Preferred demo: ${preferredSlotLabel}`,
         "",
         "Message:",
         message || "(none)",
@@ -76,7 +93,7 @@ export async function scheduleDemoAction(
           from,
           to: [to],
           replyTo: email,
-          subject: `Demo request — ${dealership} (${name})`,
+          subject: `Demo request — ${dealership} · ${preferredSlotLabel}`,
           text: lines.join("\n"),
         });
 
@@ -102,6 +119,8 @@ export async function scheduleDemoAction(
         dealership,
         phone: phone || null,
         message: message || null,
+        preferredDate,
+        preferredTime,
         emailSent,
         emailError: emailSent
           ? emailedTo
@@ -130,6 +149,8 @@ export type DemoRequestRow = {
   dealership: string;
   phone: string | null;
   message: string | null;
+  preferredDate: string | null;
+  preferredTime: string | null;
   emailSent: boolean;
   emailError: string | null;
   createdAt: string;
@@ -153,6 +174,8 @@ export async function listDemoRequestsAction(): Promise<DemoRequestRow[]> {
     dealership: row.dealership,
     phone: row.phone,
     message: row.message,
+    preferredDate: row.preferredDate,
+    preferredTime: row.preferredTime,
     emailSent: row.emailSent,
     emailError: row.emailError,
     createdAt: row.createdAt.toISOString(),

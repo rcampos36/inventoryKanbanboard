@@ -13,6 +13,10 @@ import {
   scheduleDemoAction,
   type ScheduleDemoState,
 } from "@/app/actions/demo";
+import {
+  DEMO_TIME_SLOTS,
+  todayLocalIsoDate,
+} from "@/lib/demo-schedule";
 
 type DemoContextValue = {
   openDemo: () => void;
@@ -74,10 +78,13 @@ function ScheduleDemoModal({
   onClose: () => void;
 }) {
   const [mounted, setMounted] = useState(false);
+  const [preferredDate, setPreferredDate] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
   const [state, formAction, pending] = useActionState(
     scheduleDemoAction,
     initialState
   );
+  const minDate = todayLocalIsoDate();
 
   useEffect(() => {
     setMounted(true);
@@ -126,8 +133,8 @@ function ScheduleDemoModal({
             Schedule a demo
           </h2>
           <p className="mt-2 text-sm text-[var(--salestower-muted)]">
-            Tell us about your dealership and we&apos;ll reach out to set up a
-            walkthrough.
+            Pick a preferred date and time, tell us about your dealership, and
+            we&apos;ll confirm the walkthrough.
           </p>
         </div>
 
@@ -135,7 +142,7 @@ function ScheduleDemoModal({
           <div className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-900">
             <p className="font-semibold">Request received.</p>
             <p className="mt-1">
-              Thanks — we&apos;ll follow up at your email to schedule the demo.
+              Thanks — we&apos;ll follow up at your email to confirm the demo.
             </p>
           </div>
         ) : (
@@ -199,6 +206,48 @@ function ScheduleDemoModal({
               />
             </label>
 
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-brand/55">
+                  Preferred date
+                </span>
+                <input
+                  name="preferredDate"
+                  type="date"
+                  required
+                  min={minDate}
+                  value={preferredDate}
+                  onChange={(e) => setPreferredDate(e.target.value)}
+                  className={fieldClass}
+                />
+              </label>
+
+              <label className="block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-brand/55">
+                  Preferred time
+                </span>
+                <select
+                  name="preferredTime"
+                  required
+                  value={preferredTime}
+                  onChange={(e) => setPreferredTime(e.target.value)}
+                  className={fieldClass}
+                >
+                  <option value="" disabled>
+                    Select time…
+                  </option>
+                  {DEMO_TIME_SLOTS.map((slot) => (
+                    <option key={slot.value} value={slot.value}>
+                      {slot.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <p className="text-[11px] text-brand/50">
+              Demo slots are available from 9:00 AM to 5:00 PM.
+            </p>
+
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wide text-brand/55">
                 Message <span className="normal-case text-brand/40">(optional)</span>
@@ -207,7 +256,7 @@ function ScheduleDemoModal({
                 name="message"
                 rows={3}
                 className={fieldClass}
-                placeholder="Preferred times, store count, CRM, etc."
+                placeholder="Store count, CRM, anything we should know…"
               />
             </label>
 

@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { logoutAction } from "@/app/actions/auth";
 import { listDemoRequestsAction } from "@/app/actions/demo";
 import { requireAdmin } from "@/lib/auth";
+import {
+  demoTimeLabel,
+  formatPreferredDemoDate,
+} from "@/lib/demo-schedule";
 import { PEARSON_ORG_ID } from "@/lib/tenant";
 import { boardPath } from "@/lib/paths";
 
@@ -86,6 +90,13 @@ export default async function AdminDemosPage() {
                     </a>
                     {request.phone ? ` · ${request.phone}` : null}
                   </p>
+                  {request.preferredDate && request.preferredTime ? (
+                    <p className="font-semibold text-brand">
+                      Preferred:{" "}
+                      {formatPreferredDemoDate(request.preferredDate)} at{" "}
+                      {demoTimeLabel(request.preferredTime)}
+                    </p>
+                  ) : null}
                   {request.message ? (
                     <p className="mt-2 whitespace-pre-wrap text-[var(--salestower-muted)]">
                       {request.message}

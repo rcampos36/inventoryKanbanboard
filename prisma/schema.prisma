@@ -155,15 +155,19 @@ model Manager {
 
 /** Inbound “Schedule a Demo” leads from the marketing site. */
 model DemoRequest {
-  id          String   @id @default(cuid())
-  name        String
-  email       String
-  dealership  String
-  phone       String?
-  message     String?  @db.Text
-  emailSent   Boolean  @default(false)
-  emailError  String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(cuid())
+  name           String
+  email          String
+  dealership     String
+  phone          String?
+  message        String?  @db.Text
+  /** Preferred demo day (YYYY-MM-DD). */
+  preferredDate  String?
+  /** Preferred start time (HH:mm, 09:00–17:00). */
+  preferredTime  String?
+  emailSent      Boolean  @default(false)
+  emailError     String?
+  createdAt      DateTime @default(now())
 
   @@index([createdAt])
 }
