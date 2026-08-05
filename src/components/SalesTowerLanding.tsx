@@ -3,6 +3,7 @@ import Link from "next/link";
 import { boardPath } from "@/lib/paths";
 import type { LandingContent } from "@/lib/landing-content";
 import { LandingRichHtml } from "@/components/LandingRichHtml";
+import { ContactUsButton } from "@/components/ContactUs";
 import { ScheduleDemoButton } from "@/components/ScheduleDemo";
 
 export function SalesTowerLanding({
@@ -37,6 +38,10 @@ export function SalesTowerLanding({
             <span className="sm:hidden">Demo</span>
             <span className="hidden sm:inline">Schedule a Demo</span>
           </ScheduleDemoButton>
+          <ContactUsButton className="inline-flex h-9 items-center justify-center rounded-full border border-peach/45 px-2.5 text-xs font-bold text-sand transition hover:border-peach hover:bg-peach/10 sm:h-10 sm:px-4 sm:text-sm">
+            <span className="sm:hidden">Contact</span>
+            <span className="hidden sm:inline">Contact Us</span>
+          </ContactUsButton>
           <Link
             href="/admin/landing"
             className="inline-flex h-9 items-center justify-center rounded-full px-2.5 text-xs font-bold text-sand/90 transition hover:text-sand sm:h-10 sm:px-4 sm:text-sm"
@@ -213,9 +218,14 @@ export function SalesTowerLanding({
               </Link>
             </p>
           </div>
-          <ScheduleDemoButton className="rounded-full border border-brand/25 bg-[var(--salestower-surface)] px-5 py-2.5 text-sm font-bold text-brand transition hover:bg-peach/40">
-            Schedule a Demo
-          </ScheduleDemoButton>
+          <div className="flex flex-wrap items-center gap-2">
+            <ContactUsButton className="rounded-full border border-brand/25 bg-[var(--salestower-surface)] px-5 py-2.5 text-sm font-bold text-brand transition hover:bg-peach/40">
+              Contact Us
+            </ContactUsButton>
+            <ScheduleDemoButton className="rounded-full border border-brand/25 bg-[var(--salestower-surface)] px-5 py-2.5 text-sm font-bold text-brand transition hover:bg-peach/40">
+              Schedule a Demo
+            </ScheduleDemoButton>
+          </div>
         </div>
       </footer>
     </div>
