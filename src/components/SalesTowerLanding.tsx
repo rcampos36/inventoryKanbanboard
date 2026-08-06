@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { boardPath } from "@/lib/paths";
-import type { LandingContent } from "@/lib/landing-content";
+import {
+  featureImageForIndex,
+  type LandingContent,
+} from "@/lib/landing-content";
 import { LandingRichHtml } from "@/components/LandingRichHtml";
 import { ContactUsButton } from "@/components/ContactUs";
 import { ScheduleDemoButton } from "@/components/ScheduleDemo";
@@ -136,25 +139,48 @@ export function SalesTowerLanding({
             {content.featuresTitle}
           </h2>
 
-          <div className="mt-14 divide-y divide-peach/45 border-y border-peach/45">
-            {content.features.map((feature) => (
-              <article
-                key={`${feature.eyebrow}-${feature.title}`}
-                className="grid gap-3 py-10 md:grid-cols-[220px_1fr] md:gap-10"
-              >
-                <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand/65">
-                  {feature.eyebrow}
-                </p>
-                <div>
-                  <h3 className="font-[family-name:var(--font-syne)] text-xl font-bold tracking-tight text-brand md:text-2xl">
-                    {feature.title}
-                  </h3>
-                  <p className="mt-3 max-w-3xl text-base leading-relaxed text-[var(--salestower-muted)]">
-                    {feature.body}
-                  </p>
-                </div>
-              </article>
-            ))}
+          <div className="mt-14 flex flex-col gap-16 md:gap-20">
+            {content.features.map((feature, index) => {
+              const image = featureImageForIndex(index);
+              const imageLeft = index % 2 === 0;
+
+              return (
+                <article
+                  key={`${feature.eyebrow}-${feature.title}`}
+                  className={[
+                    "grid items-center gap-8 lg:grid-cols-2 lg:gap-14",
+                    imageLeft ? "" : "lg:[&>*:first-child]:order-2",
+                  ].join(" ")}
+                >
+                  {image ? (
+                    <div className="relative aspect-[4/3] overflow-hidden bg-brand/10">
+                      <Image
+                        src={image.src}
+                        alt={image.alt}
+                        fill
+                        className="object-cover transition duration-700 ease-out hover:scale-[1.03]"
+                        sizes="(max-width: 1024px) 100vw, 560px"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-brand/25 via-transparent to-transparent" />
+                    </div>
+                  ) : (
+                    <div className="aspect-[4/3] bg-gradient-to-br from-brand via-brand to-[#045066]" />
+                  )}
+
+                  <div className={imageLeft ? "lg:pl-2" : "lg:pr-2"}>
+                    <p className="text-xs font-bold uppercase tracking-[0.18em] text-brand/65">
+                      {feature.eyebrow}
+                    </p>
+                    <h3 className="mt-3 font-[family-name:var(--font-syne)] text-2xl font-bold tracking-tight text-brand md:text-3xl">
+                      {feature.title}
+                    </h3>
+                    <p className="mt-4 max-w-xl text-base leading-relaxed text-[var(--salestower-muted)] md:text-lg">
+                      {feature.body}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>

@@ -6,6 +6,37 @@ export type LandingFeature = {
   body: string;
 };
 
+export type LandingFeatureImage = {
+  src: string;
+  alt: string;
+};
+
+/** Visuals paired with the default key-features order on the landing page. */
+export const DEFAULT_FEATURE_IMAGES: LandingFeatureImage[] = [
+  {
+    src: "/landing/feature-secure-access.webp",
+    alt: "Secure dealership login and role-based access on a tablet",
+  },
+  {
+    src: "/landing/feature-sales-tracking.webp",
+    alt: "Sales tower pacing board tracking daily and month-to-date performance",
+  },
+  {
+    src: "/landing/feature-inventory.webp",
+    alt: "Manager reviewing unified new and used inventory on the lot",
+  },
+  {
+    src: "/landing/feature-demo-tracking.webp",
+    alt: "Demo vehicle leaving the showroom with overnight asset tracking",
+  },
+];
+
+export function featureImageForIndex(
+  index: number
+): LandingFeatureImage | null {
+  return DEFAULT_FEATURE_IMAGES[index] ?? null;
+}
+
 export type LandingContent = {
   heroHeadline: string;
   heroSubcopy: string;
