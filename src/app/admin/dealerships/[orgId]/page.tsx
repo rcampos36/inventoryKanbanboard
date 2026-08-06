@@ -43,10 +43,11 @@ export default async function AdminDealershipDetailPage({
           <h1 className="text-lg font-bold text-brand">{dealership.name}</h1>
           <p className="mt-1 text-sm text-brand/65">
             {dealership.brand} · /{dealership.slug} ·{" "}
-            {planLabel(dealership.plan)}
+            {planLabel(dealership.plan)} · {dealership.dealerCount}{" "}
+            {dealership.dealerCount === 1 ? "dealer" : "dealers"}
             {billAmount != null
-              ? ` (${formatUsdFromCents(billAmount)}/mo)`
-              : " (set custom price)"}{" "}
+              ? ` · ${formatUsdFromCents(billAmount)}/mo`
+              : " · set custom price"}{" "}
             · {planStatusLabel(dealership.planStatus)}
           </p>
         </div>

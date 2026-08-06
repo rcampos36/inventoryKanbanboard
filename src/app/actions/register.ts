@@ -13,7 +13,7 @@ import {
 } from "@/lib/session";
 import { uniqueSlug } from "@/lib/slug";
 import { boardPath, isReservedPathSlug } from "@/lib/paths";
-import { parsePlanId } from "@/lib/plans";
+import { parseDealerCount, parsePlanId } from "@/lib/plans";
 import { todayIsoDate } from "@/lib/types";
 import {
   isValidUsCity,
@@ -55,12 +55,20 @@ export async function registerDealerAction(
   const salespersonNames = parseNameList(formData.get("salespeople"));
   const managerNames = parseNameList(formData.get("managers"));
   const plan = parsePlanId(formData.get("plan"));
+  const dealerCount = plan
+    ? parseDealerCount(formData.get("dealerCount"), plan)
+    : null;
 
   if (!dealershipName) {
     return { error: "Dealership name is required." };
   }
   if (!plan) {
     return { error: "Please select a subscription plan." };
+  }
+  if (dealerCount == null) {
+    return {
+      error: "Choose how many dealers / rooftops this plan should cover.",
+    };
   }
   if (!dealerNumber) {
     return { error: "Dealer number is required." };
@@ -163,6 +171,7 @@ export async function registerDealerAction(
           brand,
           plan,
           planStatus: "trialing",
+          dealerCount,
           dealerNumber,
           phone,
           addressLine1,

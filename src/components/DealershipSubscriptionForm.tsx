@@ -10,8 +10,11 @@ import {
 import {
   PLAN_IDS,
   PLAN_STATUSES,
+  clampDealerCount,
   formatUsdFromCents,
+  planDealerCountOptions,
   planLabel,
+  planMaxDealers,
   planMonthlyPriceCents,
   planStatusLabel,
   type PlanId,
@@ -41,6 +44,7 @@ export function DealershipSubscriptionForm({
   const [planStatus, setPlanStatus] = useState<PlanStatus>(
     dealership.planStatus
   );
+  const [dealerCount, setDealerCount] = useState(dealership.dealerCount);
   const [customPrice, setCustomPrice] = useState(
     dealership.customMonthlyPriceCents != null
       ? String(dealership.customMonthlyPriceCents / 100)
@@ -50,10 +54,12 @@ export function DealershipSubscriptionForm({
     updateDealershipSubscriptionAction,
     initialState
   );
+  const dealerCountOptions = planDealerCountOptions(plan);
 
   useEffect(() => {
     setPlan(dealership.plan);
     setPlanStatus(dealership.planStatus);
+    setDealerCount(clampDealerCount(dealership.dealerCount, dealership.plan));
     setCustomPrice(
       dealership.customMonthlyPriceCents != null
         ? String(dealership.customMonthlyPriceCents / 100)
@@ -62,6 +68,7 @@ export function DealershipSubscriptionForm({
   }, [
     dealership.plan,
     dealership.planStatus,
+    dealership.dealerCount,
     dealership.customMonthlyPriceCents,
     dealership.updatedAt,
   ]);
@@ -110,7 +117,13 @@ export function DealershipSubscriptionForm({
                 name="plan"
                 required
                 value={plan}
-                onChange={(e) => setPlan(e.target.value as PlanId)}
+                onChange={(e) => {
+                  const nextPlan = e.target.value as PlanId;
+                  setPlan(nextPlan);
+                  setDealerCount((current) =>
+                    clampDealerCount(current, nextPlan)
+                  );
+                }}
                 className={inputClass}
               >
                 {PLAN_IDS.map((id) => (
@@ -119,6 +132,36 @@ export function DealershipSubscriptionForm({
                   </option>
                 ))}
               </select>
+            </div>
+
+            <div className="flex flex-col gap-1">
+              <label className={labelClass} htmlFor="dealerCount">
+                Number of dealers / rooftops
+              </label>
+              {planMaxDealers(plan) <= 1 ? (
+                <>
+                  <input type="hidden" name="dealerCount" value={1} />
+                  <p className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm text-brand">
+                    Starter includes <span className="font-semibold">1</span>{" "}
+                    rooftop.
+                  </p>
+                </>
+              ) : (
+                <select
+                  id="dealerCount"
+                  name="dealerCount"
+                  required
+                  value={dealerCount}
+                  onChange={(e) => setDealerCount(Number(e.target.value))}
+                  className={inputClass}
+                >
+                  {dealerCountOptions.map((count) => (
+                    <option key={count} value={count}>
+                      {count} {count === 1 ? "dealer" : "dealers"}
+                    </option>
+                  ))}
+                </select>
+              )}
             </div>
 
             <div className="flex flex-col gap-1">
@@ -178,7 +221,8 @@ export function DealershipSubscriptionForm({
             </div>
           </div>
           <p className="mt-3 text-sm font-medium text-brand">
-            Selected: {planLabel(plan)}
+            Selected: {planLabel(plan)} · {dealerCount}{" "}
+            {dealerCount === 1 ? "dealer" : "dealers"}
             {Number.isFinite(effectivePrice) && effectivePrice != null
               ? ` · ${formatUsdFromCents(Math.round(effectivePrice * 100))}/mo`
               : " · set an agreed price"}

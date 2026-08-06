@@ -34,6 +34,8 @@ model Organization {
   planStatus PlanStatus @default(trialing)
   /** Agreed monthly price in USD cents (required for Enterprise / custom quotes). */
   customMonthlyPriceCents Int?
+  /** Number of dealership rooftops covered by the subscription. */
+  dealerCount Int @default(1)
   addressLine1 String?
   addressLine2 String?
   city         String?

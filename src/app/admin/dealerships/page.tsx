@@ -65,7 +65,11 @@ export default async function AdminDealershipsPage() {
                         ) : null}
                       </td>
                       <td className="px-4 py-3 font-medium text-brand">
-                        {planLabel(org.plan)}
+                        <p>{planLabel(org.plan)}</p>
+                        <p className="text-xs font-normal text-brand/55">
+                          {org.dealerCount}{" "}
+                          {org.dealerCount === 1 ? "dealer" : "dealers"}
+                        </p>
                       </td>
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-peach/45 px-2.5 py-1 text-xs font-bold uppercase tracking-wide text-brand/80">

@@ -46,6 +46,9 @@ export type PlanDefinition = {
   features: string[];
   highlighted?: boolean;
   maxUsers: number;
+  /** Inclusive rooftop / dealer-location count allowed on this plan. */
+  minDealers: number;
+  maxDealers: number;
   entitlements: readonly PlanFeature[];
   boardSections: readonly PlanBoardSection[];
 };
@@ -68,12 +71,14 @@ export const PLANS: PlanDefinition[] = [
     monthlyPriceCents: 299_00,
     blurb: "One rooftop getting organized on the board.",
     features: [
-      "1 dealership board",
+      "1 dealership rooftop",
       "Up to 5 user logins",
       "Inventory + Daily Sales + Sold by",
       "Working deals & overnight demos",
     ],
     maxUsers: 5,
+    minDealers: 1,
+    maxDealers: 1,
     entitlements: [],
     boardSections: STARTER_SECTIONS,
   },
@@ -85,6 +90,7 @@ export const PLANS: PlanDefinition[] = [
     blurb: "Full sales-tower visibility for an active store.",
     features: [
       "Everything in Starter",
+      "1–5 dealership rooftops",
       "Up to 20 user logins",
       "Reports & sales history",
       "Inventory file import",
@@ -93,6 +99,8 @@ export const PLANS: PlanDefinition[] = [
     ],
     highlighted: true,
     maxUsers: 20,
+    minDealers: 1,
+    maxDealers: 5,
     entitlements: ["reports", "import", "managerDemos", "intake"],
     boardSections: FULL_BOARD_SECTIONS,
   },
@@ -104,12 +112,14 @@ export const PLANS: PlanDefinition[] = [
     blurb: "Dealer groups and multi-store operations.",
     features: [
       "Everything in Professional",
-      "Multi-rooftop ready",
+      "Up to 50 dealership rooftops",
       "Higher user limits",
       "SSO (coming later)",
       "Onboarding support",
     ],
     maxUsers: 100,
+    minDealers: 1,
+    maxDealers: 50,
     entitlements: ["reports", "import", "managerDemos", "intake"],
     boardSections: FULL_BOARD_SECTIONS,
   },
@@ -158,6 +168,46 @@ export function planHasFeature(planId: PlanId, feature: PlanFeature): boolean {
 
 export function planMaxUsers(planId: PlanId): number {
   return getPlan(planId).maxUsers;
+}
+
+export function planMinDealers(planId: PlanId): number {
+  return getPlan(planId).minDealers;
+}
+
+export function planMaxDealers(planId: PlanId): number {
+  return getPlan(planId).maxDealers;
+}
+
+/** Selectable rooftop counts for a plan (Starter is always just 1). */
+export function planDealerCountOptions(planId: PlanId): number[] {
+  const plan = getPlan(planId);
+  const options: number[] = [];
+  for (let n = plan.minDealers; n <= plan.maxDealers; n++) {
+    options.push(n);
+  }
+  return options;
+}
+
+export function parseDealerCount(
+  value: unknown,
+  planId: PlanId
+): number | null {
+  const raw =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value.trim())
+        : NaN;
+  if (!Number.isInteger(raw)) return null;
+  const plan = getPlan(planId);
+  if (raw < plan.minDealers || raw > plan.maxDealers) return null;
+  return raw;
+}
+
+export function clampDealerCount(value: number, planId: PlanId): number {
+  const plan = getPlan(planId);
+  if (!Number.isFinite(value)) return plan.minDealers;
+  return Math.min(plan.maxDealers, Math.max(plan.minDealers, Math.round(value)));
 }
 
 /** Fixed monthly price for Starter/Professional; null for Enterprise custom quotes. */

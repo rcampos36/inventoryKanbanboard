@@ -21,6 +21,7 @@ import {
   formatUsdFromCents,
   isPlanId,
   isPlanStatus,
+  parseDealerCount,
   planLabel,
   planMaxUsers,
   type PlanId,
@@ -51,6 +52,7 @@ export type DealershipListItem = {
   brand: string;
   plan: PlanId;
   planStatus: PlanStatus;
+  dealerCount: number;
   phone: string | null;
   dealerNumber: string | null;
   city: string | null;
@@ -66,6 +68,7 @@ export type DealershipDetail = {
   brand: string;
   plan: PlanId;
   planStatus: PlanStatus;
+  dealerCount: number;
   customMonthlyPriceCents: number | null;
   addressLine1: string | null;
   addressLine2: string | null;
@@ -121,6 +124,7 @@ export async function listDealershipsAction(): Promise<DealershipListItem[]> {
     brand: org.brand,
     plan: isPlanId(org.plan) ? org.plan : "professional",
     planStatus: isPlanStatus(org.planStatus) ? org.planStatus : "trialing",
+    dealerCount: org.dealerCount,
     phone: org.phone,
     dealerNumber: org.dealerNumber,
     city: org.city,
@@ -163,6 +167,7 @@ export async function getDealershipAction(
     brand: org.brand,
     plan: isPlanId(org.plan) ? org.plan : "professional",
     planStatus: isPlanStatus(org.planStatus) ? org.planStatus : "trialing",
+    dealerCount: org.dealerCount,
     customMonthlyPriceCents: org.customMonthlyPriceCents,
     addressLine1: org.addressLine1,
     addressLine2: org.addressLine2,
@@ -216,6 +221,13 @@ export async function updateDealershipSubscriptionAction(
       return { error: "Choose a valid subscription status." };
     }
 
+    const dealerCount = parseDealerCount(formData.get("dealerCount"), planRaw);
+    if (dealerCount == null) {
+      return {
+        error: `Choose a dealer count allowed on ${planLabel(planRaw)}.`,
+      };
+    }
+
     let customMonthlyPriceCents: number | null = null;
     if (customPriceRaw) {
       customMonthlyPriceCents = parseDollarsToCents(customPriceRaw);
@@ -240,6 +252,7 @@ export async function updateDealershipSubscriptionAction(
       data: {
         plan: planRaw,
         planStatus: statusRaw,
+        dealerCount,
         customMonthlyPriceCents,
         phone: phone || null,
         dealerNumber: dealerNumber || null,
@@ -257,7 +270,7 @@ export async function updateDealershipSubscriptionAction(
         ? ` at ${formatUsdFromCents(customMonthlyPriceCents)}/mo`
         : "";
     return {
-      success: `Updated to ${planLabel(planRaw)} (${statusRaw.replace("_", " ")})${priceNote}.`,
+      success: `Updated to ${planLabel(planRaw)} · ${dealerCount} ${dealerCount === 1 ? "dealer" : "dealers"} (${statusRaw.replace("_", " ")})${priceNote}.`,
     };
   } catch (error) {
     return {

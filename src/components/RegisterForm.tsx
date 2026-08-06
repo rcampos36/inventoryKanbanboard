@@ -9,6 +9,9 @@ import type { AuthFormState } from "@/app/actions/auth";
 import {
   DEFAULT_PLAN_ID,
   PLANS,
+  clampDealerCount,
+  planDealerCountOptions,
+  planMaxDealers,
   type PlanId,
 } from "@/lib/plans";
 import { getUsCitiesForState, getUsStates } from "@/lib/us-locations";
@@ -28,8 +31,10 @@ export function RegisterForm({ brands }: { brands: string[] }) {
   );
   const [brand, setBrand] = useState("");
   const [plan, setPlan] = useState<PlanId>(DEFAULT_PLAN_ID);
+  const [dealerCount, setDealerCount] = useState(1);
   const [stateCode, setStateCode] = useState("");
   const [city, setCity] = useState("");
+  const dealerCountOptions = planDealerCountOptions(plan);
   const [salespersonDraft, setSalespersonDraft] = useState("");
   const [salespeople, setSalespeople] = useState<string[]>([]);
   const [managerDraft, setManagerDraft] = useState("");
@@ -81,6 +86,7 @@ export function RegisterForm({ brands }: { brands: string[] }) {
         <fieldset className="flex flex-col gap-3">
           <legend className="text-sm font-bold text-brand">Plan</legend>
           <input type="hidden" name="plan" value={plan} />
+          <input type="hidden" name="dealerCount" value={dealerCount} />
           <div className="grid gap-3 sm:grid-cols-3">
             {PLANS.map((option) => {
               const selected = plan === option.id;
@@ -88,7 +94,12 @@ export function RegisterForm({ brands }: { brands: string[] }) {
                 <button
                   key={option.id}
                   type="button"
-                  onClick={() => setPlan(option.id)}
+                  onClick={() => {
+                    setPlan(option.id);
+                    setDealerCount((current) =>
+                      clampDealerCount(current, option.id)
+                    );
+                  }}
                   className={[
                     "flex h-full flex-col rounded-xl border px-3 py-3 text-left transition",
                     selected
@@ -148,6 +159,34 @@ export function RegisterForm({ brands }: { brands: string[] }) {
                 </button>
               );
             })}
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className={labelClass} htmlFor="dealerCountSelect">
+              Number of dealers / rooftops
+            </label>
+            {planMaxDealers(plan) <= 1 ? (
+              <p className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2.5 text-sm text-brand">
+                Starter includes <span className="font-semibold">1</span>{" "}
+                dealership rooftop.
+              </p>
+            ) : (
+              <select
+                id="dealerCountSelect"
+                value={dealerCount}
+                onChange={(e) => setDealerCount(Number(e.target.value))}
+                className={inputClass}
+              >
+                {dealerCountOptions.map((count) => (
+                  <option key={count} value={count}>
+                    {count} {count === 1 ? "dealer" : "dealers"}
+                  </option>
+                ))}
+              </select>
+            )}
+            <p className="text-[11px] text-brand/55">
+              Professional supports up to 5 rooftops. Enterprise supports up to
+              50. Pricing for multi-rooftop Enterprise can be set after signup.
+            </p>
           </div>
           <p className="text-[11px] text-brand/55">
             Billing checkout can be connected later. Your selection is saved on
