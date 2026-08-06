@@ -32,6 +32,8 @@ model Organization {
   /** Selected subscription tier (Stripe billing can attach later). */
   plan      PlanId   @default(professional)
   planStatus PlanStatus @default(trialing)
+  /** Agreed monthly price in USD cents (required for Enterprise / custom quotes). */
+  customMonthlyPriceCents Int?
   addressLine1 String?
   addressLine2 String?
   city         String?

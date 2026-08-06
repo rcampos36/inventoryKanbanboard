@@ -1,13 +1,22 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   updateDealershipSubscriptionAction,
   type DealershipDetail,
   type DealershipFormState,
 } from "@/app/actions/dealerships";
-import { PLAN_IDS, PLAN_STATUSES, planLabel, planStatusLabel } from "@/lib/plans";
+import {
+  PLAN_IDS,
+  PLAN_STATUSES,
+  formatUsdFromCents,
+  planLabel,
+  planMonthlyPriceCents,
+  planStatusLabel,
+  type PlanId,
+  type PlanStatus,
+} from "@/lib/plans";
 
 const initialState: DealershipFormState = {};
 
@@ -15,20 +24,60 @@ const inputClass =
   "w-full rounded-lg border border-peach/70 px-3 py-2 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
 const labelClass = "text-xs font-semibold text-brand/70";
 
+function planOptionLabel(id: PlanId): string {
+  const cents = planMonthlyPriceCents(id);
+  return cents != null
+    ? `${planLabel(id)} — ${formatUsdFromCents(cents)}/mo`
+    : `${planLabel(id)} — Custom`;
+}
+
 export function DealershipSubscriptionForm({
   dealership,
 }: {
   dealership: DealershipDetail;
 }) {
   const router = useRouter();
+  const [plan, setPlan] = useState<PlanId>(dealership.plan);
+  const [planStatus, setPlanStatus] = useState<PlanStatus>(
+    dealership.planStatus
+  );
+  const [customPrice, setCustomPrice] = useState(
+    dealership.customMonthlyPriceCents != null
+      ? String(dealership.customMonthlyPriceCents / 100)
+      : ""
+  );
   const [state, formAction, pending] = useActionState(
     updateDealershipSubscriptionAction,
     initialState
   );
 
   useEffect(() => {
+    setPlan(dealership.plan);
+    setPlanStatus(dealership.planStatus);
+    setCustomPrice(
+      dealership.customMonthlyPriceCents != null
+        ? String(dealership.customMonthlyPriceCents / 100)
+        : ""
+    );
+  }, [
+    dealership.plan,
+    dealership.planStatus,
+    dealership.customMonthlyPriceCents,
+    dealership.updatedAt,
+  ]);
+
+  useEffect(() => {
     if (state.success) router.refresh();
   }, [state.success, router]);
+
+  const listPrice = planMonthlyPriceCents(plan);
+  const needsCustomPrice = plan === "enterprise";
+  const effectivePrice =
+    customPrice.trim() !== ""
+      ? Number(customPrice)
+      : listPrice != null
+        ? listPrice / 100
+        : null;
 
   return (
     <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
@@ -36,49 +85,104 @@ export function DealershipSubscriptionForm({
         Subscription & contact
       </h2>
       <p className="mb-4 text-sm text-brand/60">
-        Change the plan that gates features for this dealership, and update
-        contact details collected at registration.
+        Update this account&apos;s plan anytime. Saving applies feature access
+        and invoice pricing for the store.
       </p>
 
-      <form action={formAction} className="grid gap-3 sm:grid-cols-2">
+      <form
+        key={`${dealership.id}-${dealership.updatedAt}`}
+        action={formAction}
+        className="grid gap-3 sm:grid-cols-2"
+      >
         <input type="hidden" name="organizationId" value={dealership.id} />
 
-        <div className="flex flex-col gap-1">
-          <label className={labelClass} htmlFor="plan">
+        <div className="rounded-xl border border-peach/50 bg-sand/40 p-4 sm:col-span-2">
+          <p className="text-xs font-bold uppercase tracking-wider text-brand/55">
             Plan
-          </label>
-          <select
-            id="plan"
-            name="plan"
-            required
-            defaultValue={dealership.plan}
-            className={inputClass}
-          >
-            {PLAN_IDS.map((id) => (
-              <option key={id} value={id}>
-                {planLabel(id)}
-              </option>
-            ))}
-          </select>
-        </div>
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <div className="flex flex-col gap-1">
+              <label className={labelClass} htmlFor="plan">
+                Subscription plan
+              </label>
+              <select
+                id="plan"
+                name="plan"
+                required
+                value={plan}
+                onChange={(e) => setPlan(e.target.value as PlanId)}
+                className={inputClass}
+              >
+                {PLAN_IDS.map((id) => (
+                  <option key={id} value={id}>
+                    {planOptionLabel(id)}
+                  </option>
+                ))}
+              </select>
+            </div>
 
-        <div className="flex flex-col gap-1">
-          <label className={labelClass} htmlFor="planStatus">
-            Status
-          </label>
-          <select
-            id="planStatus"
-            name="planStatus"
-            required
-            defaultValue={dealership.planStatus}
-            className={inputClass}
-          >
-            {PLAN_STATUSES.map((status) => (
-              <option key={status} value={status}>
-                {planStatusLabel(status)}
-              </option>
-            ))}
-          </select>
+            <div className="flex flex-col gap-1">
+              <label className={labelClass} htmlFor="planStatus">
+                Status
+              </label>
+              <select
+                id="planStatus"
+                name="planStatus"
+                required
+                value={planStatus}
+                onChange={(e) => setPlanStatus(e.target.value as PlanStatus)}
+                className={inputClass}
+              >
+                {PLAN_STATUSES.map((status) => (
+                  <option key={status} value={status}>
+                    {planStatusLabel(status)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1 sm:col-span-2">
+              <label className={labelClass} htmlFor="customMonthlyPrice">
+                Agreed monthly price (USD)
+                {needsCustomPrice ? (
+                  <span className="ml-1 font-semibold text-brand">
+                    — required for Enterprise
+                  </span>
+                ) : (
+                  <span className="ml-1 font-medium text-brand/50">
+                    (optional override)
+                  </span>
+                )}
+              </label>
+              <input
+                id="customMonthlyPrice"
+                name="customMonthlyPrice"
+                type="number"
+                min="1"
+                step="1"
+                required={needsCustomPrice}
+                value={customPrice}
+                onChange={(e) => setCustomPrice(e.target.value)}
+                placeholder={
+                  needsCustomPrice
+                    ? "Enter the agreed Enterprise price"
+                    : listPrice != null
+                      ? `Default ${formatUsdFromCents(listPrice)}`
+                      : "Enter agreed price"
+                }
+                className={inputClass}
+              />
+              <p className="text-[11px] text-brand/55">
+                Saved on the account and used as the default invoice amount.
+              </p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm font-medium text-brand">
+            Selected: {planLabel(plan)}
+            {Number.isFinite(effectivePrice) && effectivePrice != null
+              ? ` · ${formatUsdFromCents(Math.round(effectivePrice * 100))}/mo`
+              : " · set an agreed price"}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -183,7 +287,7 @@ export function DealershipSubscriptionForm({
             disabled={pending}
             className="rounded-lg bg-brand px-4 py-2 text-sm font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
           >
-            {pending ? "Saving…" : "Save subscription"}
+            {pending ? "Saving…" : "Save plan changes"}
           </button>
         </div>
       </form>

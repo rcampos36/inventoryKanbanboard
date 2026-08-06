@@ -5,9 +5,11 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/auth";
 import {
+  buildDealershipAddressLines,
   buildInvoiceEmailText,
   buildInvoiceNumber,
   currentBillingPeriodLabel,
+  parseDollarsToCents,
   resolveInvoiceAmountCents,
 } from "@/lib/invoices";
 import {
@@ -64,6 +66,7 @@ export type DealershipDetail = {
   brand: string;
   plan: PlanId;
   planStatus: PlanStatus;
+  customMonthlyPriceCents: number | null;
   addressLine1: string | null;
   addressLine2: string | null;
   city: string | null;
@@ -160,6 +163,7 @@ export async function getDealershipAction(
     brand: org.brand,
     plan: isPlanId(org.plan) ? org.plan : "professional",
     planStatus: isPlanStatus(org.planStatus) ? org.planStatus : "trialing",
+    customMonthlyPriceCents: org.customMonthlyPriceCents,
     addressLine1: org.addressLine1,
     addressLine2: org.addressLine2,
     city: org.city,
@@ -197,6 +201,7 @@ export async function updateDealershipSubscriptionAction(
     const orgId = String(formData.get("organizationId") ?? "").trim();
     const planRaw = String(formData.get("plan") ?? "").trim();
     const statusRaw = String(formData.get("planStatus") ?? "").trim();
+    const customPriceRaw = String(formData.get("customMonthlyPrice") ?? "").trim();
     const phone = String(formData.get("phone") ?? "").trim();
     const dealerNumber = String(formData.get("dealerNumber") ?? "").trim();
     const addressLine1 = String(formData.get("addressLine1") ?? "").trim();
@@ -211,6 +216,19 @@ export async function updateDealershipSubscriptionAction(
       return { error: "Choose a valid subscription status." };
     }
 
+    let customMonthlyPriceCents: number | null = null;
+    if (customPriceRaw) {
+      customMonthlyPriceCents = parseDollarsToCents(customPriceRaw);
+      if (customMonthlyPriceCents == null) {
+        return { error: "Enter a valid agreed monthly price greater than zero." };
+      }
+    } else if (planRaw === "enterprise") {
+      return {
+        error:
+          "Enterprise / custom plans need an agreed monthly price before you can save.",
+      };
+    }
+
     const existing = await prisma.organization.findUnique({
       where: { id: orgId },
       select: { id: true },
@@ -222,6 +240,7 @@ export async function updateDealershipSubscriptionAction(
       data: {
         plan: planRaw,
         planStatus: statusRaw,
+        customMonthlyPriceCents,
         phone: phone || null,
         dealerNumber: dealerNumber || null,
         addressLine1: addressLine1 || null,
@@ -233,8 +252,12 @@ export async function updateDealershipSubscriptionAction(
     });
 
     revalidateDealershipPaths(orgId);
+    const priceNote =
+      customMonthlyPriceCents != null
+        ? ` at ${formatUsdFromCents(customMonthlyPriceCents)}/mo`
+        : "";
     return {
-      success: `Updated to ${planLabel(planRaw)} (${statusRaw.replace("_", " ")}).`,
+      success: `Updated to ${planLabel(planRaw)} (${statusRaw.replace("_", " ")})${priceNote}.`,
     };
   } catch (error) {
     return {
@@ -446,20 +469,18 @@ export async function sendDealershipInvoiceAction(
     if (!org) return { error: "Dealership not found." };
 
     const plan = isPlanId(org.plan) ? org.plan : "professional";
-    const amountResult = resolveInvoiceAmountCents(plan, amountOverride);
+    const amountResult = resolveInvoiceAmountCents({
+      planId: plan,
+      customMonthlyPriceCents: org.customMonthlyPriceCents,
+      overrideDollars: amountOverride,
+    });
     if ("error" in amountResult) {
       return { error: amountResult.error };
     }
 
     const { amountCents } = amountResult;
     const invoiceNumber = buildInvoiceNumber(org.slug);
-    const addressLines = [
-      org.name,
-      org.addressLine1,
-      org.addressLine2,
-      [org.city, org.state, org.postalCode].filter(Boolean).join(", ") || null,
-      org.dealerNumber ? `Dealer # ${org.dealerNumber}` : null,
-    ].filter((line): line is string => Boolean(line));
+    const addressLines = buildDealershipAddressLines(org);
 
     const emailBody = buildInvoiceEmailText({
       dealershipName: org.name,

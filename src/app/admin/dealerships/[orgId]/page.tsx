@@ -29,7 +29,9 @@ export default async function AdminDealershipDetailPage({
   const dealership = await getDealershipAction(orgId);
   if (!dealership) notFound();
 
-  const planAmount = planMonthlyPriceCents(dealership.plan);
+  const billAmount =
+    dealership.customMonthlyPriceCents ??
+    planMonthlyPriceCents(dealership.plan);
 
   return (
     <main className="min-h-screen bg-sand">
@@ -42,9 +44,9 @@ export default async function AdminDealershipDetailPage({
           <p className="mt-1 text-sm text-brand/65">
             {dealership.brand} · /{dealership.slug} ·{" "}
             {planLabel(dealership.plan)}
-            {planAmount != null
-              ? ` (${formatUsdFromCents(planAmount)}/mo)`
-              : " (custom)"}{" "}
+            {billAmount != null
+              ? ` (${formatUsdFromCents(billAmount)}/mo)`
+              : " (set custom price)"}{" "}
             · {planStatusLabel(dealership.planStatus)}
           </p>
         </div>
