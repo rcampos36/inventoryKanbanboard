@@ -59,6 +59,7 @@ model Organization {
 enum InvoiceStatus {
   sent
   failed
+  paid
 }
 
 /** Monthly subscription invoices emailed from the platform backend. */
@@ -76,6 +77,7 @@ model Invoice {
   status          InvoiceStatus @default(sent)
   emailError      String?
   sentAt          DateTime      @default(now())
+  paidAt          DateTime?
   createdAt       DateTime      @default(now())
 
   @@index([organizationId, sentAt])

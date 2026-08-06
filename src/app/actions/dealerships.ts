@@ -45,9 +45,10 @@ export type DealershipInvoiceRow = {
   amountCents: number;
   periodLabel: string;
   recipientEmail: string;
-  status: "sent" | "failed";
+  status: "sent" | "failed" | "paid";
   emailError: string | null;
   sentAt: string;
+  paidAt: string | null;
 };
 
 export type DealershipListItem = {
@@ -197,6 +198,7 @@ export async function getDealershipAction(
       status: invoice.status,
       emailError: invoice.emailError,
       sentAt: invoice.sentAt.toISOString(),
+      paidAt: invoice.paidAt?.toISOString() ?? null,
     })),
   };
 }
@@ -598,6 +600,58 @@ export async function sendDealershipInvoiceAction(
   } catch (error) {
     return {
       error: actionErrorMessage(error, "Could not send the invoice."),
+    };
+  }
+}
+
+export async function updateDealershipInvoicePaidAction(
+  _prev: DealershipFormState,
+  formData: FormData
+): Promise<DealershipFormState> {
+  await requirePlatformAdmin();
+
+  try {
+    const orgId = String(formData.get("organizationId") ?? "").trim();
+    const invoiceId = String(formData.get("invoiceId") ?? "").trim();
+    const markPaid = String(formData.get("markPaid") ?? "") === "true";
+
+    if (!orgId || !invoiceId) {
+      return { error: "Missing invoice or dealership id." };
+    }
+
+    const invoice = await prisma.invoice.findFirst({
+      where: { id: invoiceId, organizationId: orgId },
+    });
+    if (!invoice) return { error: "Invoice not found." };
+
+    if (markPaid) {
+      if (invoice.status === "paid") {
+        return { success: `Invoice ${invoice.invoiceNumber} is already paid.` };
+      }
+      await prisma.invoice.update({
+        where: { id: invoice.id },
+        data: { status: "paid", paidAt: new Date() },
+      });
+      revalidateDealershipPaths(orgId);
+      return { success: `Invoice ${invoice.invoiceNumber} marked as paid.` };
+    }
+
+    if (invoice.status !== "paid") {
+      return { success: `Invoice ${invoice.invoiceNumber} is not marked paid.` };
+    }
+
+    await prisma.invoice.update({
+      where: { id: invoice.id },
+      data: {
+        status: invoice.emailError ? "failed" : "sent",
+        paidAt: null,
+      },
+    });
+    revalidateDealershipPaths(orgId);
+    return { success: `Invoice ${invoice.invoiceNumber} marked unpaid.` };
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not update invoice payment status."),
     };
   }
 }

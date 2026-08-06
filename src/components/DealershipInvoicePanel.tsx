@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import {
   sendDealershipInvoiceAction,
+  updateDealershipInvoicePaidAction,
   type DealershipDetail,
   type DealershipFormState,
 } from "@/app/actions/dealerships";
@@ -76,6 +77,11 @@ export function DealershipInvoicePanel({
     sendDealershipInvoiceAction,
     initialState
   );
+  const [paidState, paidAction, paidPending] = useActionState(
+    updateDealershipInvoicePaidAction,
+    initialState
+  );
+  const [pendingPaidId, setPendingPaidId] = useState<string | null>(null);
 
   useEffect(() => {
     setMounted(true);
@@ -92,6 +98,13 @@ export function DealershipInvoicePanel({
       router.refresh();
     }
   }, [state.success, router]);
+
+  useEffect(() => {
+    if (paidState.success || paidState.error) {
+      setPendingPaidId(null);
+      if (paidState.success) router.refresh();
+    }
+  }, [paidState.success, paidState.error, router]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -301,47 +314,99 @@ export function DealershipInvoicePanel({
         <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-slate-400">
           Recent invoices
         </h3>
+        {paidState.error ? (
+          <p className="mb-3 text-sm text-rose-700" role="alert">
+            {paidState.error}
+          </p>
+        ) : null}
+        {paidState.success ? (
+          <p className="mb-3 text-sm text-emerald-700" role="status">
+            {paidState.success}
+          </p>
+        ) : null}
         {dealership.invoices.length === 0 ? (
           <p className="text-sm text-brand/55">No invoices sent yet.</p>
         ) : (
           <ul className="divide-y divide-peach/35">
-            {dealership.invoices.map((invoice) => (
-              <li
-                key={invoice.id}
-                className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm"
-              >
-                <div>
-                  <p className="font-semibold text-brand">
-                    {invoice.invoiceNumber} ·{" "}
-                    {formatUsdFromCents(invoice.amountCents)}
-                  </p>
-                  <p className="text-xs text-brand/60">
-                    {invoice.periodLabel} · {planLabel(invoice.plan)} ·{" "}
-                    {invoice.recipientEmail}
-                  </p>
-                  {invoice.emailError ? (
-                    <p className="mt-1 text-xs text-amber-800">
-                      {invoice.emailError}
+            {dealership.invoices.map((invoice) => {
+              const isPaid = invoice.status === "paid";
+              const rowBusy = paidPending && pendingPaidId === invoice.id;
+              return (
+                <li
+                  key={invoice.id}
+                  className="flex flex-wrap items-start justify-between gap-2 py-3 text-sm"
+                >
+                  <div>
+                    <p className="font-semibold text-brand">
+                      {invoice.invoiceNumber} ·{" "}
+                      {formatUsdFromCents(invoice.amountCents)}
                     </p>
-                  ) : null}
-                </div>
-                <div className="text-right">
-                  <p
-                    className={[
-                      "text-xs font-bold uppercase tracking-wide",
-                      invoice.status === "sent"
-                        ? "text-emerald-700"
-                        : "text-amber-800",
-                    ].join(" ")}
-                  >
-                    {invoice.status}
-                  </p>
-                  <p className="text-xs text-brand/45">
-                    {new Date(invoice.sentAt).toLocaleString()}
-                  </p>
-                </div>
-              </li>
-            ))}
+                    <p className="text-xs text-brand/60">
+                      {invoice.periodLabel} · {planLabel(invoice.plan)} ·{" "}
+                      {invoice.recipientEmail}
+                    </p>
+                    {invoice.emailError ? (
+                      <p className="mt-1 text-xs text-amber-800">
+                        {invoice.emailError}
+                      </p>
+                    ) : null}
+                  </div>
+                  <div className="flex flex-col items-end gap-1.5">
+                    <p
+                      className={[
+                        "text-xs font-bold uppercase tracking-wide",
+                        isPaid
+                          ? "text-emerald-700"
+                          : invoice.status === "sent"
+                            ? "text-brand/70"
+                            : "text-amber-800",
+                      ].join(" ")}
+                    >
+                      {invoice.status}
+                    </p>
+                    <p className="text-xs text-brand/45">
+                      {isPaid && invoice.paidAt
+                        ? `Paid ${new Date(invoice.paidAt).toLocaleString()}`
+                        : new Date(invoice.sentAt).toLocaleString()}
+                    </p>
+                    <form
+                      action={paidAction}
+                      onSubmit={() => setPendingPaidId(invoice.id)}
+                    >
+                      <input
+                        type="hidden"
+                        name="organizationId"
+                        value={dealership.id}
+                      />
+                      <input type="hidden" name="invoiceId" value={invoice.id} />
+                      <input
+                        type="hidden"
+                        name="markPaid"
+                        value={isPaid ? "false" : "true"}
+                      />
+                      <button
+                        type="submit"
+                        disabled={paidPending}
+                        className={[
+                          "rounded-lg border px-2.5 py-1 text-xs font-semibold disabled:opacity-60",
+                          isPaid
+                            ? "border-peach/70 text-brand/70 hover:bg-peach/35"
+                            : "border-emerald-200 text-emerald-800 hover:bg-emerald-50",
+                        ].join(" ")}
+                      >
+                        {rowBusy
+                          ? isPaid
+                            ? "Updating…"
+                            : "Marking…"
+                          : isPaid
+                            ? "Mark unpaid"
+                            : "Mark paid"}
+                      </button>
+                    </form>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
