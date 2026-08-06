@@ -5,6 +5,7 @@ export const RESERVED_PATH_SLUGS = new Set([
   "admin",
   "dashboard",
   "demo",
+  "platform",
   "terms",
   "api",
   "favicon.ico",

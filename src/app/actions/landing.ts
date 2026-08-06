@@ -1,11 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
-import { PEARSON_ORG_ID } from "@/lib/tenant";
-import { boardPath } from "@/lib/paths";
+import { requirePlatformAdmin } from "@/lib/auth";
 import {
   DEFAULT_LANDING_CONTENT,
   normalizeLandingContent,
@@ -67,15 +64,6 @@ function rowToContent(row: {
     pitchParagraphs: parseParagraphs(row.pitchParagraphsJson),
     footerTagline: row.footerTagline,
   });
-}
-
-/** Platform admin only (Pearson) — marketing site is global. */
-async function requirePlatformAdmin() {
-  const user = await requireAdmin();
-  if (user.organizationId !== PEARSON_ORG_ID) {
-    redirect(boardPath(user.organizationSlug));
-  }
-  return user;
 }
 
 export async function getLandingContent(): Promise<LandingContent> {

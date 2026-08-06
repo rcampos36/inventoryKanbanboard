@@ -1,11 +1,14 @@
 import Link from "next/link";
 import { logoutAction } from "@/app/actions/auth";
+import { PEARSON_ORG_ID } from "@/lib/org-ids";
 import { boardPath } from "@/lib/paths";
 import { planHasFeature } from "@/lib/plans";
 import type { SessionUser } from "@/lib/session-types";
 
 export function AppHeaderActions({ user }: { user: SessionUser }) {
   const canReports = planHasFeature(user.organizationPlan, "reports");
+  const isPlatformAdmin =
+    user.role === "ADMIN" && user.organizationId === PEARSON_ORG_ID;
 
   return (
     <div className="flex items-center gap-1.5 sm:gap-2">
@@ -15,6 +18,15 @@ export function AppHeaderActions({ user }: { user: SessionUser }) {
           className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
         >
           Reports
+        </Link>
+      )}
+      {isPlatformAdmin && (
+        <Link
+          href="/admin/dealerships"
+          className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-2.5 py-2 text-sm font-semibold text-brand hover:bg-peach/35 sm:px-3"
+        >
+          <span className="sm:hidden">Stores</span>
+          <span className="hidden sm:inline">Dealerships</span>
         </Link>
       )}
       {user.role === "ADMIN" && (

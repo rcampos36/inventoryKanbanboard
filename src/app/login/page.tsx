@@ -2,10 +2,23 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/LoginForm";
 import { ensureBootstrapAdmin } from "@/lib/auth";
+import { PEARSON_ORG_ID } from "@/lib/org-ids";
 import { boardPath } from "@/lib/paths";
 import { readSessionUser } from "@/lib/session";
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ next?: string }>;
+}) {
+  const { next: nextRaw } = await searchParams;
+  const next =
+    typeof nextRaw === "string" &&
+    nextRaw.startsWith("/admin/") &&
+    !nextRaw.startsWith("//")
+      ? nextRaw
+      : undefined;
+
   let setupError: string | undefined;
   try {
     await ensureBootstrapAdmin();
@@ -18,6 +31,13 @@ export default async function LoginPage() {
 
   const user = await readSessionUser();
   if (user) {
+    if (
+      next &&
+      user.role === "ADMIN" &&
+      user.organizationId === PEARSON_ORG_ID
+    ) {
+      redirect(next);
+    }
     redirect(boardPath(user.organizationSlug));
   }
 
@@ -37,7 +57,7 @@ export default async function LoginPage() {
           </p>
         </div>
         <div className="rounded-2xl border border-peach/70 bg-[var(--salestower-surface)] p-8 shadow-sm">
-          <LoginForm setupError={setupError} />
+          <LoginForm setupError={setupError} next={next} />
         </div>
         <p className="mt-4 text-center text-sm text-brand/65">
           <Link href="/" className="font-semibold text-brand hover:underline">

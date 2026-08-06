@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { logoutAction, listUsersAction } from "@/app/actions/auth";
 import { requireAdmin } from "@/lib/auth";
+import { PEARSON_ORG_ID } from "@/lib/org-ids";
 import { boardPath } from "@/lib/paths";
 import { planLabel, planMaxUsers } from "@/lib/plans";
 import { AdminUsersPanel } from "@/components/AdminUsersPanel";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function AdminPage() {
   const admin = await requireAdmin();
   const users = await listUsersAction();
+  const isPlatformAdmin = admin.organizationId === PEARSON_ORG_ID;
 
   return (
     <main className="min-h-screen bg-sand">
@@ -21,6 +23,14 @@ export default async function AdminPage() {
           <h1 className="text-lg font-bold text-brand">User access</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          {isPlatformAdmin && (
+            <Link
+              href="/admin/dealerships"
+              className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
+            >
+              Dealerships
+            </Link>
+          )}
           <Link
             href={boardPath(admin.organizationSlug)}
             className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"

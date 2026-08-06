@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/db";
-import { requireAdmin } from "@/lib/auth";
+import { requirePlatformAdmin } from "@/lib/auth";
 import {
   describeResendError,
   getResend,
@@ -14,9 +14,6 @@ import {
   isDemoTimeSlot,
   isValidPreferredDemoDate,
 } from "@/lib/demo-schedule";
-import { PEARSON_ORG_ID } from "@/lib/tenant";
-import { boardPath } from "@/lib/paths";
-import { redirect } from "next/navigation";
 
 export type ScheduleDemoState = {
   ok: boolean;
@@ -157,10 +154,7 @@ export type DemoRequestRow = {
 };
 
 export async function listDemoRequestsAction(): Promise<DemoRequestRow[]> {
-  const user = await requireAdmin();
-  if (user.organizationId !== PEARSON_ORG_ID) {
-    redirect(boardPath(user.organizationSlug));
-  }
+  await requirePlatformAdmin();
 
   const rows = await prisma.demoRequest.findMany({
     orderBy: { createdAt: "desc" },

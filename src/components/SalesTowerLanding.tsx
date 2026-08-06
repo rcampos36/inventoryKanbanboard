@@ -235,12 +235,18 @@ export function SalesTowerLanding({
             <p className="mt-1 text-sm text-[var(--salestower-muted)]">
               {content.footerTagline}
             </p>
-            <p className="mt-2 text-sm">
+            <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm">
               <Link
                 href="/terms"
                 className="font-semibold text-brand/70 underline decoration-peach/70 underline-offset-2 hover:text-brand"
               >
                 Terms of Use
+              </Link>
+              <Link
+                href="/platform"
+                className="font-semibold text-brand/70 underline decoration-peach/70 underline-offset-2 hover:text-brand"
+              >
+                Backend
               </Link>
             </p>
           </div>

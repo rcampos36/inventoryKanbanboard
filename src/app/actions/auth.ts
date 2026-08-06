@@ -47,6 +47,11 @@ export async function loginAction(
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
+  const nextRaw = String(formData.get("next") ?? "").trim();
+  const next =
+    nextRaw.startsWith("/admin/") && !nextRaw.startsWith("//")
+      ? nextRaw
+      : null;
 
   if (!email || !password) {
     return { error: "Email and password are required." };
@@ -82,7 +87,7 @@ export async function loginAction(
     organizationPlan,
   });
   await setSessionCookie(token);
-  redirect(boardPath(user.organization.slug));
+  redirect(next ?? boardPath(user.organization.slug));
 }
 
 export async function logoutAction() {

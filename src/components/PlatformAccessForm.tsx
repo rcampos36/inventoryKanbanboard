@@ -2,54 +2,39 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { loginAction, type AuthFormState } from "@/app/actions/auth";
+import {
+  unlockPlatformAction,
+  type PlatformAccessFormState,
+} from "@/app/actions/platform-access";
 
-const initialState: AuthFormState = {};
+const initialState: PlatformAccessFormState = {};
 
 const inputClass =
   "w-full rounded-lg border border-peach/70 px-3 py-2.5 text-sm text-brand outline-none focus:border-brand focus:ring-2 focus:ring-brand/15";
 const labelClass = "text-xs font-semibold text-brand/70";
 
-export function LoginForm({
-  setupError,
-  next,
-}: {
-  setupError?: string;
-  next?: string;
-}) {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
+export function PlatformAccessForm() {
+  const [state, formAction, pending] = useActionState(
+    unlockPlatformAction,
+    initialState
+  );
 
   return (
     <div className="flex w-full max-w-md flex-col gap-5">
       <div>
-        <h1 className="text-2xl font-bold text-brand">Sign in</h1>
+        <h1 className="text-2xl font-bold text-brand">Platform backend</h1>
         <p className="mt-1 text-sm text-brand/60">
-          Restricted access for dealership managers. Each login opens that
-          store&apos;s board only.
+          Enter the platform password to manage dealership accounts.
         </p>
       </div>
 
-      {(setupError || state.error) && (
+      {state.error && (
         <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
-          {setupError || state.error}
+          {state.error}
         </p>
       )}
 
       <form action={formAction} className="flex flex-col gap-3">
-        {next ? <input type="hidden" name="next" value={next} /> : null}
-        <div className="flex flex-col gap-1">
-          <label className={labelClass} htmlFor="email">
-            Email
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            className={inputClass}
-          />
-        </div>
         <div className="flex flex-col gap-1">
           <label className={labelClass} htmlFor="password">
             Password
@@ -66,17 +51,16 @@ export function LoginForm({
 
         <button
           type="submit"
-          disabled={pending || Boolean(setupError)}
+          disabled={pending}
           className="mt-1 rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-sand hover:bg-[#034a5c] disabled:opacity-60"
         >
-          {pending ? "Signing in…" : "Sign in"}
+          {pending ? "Unlocking…" : "Continue"}
         </button>
       </form>
 
       <p className="text-center text-sm text-brand/65">
-        New dealership?{" "}
-        <Link href="/register" className="font-semibold text-brand hover:underline">
-          Register here
+        <Link href="/" className="font-semibold text-brand hover:underline">
+          Back to SalesTower
         </Link>
       </p>
     </div>

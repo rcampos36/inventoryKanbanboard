@@ -3,8 +3,9 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/db";
 import { readSessionUser } from "@/lib/session";
 import type { SessionUser } from "@/lib/session-types";
-import { ensureOrganizations, PEARSON_ORG } from "@/lib/tenant";
+import { ensureOrganizations, PEARSON_ORG, PEARSON_ORG_ID } from "@/lib/tenant";
 import { boardPath } from "@/lib/paths";
+import { hasPlatformAccess } from "@/lib/platform-access";
 import {
   DEFAULT_PLAN_ID,
   featureUpgradeHint,
@@ -127,6 +128,28 @@ export async function requireUser(): Promise<SessionUser> {
 export async function requireAdmin(): Promise<SessionUser> {
   const user = await requireUser();
   if (user.role !== "ADMIN") {
+    redirect(boardPath(user.organizationSlug));
+  }
+  return user;
+}
+
+/**
+ * Platform (SalesTower) admin — password unlock + Pearson Mazda admin login.
+ * Unauthenticated visitors are sent to login with a return URL to dealerships.
+ */
+export async function requirePlatformAdmin(): Promise<SessionUser> {
+  if (!(await hasPlatformAccess())) {
+    redirect("/platform");
+  }
+
+  await ensureBootstrapAdmin();
+  const session = await readSessionUser();
+  if (!session) {
+    redirect("/login?next=/admin/dealerships");
+  }
+
+  const user = await withFreshPlan(session);
+  if (user.role !== "ADMIN" || user.organizationId !== PEARSON_ORG_ID) {
     redirect(boardPath(user.organizationSlug));
   }
   return user;

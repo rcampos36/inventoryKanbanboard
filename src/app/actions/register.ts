@@ -124,6 +124,7 @@ export async function registerDealerAction(
     "admin",
     "dashboard",
     "demo",
+    "platform",
     "terms",
     "api",
   ]) {

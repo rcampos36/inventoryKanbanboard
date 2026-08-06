@@ -1,23 +1,15 @@
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { logoutAction } from "@/app/actions/auth";
 import { listDemoRequestsAction } from "@/app/actions/demo";
-import { requireAdmin } from "@/lib/auth";
+import { PlatformAdminNav } from "@/components/PlatformAdminNav";
+import { requirePlatformAdmin } from "@/lib/auth";
 import {
   demoTimeLabel,
   formatPreferredDemoDate,
 } from "@/lib/demo-schedule";
-import { PEARSON_ORG_ID } from "@/lib/tenant";
-import { boardPath } from "@/lib/paths";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDemosPage() {
-  const admin = await requireAdmin();
-  if (admin.organizationId !== PEARSON_ORG_ID) {
-    redirect(boardPath(admin.organizationSlug));
-  }
-
+  const admin = await requirePlatformAdmin();
   const requests = await listDemoRequestsAction();
 
   return (
@@ -25,7 +17,7 @@ export default async function AdminDemosPage() {
       <header className="flex flex-col gap-3 border-b border-peach/50 bg-[var(--salestower-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-wider text-brand/50">
-            Administrator
+            Platform
           </p>
           <h1 className="text-lg font-bold text-brand">Demo requests</h1>
           <p className="mt-1 max-w-xl text-sm text-brand/65">
@@ -35,28 +27,10 @@ export default async function AdminDemosPage() {
             your Resend account email so notifications can deliver.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href="/admin/landing"
-            className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
-          >
-            Landing copy
-          </Link>
-          <Link
-            href={boardPath(admin.organizationSlug)}
-            className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
-          >
-            Back to board
-          </Link>
-          <form action={logoutAction}>
-            <button
-              type="submit"
-              className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-peach/35"
-            >
-              Sign out
-            </button>
-          </form>
-        </div>
+        <PlatformAdminNav
+          organizationSlug={admin.organizationSlug}
+          active="demos"
+        />
       </header>
 
       <div className="mx-auto max-w-5xl px-4 py-6 sm:px-6">

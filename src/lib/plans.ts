@@ -4,6 +4,15 @@ export const PLAN_IDS = ["starter", "professional", "enterprise"] as const;
 
 export type PlanId = (typeof PLAN_IDS)[number];
 
+export const PLAN_STATUSES = [
+  "trialing",
+  "active",
+  "past_due",
+  "canceled",
+] as const;
+
+export type PlanStatus = (typeof PLAN_STATUSES)[number];
+
 /** Gated product capabilities. */
 export const PLAN_FEATURES = [
   "reports",
@@ -105,6 +114,23 @@ export const DEFAULT_PLAN_ID: PlanId = "professional";
 
 export function isPlanId(value: string): value is PlanId {
   return (PLAN_IDS as readonly string[]).includes(value);
+}
+
+export function isPlanStatus(value: string): value is PlanStatus {
+  return (PLAN_STATUSES as readonly string[]).includes(value);
+}
+
+export function planStatusLabel(status: PlanStatus): string {
+  switch (status) {
+    case "trialing":
+      return "Trialing";
+    case "active":
+      return "Active";
+    case "past_due":
+      return "Past due";
+    case "canceled":
+      return "Canceled";
+  }
 }
 
 export function parsePlanId(value: unknown): PlanId | null {
