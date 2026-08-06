@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDealershipAction } from "@/app/actions/dealerships";
 import { DealershipInvoicePanel } from "@/components/DealershipInvoicePanel";
+import { DealershipRemovePanel } from "@/components/DealershipRemovePanel";
 import { DealershipSubscriptionForm } from "@/components/DealershipSubscriptionForm";
 import { PlatformAdminNav } from "@/components/PlatformAdminNav";
 import { PlatformUsersPanel } from "@/components/PlatformUsersPanel";
@@ -85,6 +86,8 @@ export default async function AdminDealershipDetailPage({
           maxUsers={planMaxUsers(dealership.plan)}
           users={dealership.users}
         />
+
+        <DealershipRemovePanel dealership={dealership} />
       </div>
     </main>
   );

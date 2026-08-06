@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/auth";
 import {
@@ -22,6 +23,7 @@ import {
   resolveCustomerEmailRecipients,
   resolveFromAddress,
 } from "@/lib/mail";
+import { PEARSON_ORG_ID, SUNRISE_ORG_ID } from "@/lib/org-ids";
 import {
   formatUsdFromCents,
   isPlanId,
@@ -666,6 +668,47 @@ export async function updateDealershipInvoicePaidAction(
   } catch (error) {
     return {
       error: actionErrorMessage(error, "Could not update invoice payment status."),
+    };
+  }
+}
+
+export async function deleteDealershipAction(
+  _prev: DealershipFormState,
+  formData: FormData
+): Promise<DealershipFormState> {
+  await requirePlatformAdmin();
+
+  try {
+    const orgId = String(formData.get("organizationId") ?? "").trim();
+    const confirmName = String(formData.get("confirmName") ?? "").trim();
+
+    if (!orgId) return { error: "Missing dealership id." };
+
+    if (orgId === PEARSON_ORG_ID || orgId === SUNRISE_ORG_ID) {
+      return {
+        error:
+          "Built-in platform and demo dealerships cannot be removed.",
+      };
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true },
+    });
+    if (!org) return { error: "Dealership not found." };
+
+    if (confirmName.toLowerCase() !== org.name.toLowerCase()) {
+      return {
+        error: `Type the dealership name exactly (“${org.name}”) to confirm removal.`,
+      };
+    }
+
+    await prisma.organization.delete({ where: { id: org.id } });
+    revalidatePath("/admin/dealerships");
+    redirect("/admin/dealerships");
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not remove the dealership."),
     };
   }
 }
