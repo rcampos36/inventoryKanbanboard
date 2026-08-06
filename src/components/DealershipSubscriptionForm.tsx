@@ -61,7 +61,8 @@ export function DealershipSubscriptionForm({
     setPlanStatus(dealership.planStatus);
     setDealerCount(clampDealerCount(dealership.dealerCount, dealership.plan));
     setCustomPrice(
-      dealership.customMonthlyPriceCents != null
+      dealership.plan === "enterprise" &&
+        dealership.customMonthlyPriceCents != null
         ? String(dealership.customMonthlyPriceCents / 100)
         : ""
     );
@@ -79,12 +80,13 @@ export function DealershipSubscriptionForm({
 
   const listPrice = planMonthlyPriceCents(plan);
   const needsCustomPrice = plan === "enterprise";
-  const effectivePrice =
-    customPrice.trim() !== ""
+  const effectivePrice = needsCustomPrice
+    ? customPrice.trim() !== ""
       ? Number(customPrice)
-      : listPrice != null
-        ? listPrice / 100
-        : null;
+      : null
+    : listPrice != null
+      ? listPrice / 100
+      : null;
 
   return (
     <section className="rounded-2xl border border-peach/60 bg-[var(--salestower-surface)] p-5 shadow-sm">
@@ -123,6 +125,16 @@ export function DealershipSubscriptionForm({
                   setDealerCount((current) =>
                     clampDealerCount(current, nextPlan)
                   );
+                  if (nextPlan !== "enterprise") {
+                    setCustomPrice("");
+                  } else if (
+                    dealership.customMonthlyPriceCents != null &&
+                    dealership.plan === "enterprise"
+                  ) {
+                    setCustomPrice(
+                      String(dealership.customMonthlyPriceCents / 100)
+                    );
+                  }
                 }}
                 className={inputClass}
               >
@@ -184,41 +196,41 @@ export function DealershipSubscriptionForm({
               </select>
             </div>
 
-            <div className="flex flex-col gap-1 sm:col-span-2">
-              <label className={labelClass} htmlFor="customMonthlyPrice">
-                Agreed monthly price (USD)
-                {needsCustomPrice ? (
+            {needsCustomPrice ? (
+              <div className="flex flex-col gap-1 sm:col-span-2">
+                <label className={labelClass} htmlFor="customMonthlyPrice">
+                  Agreed monthly price (USD)
                   <span className="ml-1 font-semibold text-brand">
                     — required for Enterprise
                   </span>
-                ) : (
-                  <span className="ml-1 font-medium text-brand/50">
-                    (optional override)
-                  </span>
-                )}
-              </label>
-              <input
-                id="customMonthlyPrice"
-                name="customMonthlyPrice"
-                type="number"
-                min="1"
-                step="1"
-                required={needsCustomPrice}
-                value={customPrice}
-                onChange={(e) => setCustomPrice(e.target.value)}
-                placeholder={
-                  needsCustomPrice
-                    ? "Enter the agreed Enterprise price"
-                    : listPrice != null
-                      ? `Default ${formatUsdFromCents(listPrice)}`
-                      : "Enter agreed price"
-                }
-                className={inputClass}
-              />
-              <p className="text-[11px] text-brand/55">
-                Saved on the account and used as the default invoice amount.
-              </p>
-            </div>
+                </label>
+                <input
+                  id="customMonthlyPrice"
+                  name="customMonthlyPrice"
+                  type="number"
+                  min="1"
+                  step="1"
+                  required
+                  value={customPrice}
+                  onChange={(e) => setCustomPrice(e.target.value)}
+                  placeholder="Enter the agreed Enterprise price"
+                  className={inputClass}
+                />
+                <p className="text-[11px] text-brand/55">
+                  Saved on the account and used as the default invoice amount.
+                </p>
+              </div>
+            ) : (
+              <div className="sm:col-span-2">
+                <p className="rounded-lg border border-peach/50 bg-[var(--salestower-surface)] px-3 py-2 text-sm text-brand/70">
+                  {planLabel(plan)} uses the fixed list price
+                  {listPrice != null
+                    ? ` of ${formatUsdFromCents(listPrice)}/mo`
+                    : ""}
+                  . Agreed custom pricing applies to Enterprise only.
+                </p>
+              </div>
+            )}
           </div>
           <p className="mt-3 text-sm font-medium text-brand">
             Selected: {planLabel(plan)} · {dealerCount}{" "}

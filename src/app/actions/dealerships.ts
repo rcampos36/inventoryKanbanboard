@@ -24,6 +24,7 @@ import {
   parseDealerCount,
   planLabel,
   planMaxUsers,
+  planMonthlyPriceCents,
   type PlanId,
   type PlanStatus,
 } from "@/lib/plans";
@@ -228,17 +229,16 @@ export async function updateDealershipSubscriptionAction(
       };
     }
 
+    // Agreed custom pricing is Enterprise-only; lower tiers always use list price.
     let customMonthlyPriceCents: number | null = null;
-    if (customPriceRaw) {
+    if (planRaw === "enterprise") {
       customMonthlyPriceCents = parseDollarsToCents(customPriceRaw);
       if (customMonthlyPriceCents == null) {
-        return { error: "Enter a valid agreed monthly price greater than zero." };
+        return {
+          error:
+            "Enterprise / custom plans need an agreed monthly price before you can save.",
+        };
       }
-    } else if (planRaw === "enterprise") {
-      return {
-        error:
-          "Enterprise / custom plans need an agreed monthly price before you can save.",
-      };
     }
 
     const existing = await prisma.organization.findUnique({
@@ -265,10 +265,12 @@ export async function updateDealershipSubscriptionAction(
     });
 
     revalidateDealershipPaths(orgId);
+    const billedCents =
+      planRaw === "enterprise"
+        ? customMonthlyPriceCents
+        : planMonthlyPriceCents(planRaw);
     const priceNote =
-      customMonthlyPriceCents != null
-        ? ` at ${formatUsdFromCents(customMonthlyPriceCents)}/mo`
-        : "";
+      billedCents != null ? ` at ${formatUsdFromCents(billedCents)}/mo` : "";
     return {
       success: `Updated to ${planLabel(planRaw)} · ${dealerCount} ${dealerCount === 1 ? "dealer" : "dealers"} (${statusRaw.replace("_", " ")})${priceNote}.`,
     };

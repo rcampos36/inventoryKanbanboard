@@ -30,8 +30,9 @@ export default async function AdminDealershipDetailPage({
   if (!dealership) notFound();
 
   const billAmount =
-    dealership.customMonthlyPriceCents ??
-    planMonthlyPriceCents(dealership.plan);
+    dealership.plan === "enterprise"
+      ? dealership.customMonthlyPriceCents
+      : planMonthlyPriceCents(dealership.plan);
 
   return (
     <main className="min-h-screen bg-sand">

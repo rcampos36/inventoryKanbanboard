@@ -24,7 +24,7 @@ export function parseDollarsToCents(
 /**
  * Resolve invoice amount:
  * 1) one-off override on the send form
- * 2) saved customMonthlyPriceCents on the org (Enterprise agreed price)
+ * 2) saved customMonthlyPriceCents (Enterprise only)
  * 3) fixed plan list price (Starter / Professional)
  */
 export function resolveInvoiceAmountCents(input: {
@@ -41,6 +41,7 @@ export function resolveInvoiceAmountCents(input: {
   }
 
   if (
+    input.planId === "enterprise" &&
     typeof input.customMonthlyPriceCents === "number" &&
     input.customMonthlyPriceCents > 0
   ) {
@@ -64,6 +65,7 @@ export function defaultInvoiceAmountCents(input: {
   customMonthlyPriceCents?: number | null;
 }): number | null {
   if (
+    input.planId === "enterprise" &&
     typeof input.customMonthlyPriceCents === "number" &&
     input.customMonthlyPriceCents > 0
   ) {

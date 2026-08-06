@@ -113,12 +113,14 @@ export function DealershipInvoicePanel({
         Send invoice
       </h2>
       <p className="mb-4 text-sm text-brand/60">
-        Amount defaults from the saved agreed price
-        {dealership.customMonthlyPriceCents != null
-          ? ` (${formatUsdFromCents(dealership.customMonthlyPriceCents)}/mo)`
+        Amount defaults from
+        {dealership.plan === "enterprise"
+          ? dealership.customMonthlyPriceCents != null
+            ? ` the agreed Enterprise price (${formatUsdFromCents(dealership.customMonthlyPriceCents)}/mo)`
+            : " the agreed Enterprise price — save it on the subscription first"
           : defaultAmount != null
-            ? ` (${formatUsdFromCents(defaultAmount)}/mo ${planLabel(dealership.plan)} list price)`
-            : " — save an Enterprise price on the subscription first"}
+            ? ` the ${planLabel(dealership.plan)} list price (${formatUsdFromCents(defaultAmount)}/mo)`
+            : ` the ${planLabel(dealership.plan)} list price`}
         . Preview before sending.
       </p>
 
