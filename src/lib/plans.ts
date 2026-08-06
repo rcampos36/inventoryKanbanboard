@@ -40,6 +40,8 @@ export type PlanDefinition = {
   id: PlanId;
   name: string;
   priceLabel: string;
+  /** Monthly subscription amount in USD cents. Null = custom / quote. */
+  monthlyPriceCents: number | null;
   blurb: string;
   features: string[];
   highlighted?: boolean;
@@ -63,6 +65,7 @@ export const PLANS: PlanDefinition[] = [
     id: "starter",
     name: "Starter",
     priceLabel: "$299/mo",
+    monthlyPriceCents: 299_00,
     blurb: "One rooftop getting organized on the board.",
     features: [
       "1 dealership board",
@@ -78,6 +81,7 @@ export const PLANS: PlanDefinition[] = [
     id: "professional",
     name: "Professional",
     priceLabel: "$599/mo",
+    monthlyPriceCents: 599_00,
     blurb: "Full sales-tower visibility for an active store.",
     features: [
       "Everything in Starter",
@@ -96,6 +100,7 @@ export const PLANS: PlanDefinition[] = [
     id: "enterprise",
     name: "Enterprise",
     priceLabel: "Custom",
+    monthlyPriceCents: null,
     blurb: "Dealer groups and multi-store operations.",
     features: [
       "Everything in Professional",
@@ -153,6 +158,19 @@ export function planHasFeature(planId: PlanId, feature: PlanFeature): boolean {
 
 export function planMaxUsers(planId: PlanId): number {
   return getPlan(planId).maxUsers;
+}
+
+/** Fixed monthly price for Starter/Professional; null for Enterprise custom quotes. */
+export function planMonthlyPriceCents(planId: PlanId): number | null {
+  return getPlan(planId).monthlyPriceCents;
+}
+
+export function formatUsdFromCents(cents: number): string {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
 }
 
 export function planAllowsBoardSection(

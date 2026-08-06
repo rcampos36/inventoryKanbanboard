@@ -5,6 +5,18 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requirePlatformAdmin } from "@/lib/auth";
 import {
+  buildInvoiceEmailText,
+  buildInvoiceNumber,
+  currentBillingPeriodLabel,
+  resolveInvoiceAmountCents,
+} from "@/lib/invoices";
+import {
+  describeResendError,
+  getResend,
+  resolveFromAddress,
+} from "@/lib/mail";
+import {
+  formatUsdFromCents,
   isPlanId,
   isPlanStatus,
   planLabel,
@@ -16,6 +28,18 @@ import {
 export type DealershipFormState = {
   error?: string;
   success?: string;
+};
+
+export type DealershipInvoiceRow = {
+  id: string;
+  invoiceNumber: string;
+  plan: PlanId;
+  amountCents: number;
+  periodLabel: string;
+  recipientEmail: string;
+  status: "sent" | "failed";
+  emailError: string | null;
+  sentAt: string;
 };
 
 export type DealershipListItem = {
@@ -56,6 +80,7 @@ export type DealershipDetail = {
     role: "ADMIN" | "USER";
     createdAt: string;
   }[];
+  invoices: DealershipInvoiceRow[];
 };
 
 function actionErrorMessage(error: unknown, fallback: string): string {
@@ -120,6 +145,10 @@ export async function getDealershipAction(
           createdAt: true,
         },
       },
+      invoices: {
+        orderBy: { sentAt: "desc" },
+        take: 20,
+      },
     },
   });
   if (!org) return null;
@@ -143,6 +172,17 @@ export async function getDealershipAction(
     users: org.users.map((user) => ({
       ...user,
       createdAt: user.createdAt.toISOString(),
+    })),
+    invoices: org.invoices.map((invoice) => ({
+      id: invoice.id,
+      invoiceNumber: invoice.invoiceNumber,
+      plan: isPlanId(invoice.plan) ? invoice.plan : "professional",
+      amountCents: invoice.amountCents,
+      periodLabel: invoice.periodLabel,
+      recipientEmail: invoice.recipientEmail,
+      status: invoice.status,
+      emailError: invoice.emailError,
+      sentAt: invoice.sentAt.toISOString(),
     })),
   };
 }
@@ -374,6 +414,127 @@ export async function deleteDealershipUserAction(
   } catch (error) {
     return {
       error: actionErrorMessage(error, "Could not remove the user."),
+    };
+  }
+}
+
+export async function sendDealershipInvoiceAction(
+  _prev: DealershipFormState,
+  formData: FormData
+): Promise<DealershipFormState> {
+  await requirePlatformAdmin();
+
+  try {
+    const orgId = String(formData.get("organizationId") ?? "").trim();
+    const recipientEmail = String(formData.get("recipientEmail") ?? "")
+      .trim()
+      .toLowerCase();
+    const amountOverride = String(formData.get("amountOverride") ?? "").trim();
+    const note = String(formData.get("note") ?? "").trim();
+    const periodLabel =
+      String(formData.get("periodLabel") ?? "").trim() ||
+      currentBillingPeriodLabel();
+
+    if (!orgId) return { error: "Missing dealership id." };
+    if (!recipientEmail || !recipientEmail.includes("@")) {
+      return { error: "Enter a valid recipient email." };
+    }
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+    });
+    if (!org) return { error: "Dealership not found." };
+
+    const plan = isPlanId(org.plan) ? org.plan : "professional";
+    const amountResult = resolveInvoiceAmountCents(plan, amountOverride);
+    if ("error" in amountResult) {
+      return { error: amountResult.error };
+    }
+
+    const { amountCents } = amountResult;
+    const invoiceNumber = buildInvoiceNumber(org.slug);
+    const addressLines = [
+      org.name,
+      org.addressLine1,
+      org.addressLine2,
+      [org.city, org.state, org.postalCode].filter(Boolean).join(", ") || null,
+      org.dealerNumber ? `Dealer # ${org.dealerNumber}` : null,
+    ].filter((line): line is string => Boolean(line));
+
+    const emailBody = buildInvoiceEmailText({
+      dealershipName: org.name,
+      invoiceNumber,
+      planId: plan,
+      amountCents,
+      periodLabel,
+      note,
+      addressLines,
+    });
+
+    const resend = getResend();
+    if (!resend) {
+      return {
+        error:
+          "RESEND_API_KEY is not configured. Cannot send the invoice email.",
+      };
+    }
+
+    const from = resolveFromAddress();
+    const usingTestSender = from.toLowerCase().includes("onboarding@resend.dev");
+    let emailSent = false;
+    let emailError: string | null = null;
+
+    try {
+      const { error } = await resend.emails.send({
+        from,
+        to: [recipientEmail],
+        replyTo: "info@salestower.io",
+        ...(usingTestSender ? {} : { bcc: ["info@salestower.io"] }),
+        subject: `SalesTower invoice ${invoiceNumber} — ${formatUsdFromCents(amountCents)} (${periodLabel})`,
+        text: emailBody,
+      });
+
+      if (error) {
+        emailError = describeResendError(error);
+        console.error("Resend invoice email failed", error);
+      } else {
+        emailSent = true;
+      }
+    } catch (error) {
+      emailError = describeResendError(error);
+      console.error("Resend invoice email threw", error);
+    }
+
+    await prisma.invoice.create({
+      data: {
+        organizationId: org.id,
+        invoiceNumber,
+        plan,
+        amountCents,
+        periodLabel,
+        recipientEmail,
+        note: note || null,
+        status: emailSent ? "sent" : "failed",
+        emailError,
+      },
+    });
+
+    revalidateDealershipPaths(orgId);
+
+    if (!emailSent) {
+      return {
+        error:
+          emailError ??
+          "Invoice was saved but the email could not be delivered.",
+      };
+    }
+
+    return {
+      success: `Invoice ${invoiceNumber} for ${formatUsdFromCents(amountCents)} sent to ${recipientEmail}.`,
+    };
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not send the invoice."),
     };
   }
 }

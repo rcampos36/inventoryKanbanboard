@@ -49,6 +49,32 @@ model Organization {
   managers    Manager[]
   events      BoardEvent[]
   settings    AppSettings?
+  invoices    Invoice[]
+}
+
+enum InvoiceStatus {
+  sent
+  failed
+}
+
+/** Monthly subscription invoices emailed from the platform backend. */
+model Invoice {
+  id              String        @id @default(cuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  invoiceNumber   String        @unique
+  plan            PlanId
+  amountCents     Int
+  currency        String        @default("usd")
+  periodLabel     String
+  recipientEmail  String
+  note            String?       @db.Text
+  status          InvoiceStatus @default(sent)
+  emailError      String?
+  sentAt          DateTime      @default(now())
+  createdAt       DateTime      @default(now())
+
+  @@index([organizationId, sentAt])
 }
 
 model Car {

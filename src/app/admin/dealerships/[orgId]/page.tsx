@@ -1,12 +1,19 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDealershipAction } from "@/app/actions/dealerships";
+import { DealershipInvoicePanel } from "@/components/DealershipInvoicePanel";
 import { DealershipSubscriptionForm } from "@/components/DealershipSubscriptionForm";
 import { PlatformAdminNav } from "@/components/PlatformAdminNav";
 import { PlatformUsersPanel } from "@/components/PlatformUsersPanel";
 import { requirePlatformAdmin } from "@/lib/auth";
 import { boardPath } from "@/lib/paths";
-import { planLabel, planMaxUsers, planStatusLabel } from "@/lib/plans";
+import {
+  formatUsdFromCents,
+  planLabel,
+  planMaxUsers,
+  planMonthlyPriceCents,
+  planStatusLabel,
+} from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +29,8 @@ export default async function AdminDealershipDetailPage({
   const dealership = await getDealershipAction(orgId);
   if (!dealership) notFound();
 
+  const planAmount = planMonthlyPriceCents(dealership.plan);
+
   return (
     <main className="min-h-screen bg-sand">
       <header className="flex flex-col gap-3 border-b border-peach/50 bg-[var(--salestower-surface)] px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
@@ -32,8 +41,11 @@ export default async function AdminDealershipDetailPage({
           <h1 className="text-lg font-bold text-brand">{dealership.name}</h1>
           <p className="mt-1 text-sm text-brand/65">
             {dealership.brand} · /{dealership.slug} ·{" "}
-            {planLabel(dealership.plan)} ·{" "}
-            {planStatusLabel(dealership.planStatus)}
+            {planLabel(dealership.plan)}
+            {planAmount != null
+              ? ` (${formatUsdFromCents(planAmount)}/mo)`
+              : " (custom)"}{" "}
+            · {planStatusLabel(dealership.planStatus)}
           </p>
         </div>
         <PlatformAdminNav
@@ -59,6 +71,8 @@ export default async function AdminDealershipDetailPage({
         </div>
 
         <DealershipSubscriptionForm dealership={dealership} />
+
+        <DealershipInvoicePanel dealership={dealership} />
 
         <PlatformUsersPanel
           organizationId={dealership.id}
