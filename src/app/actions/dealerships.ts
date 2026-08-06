@@ -19,6 +19,7 @@ import {
 import {
   describeResendError,
   getResend,
+  resolveCustomerEmailRecipients,
   resolveFromAddress,
 } from "@/lib/mail";
 import {
@@ -708,20 +709,29 @@ export async function resendDealershipSerialAction(
     }
 
     const from = resolveFromAddress();
-    const recipients = admins.map((admin) => admin.email);
+    const intended = admins.map((admin) => admin.email);
     const primaryAdmin = admins[0]!;
+    const resolved = resolveCustomerEmailRecipients(intended, from);
+    if ("error" in resolved) {
+      return { error: resolved.error };
+    }
 
-    const { error } = await resend.emails.send({
+    let body = buildSubscriptionSerialEmailText({
+      dealershipName: org.name,
+      adminName: primaryAdmin.name,
+      serial: org.subscriptionSerial,
+      trialDays: TRIAL_LENGTH_DAYS,
+    });
+    if (resolved.note) {
+      body = `${body}\n\n---\n${resolved.note}`;
+    }
+
+    const { data, error } = await resend.emails.send({
       from,
-      to: recipients,
+      to: resolved.to,
       replyTo: "info@salestower.io",
       subject: `Your SalesTower activation serial — ${org.name}`,
-      text: buildSubscriptionSerialEmailText({
-        dealershipName: org.name,
-        adminName: primaryAdmin.name,
-        serial: org.subscriptionSerial,
-        trialDays: TRIAL_LENGTH_DAYS,
-      }),
+      text: body,
     });
 
     if (error) {
@@ -729,9 +739,16 @@ export async function resendDealershipSerialAction(
       return { error: describeResendError(error) };
     }
 
-    revalidateDealershipPaths(orgId);
+    console.info("Resend serial email sent", {
+      id: data?.id,
+      to: resolved.to,
+      intended,
+    });
+
     return {
-      success: `Activation serial resent to ${recipients.join(", ")}.`,
+      success: resolved.note
+        ? `Activation serial sent to ${resolved.to.join(", ")}. ${resolved.note}`
+        : `Activation serial resent to ${resolved.to.join(", ")}.`,
     };
   } catch (error) {
     return {

@@ -84,10 +84,6 @@ export function DealershipSubscriptionForm({
     if (state.success) router.refresh();
   }, [state.success, router]);
 
-  useEffect(() => {
-    if (serialState.success) router.refresh();
-  }, [serialState.success, router]);
-
   const listPrice = planMonthlyPriceCents(plan);
   const needsCustomPrice = plan === "enterprise";
   const effectivePrice = needsCustomPrice

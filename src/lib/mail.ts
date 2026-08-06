@@ -42,16 +42,63 @@ export function resolveFromAddress(): string {
   return process.env.DEMO_FROM_EMAIL?.trim() || TEST_FROM;
 }
 
+export function isResendTestSender(from: string): boolean {
+  return from.toLowerCase().includes("onboarding@resend.dev");
+}
+
 /** Prefer configured inbox, otherwise info@salestower.io when domain sending is ready. */
 export function resolveToAddress(from: string): string | null {
   const configured = process.env.DEMO_TO_EMAIL?.trim();
   if (configured) return configured;
 
-  const usingTestSender = from.toLowerCase().includes("onboarding@resend.dev");
-  if (usingTestSender) {
+  if (isResendTestSender(from)) {
     return null;
   }
   return DEFAULT_TO;
+}
+
+/**
+ * Resolve recipients for emails meant for a customer (serial, invoice, etc.).
+ * Resend's onboarding@resend.dev sender can only deliver to the account email
+ * (DEMO_TO_EMAIL). With a verified domain, send to the intended addresses.
+ */
+export function resolveCustomerEmailRecipients(
+  intendedRecipients: string[],
+  from: string
+):
+  | { to: string[]; redirectedFrom?: string[]; note?: string }
+  | { error: string } {
+  const intended = [
+    ...new Set(
+      intendedRecipients
+        .map((email) => email.trim().toLowerCase())
+        .filter(Boolean)
+    ),
+  ];
+  if (intended.length === 0) {
+    return { error: "No recipient email addresses were provided." };
+  }
+
+  if (!isResendTestSender(from)) {
+    return { to: intended };
+  }
+
+  const testInbox = process.env.DEMO_TO_EMAIL?.trim().toLowerCase();
+  if (!testInbox) {
+    return {
+      error:
+        "Using Resend's test sender (onboarding@resend.dev). Set DEMO_TO_EMAIL to your Resend account email so serial emails can be delivered, or verify salestower.io and set DEMO_FROM_EMAIL to an address on that domain.",
+    };
+  }
+
+  const alreadyTargeted = intended.includes(testInbox);
+  return {
+    to: [testInbox],
+    redirectedFrom: alreadyTargeted ? undefined : intended,
+    note: alreadyTargeted
+      ? undefined
+      : `Resend test mode redirected delivery to ${testInbox} (intended: ${intended.join(", ")}).`,
+  };
 }
 
 export const CONTACT_INBOX = DEFAULT_TO;

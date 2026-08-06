@@ -16,6 +16,7 @@ import { boardPath, isReservedPathSlug } from "@/lib/paths";
 import {
   describeResendError,
   getResend,
+  resolveCustomerEmailRecipients,
   resolveFromAddress,
 } from "@/lib/mail";
 import { parseDealerCount, parsePlanId } from "@/lib/plans";
@@ -262,24 +263,44 @@ export async function registerDealerAction(
   if (resend) {
     try {
       const from = resolveFromAddress();
-      const { error } = await resend.emails.send({
-        from,
-        to: [organization.admin.email],
-        replyTo: "info@salestower.io",
-        subject: `Your SalesTower activation serial — ${organization.org.name}`,
-        text: buildSubscriptionSerialEmailText({
+      const resolved = resolveCustomerEmailRecipients(
+        [organization.admin.email],
+        from
+      );
+      if ("error" in resolved) {
+        console.error(
+          "Subscription serial email skipped:",
+          resolved.error
+        );
+      } else {
+        let body = buildSubscriptionSerialEmailText({
           dealershipName: organization.org.name,
           adminName: organization.admin.name,
           serial: organization.org.subscriptionSerial,
           trialDays: TRIAL_LENGTH_DAYS,
-        }),
-      });
-      if (error) {
-        console.error(
-          "Resend subscription serial email failed",
-          describeResendError(error),
-          error
-        );
+        });
+        if (resolved.note) {
+          body = `${body}\n\n---\n${resolved.note}`;
+        }
+        const { data, error } = await resend.emails.send({
+          from,
+          to: resolved.to,
+          replyTo: "info@salestower.io",
+          subject: `Your SalesTower activation serial — ${organization.org.name}`,
+          text: body,
+        });
+        if (error) {
+          console.error(
+            "Resend subscription serial email failed",
+            describeResendError(error),
+            error
+          );
+        } else {
+          console.info("Resend subscription serial email sent", {
+            id: data?.id,
+            to: resolved.to,
+          });
+        }
       }
     } catch (error) {
       console.error(
