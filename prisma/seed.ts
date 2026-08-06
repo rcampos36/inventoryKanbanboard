@@ -1,9 +1,15 @@
 import "dotenv/config";
 import bcrypt from "bcryptjs";
+import { randomBytes } from "crypto";
 import { PrismaNeon } from "@prisma/adapter-neon";
 import { PrismaClient } from "../src/generated/prisma/client";
 import { INITIAL_CARS, DEFAULT_SALESPEOPLE } from "../src/lib/data";
 import { todayIsoDate } from "../src/lib/types";
+
+function seedSerial(tag: string): string {
+  const hex = randomBytes(6).toString("hex").toUpperCase();
+  return `ST-${tag.slice(0, 4)}-${hex.slice(0, 4)}-${hex.slice(4, 8)}`;
+}
 
 const connectionString =
   process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
@@ -78,6 +84,9 @@ const SUNRISE_CARS = [
 ] as const;
 
 async function ensureOrgs() {
+  const now = new Date();
+  const trialEndsAt = new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+
   await prisma.organization.upsert({
     where: { id: PEARSON_ID },
     create: {
@@ -85,8 +94,12 @@ async function ensureOrgs() {
       name: "Pearson Mazda",
       slug: "pearson-mazda",
       brand: "Mazda",
+      planStatus: "active",
+      subscriptionSerial: seedSerial("PEAR"),
+      trialEndsAt,
+      serialActivatedAt: now,
     },
-    update: { brand: "Mazda" },
+    update: { brand: "Mazda", planStatus: "active" },
   });
   await prisma.organization.upsert({
     where: { id: SUNRISE_ID },
@@ -95,8 +108,12 @@ async function ensureOrgs() {
       name: "Sunrise Honda",
       slug: "sunrise-honda",
       brand: "Honda",
+      planStatus: "active",
+      subscriptionSerial: seedSerial("SUNR"),
+      trialEndsAt,
+      serialActivatedAt: now,
     },
-    update: { brand: "Honda" },
+    update: { brand: "Honda", planStatus: "active" },
   });
 
   await prisma.appSettings.upsert({

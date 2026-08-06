@@ -21,6 +21,7 @@ import {
   planLabel,
   planMaxUsers,
 } from "@/lib/plans";
+import { orgNeedsActivation } from "@/lib/subscription-serial";
 
 export type AuthFormState = {
   error?: string;
@@ -87,6 +88,19 @@ export async function loginAction(
     organizationPlan,
   });
   await setSessionCookie(token);
+
+  if (
+    !next &&
+    orgNeedsActivation({
+      id: user.organization.id,
+      planStatus: user.organization.planStatus,
+      trialEndsAt: user.organization.trialEndsAt,
+      serialActivatedAt: user.organization.serialActivatedAt,
+    })
+  ) {
+    redirect("/activate");
+  }
+
   redirect(next ?? boardPath(user.organization.slug));
 }
 

@@ -14,8 +14,14 @@ import {
   type PlanFeature,
   type PlanId,
 } from "@/lib/plans";
+import { orgNeedsActivation } from "@/lib/subscription-serial";
 
 export type { SessionUser };
+
+export type RequireUserOptions = {
+  /** Allow access when the org trial has ended (activation page). */
+  allowTrialExpired?: boolean;
+};
 
 /**
  * Ensures an administrator exists from ADMIN_EMAIL / ADMIN_PASSWORD
@@ -105,24 +111,49 @@ export async function ensureSunriseDemoAdmin() {
   });
 }
 
-async function withFreshPlan(user: SessionUser): Promise<SessionUser> {
+async function withFreshPlan(
+  user: SessionUser,
+  options?: RequireUserOptions
+): Promise<SessionUser> {
   const org = await prisma.organization.findUnique({
     where: { id: user.organizationId },
-    select: { plan: true },
+    select: {
+      id: true,
+      plan: true,
+      planStatus: true,
+      trialEndsAt: true,
+      serialActivatedAt: true,
+    },
   });
   const plan: PlanId =
     org?.plan && isPlanId(org.plan) ? org.plan : DEFAULT_PLAN_ID;
+
+  if (
+    org &&
+    !options?.allowTrialExpired &&
+    orgNeedsActivation({
+      id: org.id,
+      planStatus: org.planStatus,
+      trialEndsAt: org.trialEndsAt,
+      serialActivatedAt: org.serialActivatedAt,
+    })
+  ) {
+    redirect("/activate");
+  }
+
   if (user.organizationPlan === plan) return user;
   return { ...user, organizationPlan: plan };
 }
 
-export async function requireUser(): Promise<SessionUser> {
+export async function requireUser(
+  options?: RequireUserOptions
+): Promise<SessionUser> {
   await ensureBootstrapAdmin();
   const user = await readSessionUser();
   if (!user) {
     redirect("/login");
   }
-  return withFreshPlan(user);
+  return withFreshPlan(user, options);
 }
 
 export async function requireAdmin(): Promise<SessionUser> {

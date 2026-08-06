@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/db";
 import { DEFAULT_BOARD_TITLE } from "@/lib/board";
 import { PEARSON_ORG_ID, SUNRISE_ORG_ID } from "@/lib/org-ids";
+import {
+  generateSubscriptionSerial,
+  trialEndsAtFrom,
+} from "@/lib/subscription-serial";
 import { todayIsoDate } from "@/lib/types";
 
 export { PEARSON_ORG_ID, SUNRISE_ORG_ID };
@@ -37,35 +41,46 @@ async function ensureOrgSettings(
   });
 }
 
+function builtInOrgCreateData(org: {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+}) {
+  const now = new Date();
+  return {
+    id: org.id,
+    name: org.name,
+    slug: org.slug,
+    brand: org.brand,
+    planStatus: "active" as const,
+    subscriptionSerial: generateSubscriptionSerial(),
+    trialEndsAt: trialEndsAtFrom(now),
+    serialActivatedAt: now,
+  };
+}
+
 /** Ensures the built-in demo dealerships exist (idempotent). */
 export async function ensureOrganizations() {
   await prisma.organization.upsert({
     where: { id: PEARSON_ORG.id },
-    create: {
-      id: PEARSON_ORG.id,
-      name: PEARSON_ORG.name,
-      slug: PEARSON_ORG.slug,
-      brand: PEARSON_ORG.brand,
-    },
+    create: builtInOrgCreateData(PEARSON_ORG),
     update: {
       name: PEARSON_ORG.name,
       slug: PEARSON_ORG.slug,
       brand: PEARSON_ORG.brand,
+      planStatus: "active",
     },
   });
 
   await prisma.organization.upsert({
     where: { id: SUNRISE_ORG.id },
-    create: {
-      id: SUNRISE_ORG.id,
-      name: SUNRISE_ORG.name,
-      slug: SUNRISE_ORG.slug,
-      brand: SUNRISE_ORG.brand,
-    },
+    create: builtInOrgCreateData(SUNRISE_ORG),
     update: {
       name: SUNRISE_ORG.name,
       slug: SUNRISE_ORG.slug,
       brand: SUNRISE_ORG.brand,
+      planStatus: "active",
     },
   });
 

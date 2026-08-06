@@ -2,6 +2,7 @@
 export const RESERVED_PATH_SLUGS = new Set([
   "login",
   "register",
+  "activate",
   "admin",
   "dashboard",
   "demo",

@@ -44,6 +44,12 @@ model Organization {
   phone        String?
   /** Manufacturer / OEM dealer code when provided at registration. */
   dealerNumber String?
+  /** Unique activation serial emailed to the registering admin. */
+  subscriptionSerial String @unique
+  /** End of the free trial window (typically createdAt + 3 days). */
+  trialEndsAt DateTime
+  /** When the subscription serial was accepted (activates the account). */
+  serialActivatedAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

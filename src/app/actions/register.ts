@@ -13,7 +13,18 @@ import {
 } from "@/lib/session";
 import { uniqueSlug } from "@/lib/slug";
 import { boardPath, isReservedPathSlug } from "@/lib/paths";
+import {
+  describeResendError,
+  getResend,
+  resolveFromAddress,
+} from "@/lib/mail";
 import { parseDealerCount, parsePlanId } from "@/lib/plans";
+import {
+  buildSubscriptionSerialEmailText,
+  generateSubscriptionSerial,
+  TRIAL_LENGTH_DAYS,
+  trialEndsAtFrom,
+} from "@/lib/subscription-serial";
 import { todayIsoDate } from "@/lib/types";
 import {
   isValidUsCity,
@@ -129,6 +140,7 @@ export async function registerDealerAction(
   for (const reserved of [
     "login",
     "register",
+    "activate",
     "admin",
     "dashboard",
     "demo",
@@ -153,6 +165,7 @@ export async function registerDealerAction(
       slug: string;
       brand: string;
       plan: typeof plan;
+      subscriptionSerial: string;
     };
     admin: {
       id: string;
@@ -163,6 +176,9 @@ export async function registerDealerAction(
   };
 
   try {
+    const subscriptionSerial = generateSubscriptionSerial();
+    const trialEndsAt = trialEndsAtFrom();
+
     organization = await prisma.$transaction(async (tx) => {
       const org = await tx.organization.create({
         data: {
@@ -179,6 +195,8 @@ export async function registerDealerAction(
           city,
           state: stateCode,
           postalCode,
+          subscriptionSerial,
+          trialEndsAt,
         },
       });
 
@@ -238,6 +256,42 @@ export async function registerDealerAction(
           ? error.message
           : "Could not create the dealership. Please try again.",
     };
+  }
+
+  const resend = getResend();
+  if (resend) {
+    try {
+      const from = resolveFromAddress();
+      const { error } = await resend.emails.send({
+        from,
+        to: [organization.admin.email],
+        replyTo: "info@salestower.io",
+        subject: `Your SalesTower activation serial — ${organization.org.name}`,
+        text: buildSubscriptionSerialEmailText({
+          dealershipName: organization.org.name,
+          adminName: organization.admin.name,
+          serial: organization.org.subscriptionSerial,
+          trialDays: TRIAL_LENGTH_DAYS,
+        }),
+      });
+      if (error) {
+        console.error(
+          "Resend subscription serial email failed",
+          describeResendError(error),
+          error
+        );
+      }
+    } catch (error) {
+      console.error(
+        "Resend subscription serial email threw",
+        describeResendError(error),
+        error
+      );
+    }
+  } else {
+    console.error(
+      "RESEND_API_KEY is not configured. Subscription serial was not emailed."
+    );
   }
 
   const token = await createSessionToken({

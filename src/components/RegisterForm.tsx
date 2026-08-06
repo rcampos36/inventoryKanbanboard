@@ -189,7 +189,9 @@ export function RegisterForm({ brands }: { brands: string[] }) {
             </p>
           </div>
           <p className="text-[11px] text-brand/55">
-            Billing checkout can be connected later. Your selection is saved on
+            Includes a 3-day trial. Your activation serial is emailed to the
+            admin account below. Billing checkout can be connected later. Your
+            selection is saved on
             the dealership now so we know which plan you want.
           </p>
         </fieldset>

@@ -157,6 +157,8 @@ interface KanbanBoardProps {
   organizationPlan?: PlanId;
   isAdmin?: boolean;
   headerActions?: React.ReactNode;
+  /** Whole days left in trial; null when no trial banner should show. */
+  trialDaysRemaining?: number | null;
   /**
    * Public sales-demo board: in-memory only, no DB writes.
    * End day advances the simulated calendar so sales move into Sold by.
@@ -175,6 +177,7 @@ export function KanbanBoard({
   organizationPlan = DEFAULT_PLAN_ID,
   isAdmin = false,
   headerActions,
+  trialDaysRemaining = null,
   sandbox = false,
 }: KanbanBoardProps) {
   const brand = organizationBrand;
@@ -1260,6 +1263,31 @@ export function KanbanBoard({
           </div>
         )}
       </header>
+
+      {!sandbox && trialDaysRemaining != null ? (
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-peach/70 bg-peach/45 px-3 py-2.5 text-brand sm:px-6">
+          <div className="min-w-0">
+            <p className="text-xs font-bold uppercase tracking-wider text-brand/60">
+              Free trial
+            </p>
+            <p className="text-sm font-semibold">
+              {trialDaysRemaining <= 1
+                ? "Trial ends today"
+                : `${trialDaysRemaining} days remaining`}
+            </p>
+            <p className="mt-0.5 text-xs text-brand/70">
+              Your activation serial was emailed to the admin who created this
+              account. You&apos;ll need it after the trial.
+            </p>
+          </div>
+          <a
+            href="/activate"
+            className="rounded-lg border border-brand/25 bg-[var(--salestower-surface)] px-3 py-2 text-sm font-semibold text-brand hover:bg-sand"
+          >
+            Enter serial
+          </a>
+        </div>
+      ) : null}
 
       {sandbox && (
         <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-amber-300/80 bg-amber-100 px-3 py-2.5 text-amber-950 sm:px-6">

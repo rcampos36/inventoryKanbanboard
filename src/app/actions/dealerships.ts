@@ -32,6 +32,10 @@ import {
   type PlanId,
   type PlanStatus,
 } from "@/lib/plans";
+import {
+  buildSubscriptionSerialEmailText,
+  TRIAL_LENGTH_DAYS,
+} from "@/lib/subscription-serial";
 
 export type DealershipFormState = {
   error?: string;
@@ -76,6 +80,9 @@ export type DealershipDetail = {
   planStatus: PlanStatus;
   dealerCount: number;
   customMonthlyPriceCents: number | null;
+  subscriptionSerial: string;
+  trialEndsAt: string;
+  serialActivatedAt: string | null;
   addressLine1: string | null;
   addressLine2: string | null;
   city: string | null;
@@ -175,6 +182,9 @@ export async function getDealershipAction(
     planStatus: isPlanStatus(org.planStatus) ? org.planStatus : "trialing",
     dealerCount: org.dealerCount,
     customMonthlyPriceCents: org.customMonthlyPriceCents,
+    subscriptionSerial: org.subscriptionSerial,
+    trialEndsAt: org.trialEndsAt.toISOString(),
+    serialActivatedAt: org.serialActivatedAt?.toISOString() ?? null,
     addressLine1: org.addressLine1,
     addressLine2: org.addressLine2,
     city: org.city,
@@ -249,7 +259,7 @@ export async function updateDealershipSubscriptionAction(
 
     const existing = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { id: true },
+      select: { id: true, serialActivatedAt: true },
     });
     if (!existing) return { error: "Dealership not found." };
 
@@ -267,6 +277,9 @@ export async function updateDealershipSubscriptionAction(
         city: city || null,
         state: state || null,
         postalCode: postalCode || null,
+        ...(statusRaw === "active" && !existing.serialActivatedAt
+          ? { serialActivatedAt: new Date() }
+          : {}),
       },
     });
 
@@ -652,6 +665,77 @@ export async function updateDealershipInvoicePaidAction(
   } catch (error) {
     return {
       error: actionErrorMessage(error, "Could not update invoice payment status."),
+    };
+  }
+}
+
+export async function resendDealershipSerialAction(
+  _prev: DealershipFormState,
+  formData: FormData
+): Promise<DealershipFormState> {
+  await requirePlatformAdmin();
+
+  try {
+    const orgId = String(formData.get("organizationId") ?? "").trim();
+    if (!orgId) return { error: "Missing dealership id." };
+
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: {
+        id: true,
+        name: true,
+        subscriptionSerial: true,
+        users: {
+          where: { role: "ADMIN" },
+          orderBy: { createdAt: "asc" },
+          select: { email: true, name: true },
+        },
+      },
+    });
+    if (!org) return { error: "Dealership not found." };
+
+    const admins = org.users;
+    if (admins.length === 0) {
+      return { error: "This dealership has no admin users to email." };
+    }
+
+    const resend = getResend();
+    if (!resend) {
+      return {
+        error:
+          "RESEND_API_KEY is not configured. Cannot send the serial email.",
+      };
+    }
+
+    const from = resolveFromAddress();
+    const recipients = admins.map((admin) => admin.email);
+    const primaryAdmin = admins[0]!;
+
+    const { error } = await resend.emails.send({
+      from,
+      to: recipients,
+      replyTo: "info@salestower.io",
+      subject: `Your SalesTower activation serial — ${org.name}`,
+      text: buildSubscriptionSerialEmailText({
+        dealershipName: org.name,
+        adminName: primaryAdmin.name,
+        serial: org.subscriptionSerial,
+        trialDays: TRIAL_LENGTH_DAYS,
+      }),
+    });
+
+    if (error) {
+      console.error("Resend serial email failed", error);
+      return { error: describeResendError(error) };
+    }
+
+    revalidateDealershipPaths(orgId);
+    return {
+      success: `Activation serial resent to ${recipients.join(", ")}.`,
+    };
+  } catch (error) {
+    return {
+      error: actionErrorMessage(error, "Could not resend the serial email."),
     };
   }
 }

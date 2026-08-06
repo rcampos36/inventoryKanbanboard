@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  resendDealershipSerialAction,
   updateDealershipSubscriptionAction,
   type DealershipDetail,
   type DealershipFormState,
@@ -50,8 +51,13 @@ export function DealershipSubscriptionForm({
       ? String(dealership.customMonthlyPriceCents / 100)
       : ""
   );
+  const [copied, setCopied] = useState(false);
   const [state, formAction, pending] = useActionState(
     updateDealershipSubscriptionAction,
+    initialState
+  );
+  const [serialState, serialAction, serialPending] = useActionState(
+    resendDealershipSerialAction,
     initialState
   );
   const dealerCountOptions = planDealerCountOptions(plan);
@@ -78,6 +84,10 @@ export function DealershipSubscriptionForm({
     if (state.success) router.refresh();
   }, [state.success, router]);
 
+  useEffect(() => {
+    if (serialState.success) router.refresh();
+  }, [serialState.success, router]);
+
   const listPrice = planMonthlyPriceCents(plan);
   const needsCustomPrice = plan === "enterprise";
   const effectivePrice = needsCustomPrice
@@ -97,6 +107,57 @@ export function DealershipSubscriptionForm({
         Update this account&apos;s plan anytime. Saving applies feature access
         and invoice pricing for the store.
       </p>
+
+      <div className="mb-4 rounded-xl border border-peach/50 bg-sand/40 p-4">
+        <p className="text-xs font-bold uppercase tracking-wider text-brand/55">
+          Activation serial
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <code className="rounded-lg border border-peach/60 bg-[var(--salestower-surface)] px-3 py-2 font-mono text-sm tracking-wide text-brand">
+            {dealership.subscriptionSerial}
+          </code>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(
+                  dealership.subscriptionSerial
+                );
+                setCopied(true);
+                window.setTimeout(() => setCopied(false), 1500);
+              } catch {
+                setCopied(false);
+              }
+            }}
+            className="rounded-lg border border-peach/70 px-3 py-1.5 text-xs font-semibold text-brand hover:bg-peach/35"
+          >
+            {copied ? "Copied" : "Copy"}
+          </button>
+        </div>
+        <p className="mt-2 text-xs text-brand/60">
+          Trial ends{" "}
+          {new Date(dealership.trialEndsAt).toLocaleString()}
+          {dealership.serialActivatedAt
+            ? ` · Activated ${new Date(dealership.serialActivatedAt).toLocaleString()}`
+            : " · Not activated yet"}
+        </p>
+        <form action={serialAction} className="mt-3">
+          <input type="hidden" name="organizationId" value={dealership.id} />
+          {serialState.error ? (
+            <p className="mb-2 text-sm text-rose-700">{serialState.error}</p>
+          ) : null}
+          {serialState.success ? (
+            <p className="mb-2 text-sm text-emerald-700">{serialState.success}</p>
+          ) : null}
+          <button
+            type="submit"
+            disabled={serialPending}
+            className="rounded-lg border border-peach/70 bg-[var(--salestower-surface)] px-3 py-1.5 text-xs font-semibold text-brand hover:bg-peach/35 disabled:opacity-60"
+          >
+            {serialPending ? "Sending…" : "Resend serial email"}
+          </button>
+        </form>
+      </div>
 
       <form
         key={`${dealership.id}-${dealership.updatedAt}`}
