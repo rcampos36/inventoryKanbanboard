@@ -35,7 +35,7 @@ export async function buildInvoicePdf(
     margins: { top: 54, bottom: 54, left: 54, right: 54 },
     info: {
       Title: `Invoice ${input.invoiceNumber}`,
-      Author: "SalesTower",
+      Author: "SalesTower Technologies LLC",
       Subject: `Subscription invoice for ${input.dealershipName}`,
     },
   });
@@ -51,8 +51,8 @@ export async function buildInvoicePdf(
   doc
     .fillColor(BRAND)
     .font("Helvetica-Bold")
-    .fontSize(22)
-    .text("SalesTower", { continued: false });
+    .fontSize(20)
+    .text("SalesTower Technologies LLC", { continued: false });
 
   doc
     .moveDown(0.2)
@@ -186,7 +186,7 @@ export async function buildInvoicePdf(
     .font("Helvetica")
     .fontSize(9)
     .text("Thank you for your business.", { align: "left" })
-    .text("SalesTower Billing · info@salestower.io");
+    .text("SalesTower Technologies LLC · info@salestower.io");
 
   doc.end();
   return done;
