@@ -133,6 +133,8 @@ export function buildInvoiceEmailText(input: {
   }
 
   lines.push(
+    "A PDF copy of this invoice is attached for printing or your records.",
+    "",
     "Payment instructions",
     "Please remit the amount due by ACH or check for this monthly subscription.",
     "Reply to this email if you need bank / ACH details or have billing questions.",

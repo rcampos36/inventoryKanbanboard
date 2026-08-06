@@ -13,6 +13,10 @@ import {
   resolveInvoiceAmountCents,
 } from "@/lib/invoices";
 import {
+  buildInvoicePdf,
+  invoicePdfFilename,
+} from "@/lib/invoice-pdf";
+import {
   describeResendError,
   getResend,
   resolveFromAddress,
@@ -520,6 +524,23 @@ export async function sendDealershipInvoiceAction(
     let emailSent = false;
     let emailError: string | null = null;
 
+    let pdfBuffer: Buffer;
+    try {
+      pdfBuffer = await buildInvoicePdf({
+        dealershipName: org.name,
+        invoiceNumber,
+        planId: plan,
+        amountCents,
+        periodLabel,
+        note,
+        addressLines,
+        recipientEmail,
+      });
+    } catch (error) {
+      console.error("Invoice PDF generation failed", error);
+      return { error: "Could not generate the invoice PDF." };
+    }
+
     try {
       const { error } = await resend.emails.send({
         from,
@@ -528,6 +549,12 @@ export async function sendDealershipInvoiceAction(
         ...(usingTestSender ? {} : { bcc: ["info@salestower.io"] }),
         subject: `SalesTower invoice ${invoiceNumber} — ${formatUsdFromCents(amountCents)} (${periodLabel})`,
         text: emailBody,
+        attachments: [
+          {
+            filename: invoicePdfFilename(invoiceNumber),
+            content: pdfBuffer,
+          },
+        ],
       });
 
       if (error) {

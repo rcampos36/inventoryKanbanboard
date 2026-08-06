@@ -266,6 +266,7 @@ export function DealershipInvoicePanel({
                       {previewAmount != null
                         ? ` · ${formatUsdFromCents(previewAmount)}`
                         : ""}
+                      . A PDF invoice will be attached.
                     </p>
                   </div>
                   <pre className="flex-1 overflow-y-auto whitespace-pre-wrap px-5 py-4 font-sans text-sm leading-relaxed text-brand sm:px-6">
