@@ -19,6 +19,7 @@ interface WorkingDealColumnProps {
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onEditExteriorColor?: (carId: string) => void;
+  onEditWorkingDealNote?: (carId: string) => void;
 }
 
 function initials(name: string): string {
@@ -37,6 +38,7 @@ export function WorkingDealColumn({
   onMove,
   onEditCheckoutDates,
   onEditExteriorColor,
+  onEditWorkingDealNote,
 }: WorkingDealColumnProps) {
   const containerId = workingDealContainerId(salesperson.id);
   const { setNodeRef, isOver } = useDroppable({
@@ -82,6 +84,7 @@ export function WorkingDealColumn({
               onMove={onMove}
               onEditCheckoutDates={onEditCheckoutDates}
               onEditExteriorColor={onEditExteriorColor}
+              onEditWorkingDealNote={onEditWorkingDealNote}
             />
           ))}
         </SortableContext>

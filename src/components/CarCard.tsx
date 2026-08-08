@@ -35,6 +35,7 @@ interface CarCardProps {
   onMove?: (carId: string, targetContainerId: string) => void;
   onEditCheckoutDates?: (carId: string) => void;
   onEditExteriorColor?: (carId: string) => void;
+  onEditWorkingDealNote?: (carId: string) => void;
   onReviewOvernightDue?: (carId: string) => void;
   onRequestHalfDeal?: (carId: string) => void;
   onHalfDealWith?: (carId: string, partnerId: string) => void;
@@ -48,6 +49,7 @@ export function CarCard({
   onMove,
   onEditCheckoutDates,
   onEditExteriorColor,
+  onEditWorkingDealNote,
   onReviewOvernightDue,
   onRequestHalfDeal,
   onHalfDealWith,
@@ -315,6 +317,33 @@ export function CarCard({
           className="text-left text-[11px] font-semibold text-black/60 hover:text-black"
         >
           Add paint color…
+        </button>
+      ) : null}
+
+      {working && car.note ? (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditWorkingDealNote?.(car.id);
+          }}
+          className="line-clamp-2 text-left text-[11px] font-semibold leading-snug text-black/80 hover:text-black"
+          title="Edit deal note"
+        >
+          {car.note}
+        </button>
+      ) : working && onEditWorkingDealNote ? (
+        <button
+          type="button"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onEditWorkingDealNote(car.id);
+          }}
+          className="text-left text-[11px] font-semibold text-black/60 hover:text-black"
+        >
+          Add note…
         </button>
       ) : null}
 

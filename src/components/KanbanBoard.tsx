@@ -35,6 +35,7 @@ import {
   managerContainerId,
   monthKeyFromDate,
   needsCheckoutDates,
+  needsWorkingDealNote,
   overnightContainerId,
   saleCreditFor,
   salespersonContainerId,
@@ -85,6 +86,7 @@ import { CheckoutDatesModal } from "./CheckoutDatesModal";
 import { ExteriorColorModal } from "./ExteriorColorModal";
 import { OvernightDueModal } from "./OvernightDueModal";
 import { HalfDealModal } from "./HalfDealModal";
+import { WorkingDealNoteModal } from "./WorkingDealNoteModal";
 import { ConfirmClearBoardModal } from "./ConfirmClearBoardModal";
 import { ImportInventoryModal } from "./ImportInventoryModal";
 import { SalespeopleProvider } from "./SalespeopleContext";
@@ -250,6 +252,14 @@ export function KanbanBoard({
     returnDate: string;
     tagNumber: string;
     mode: "assign" | "edit";
+  } | null>(null);
+  const [workingDealNotePrompt, setWorkingDealNotePrompt] = useState<{
+    carId: string;
+    targetContainerId: string;
+    initialNote: string;
+    mode: "assign" | "edit";
+    /** When true, the car is already in the target lane (drag-drop). */
+    alreadyMoved: boolean;
   } | null>(null);
   const [overnightDueCarId, setOvernightDueCarId] = useState<string | null>(
     null
@@ -626,26 +636,41 @@ export function KanbanBoard({
   function moveCar(
     carId: string,
     targetContainerId: string,
-    checkoutDates?: CheckoutDates
+    checkoutDates?: CheckoutDates,
+    note?: string
   ) {
     const found = findCar(carId);
     if (!found) return;
     const { car, containerId: source } = found;
 
-    // Editing dates in place (same overnight container).
+    // Editing dates or note in place (same container).
     if (source === targetContainerId) {
-      if (!checkoutDates) return;
-      const updated: Car = {
-        ...car,
-        outDate: checkoutDates.outDate,
-        returnDate: checkoutDates.returnDate,
-        tagNumber: checkoutDates.tagNumber,
-      };
-      setBoard((prev) => ({
-        ...prev,
-        [source]: prev[source].map((c) => (c.id === carId ? updated : c)),
-      }));
-      persistCar(updated);
+      if (checkoutDates) {
+        const updated: Car = {
+          ...car,
+          outDate: checkoutDates.outDate,
+          returnDate: checkoutDates.returnDate,
+          tagNumber: checkoutDates.tagNumber,
+        };
+        setBoard((prev) => ({
+          ...prev,
+          [source]: prev[source].map((c) => (c.id === carId ? updated : c)),
+        }));
+        persistCar(updated);
+        return;
+      }
+      if (note !== undefined) {
+        const trimmed = note.trim();
+        const updated: Car = {
+          ...car,
+          note: trimmed || undefined,
+        };
+        setBoard((prev) => ({
+          ...prev,
+          [source]: prev[source].map((c) => (c.id === carId ? updated : c)),
+        }));
+        persistCar(updated);
+      }
       return;
     }
 
@@ -654,7 +679,8 @@ export function KanbanBoard({
       targetContainerId,
       checkoutDates,
       dailySalesDay,
-      calendarDay
+      calendarDay,
+      note
     );
     setBoard((prev) => ({
       ...prev,
@@ -680,7 +706,30 @@ export function KanbanBoard({
       return;
     }
 
+    if (needsWorkingDealNote(targetContainerId)) {
+      setWorkingDealNotePrompt({
+        carId,
+        targetContainerId,
+        initialNote: found.car.note ?? "",
+        mode: "assign",
+        alreadyMoved: false,
+      });
+      return;
+    }
+
     moveCar(carId, targetContainerId);
+  }
+
+  function openWorkingDealNoteEditor(carId: string) {
+    const found = findCar(carId);
+    if (!found) return;
+    setWorkingDealNotePrompt({
+      carId,
+      targetContainerId: found.containerId,
+      initialNote: found.car.note ?? "",
+      mode: "edit",
+      alreadyMoved: true,
+    });
   }
 
   function assignHalfDeal(
@@ -978,6 +1027,18 @@ export function KanbanBoard({
         returnDate: car.returnDate ?? tomorrowIsoDate(),
         tagNumber: car.tagNumber ?? "",
         mode: "assign",
+      });
+    } else if (
+      needsWorkingDealNote(currentContainer) &&
+      cameFromElsewhere &&
+      car
+    ) {
+      setWorkingDealNotePrompt({
+        carId: activeId,
+        targetContainerId: currentContainer,
+        initialNote: car.note ?? "",
+        mode: "assign",
+        alreadyMoved: true,
       });
     }
     dragSourceRef.current = null;
@@ -1583,6 +1644,7 @@ export function KanbanBoard({
                           cars={board[workingDealContainerId(person.id)] ?? []}
                           onMove={requestMove}
                           onEditExteriorColor={setExteriorColorCarId}
+                          onEditWorkingDealNote={openWorkingDealNoteEditor}
                         />
                       </TeamLaneItem>
                     ))}
@@ -1793,6 +1855,38 @@ export function KanbanBoard({
         onConfirm={(exteriorColor) => {
           if (!exteriorColorCarId) return;
           saveExteriorColor(exteriorColorCarId, exteriorColor);
+        }}
+      />
+
+      <WorkingDealNoteModal
+        open={Boolean(workingDealNotePrompt)}
+        mode={workingDealNotePrompt?.mode}
+        stockNumber={
+          workingDealNotePrompt
+            ? findCar(workingDealNotePrompt.carId)?.car.stockNumber
+            : undefined
+        }
+        initialNote={workingDealNotePrompt?.initialNote}
+        onClose={() => setWorkingDealNotePrompt(null)}
+        onSkip={() => {
+          if (!workingDealNotePrompt) return;
+          if (!workingDealNotePrompt.alreadyMoved) {
+            moveCar(
+              workingDealNotePrompt.carId,
+              workingDealNotePrompt.targetContainerId
+            );
+          }
+          setWorkingDealNotePrompt(null);
+        }}
+        onConfirm={(note) => {
+          if (!workingDealNotePrompt) return;
+          moveCar(
+            workingDealNotePrompt.carId,
+            workingDealNotePrompt.targetContainerId,
+            undefined,
+            note
+          );
+          setWorkingDealNotePrompt(null);
         }}
       />
 

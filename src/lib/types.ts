@@ -31,6 +31,8 @@ export interface Car {
   homeColumnId?: string;
   /** Exterior paint / body color name of the vehicle. */
   exteriorColor?: string;
+  /** Optional note on the chip (used for working deals). */
+  note?: string;
   price?: number;
 }
 
@@ -211,6 +213,11 @@ export function needsCheckoutDates(containerId: string): boolean {
   return isOvernightContainer(containerId);
 }
 
+/** Working-deal lanes offer an optional note on the chip. */
+export function needsWorkingDealNote(containerId: string): boolean {
+  return isWorkingDealContainer(containerId);
+}
+
 export function isCheckoutAssignment(car: Car): boolean {
   return Boolean(car.overnightId);
 }
@@ -231,7 +238,8 @@ export function applyContainerLocation(
   containerId: string,
   checkoutDates?: CheckoutDates,
   saleDate?: string,
-  asOf?: string
+  asOf?: string,
+  note?: string
 ): Car {
   const location = containerToLocation(containerId);
   const next: Car = { ...car, ...location };
@@ -239,6 +247,8 @@ export function applyContainerLocation(
   const isSold = Boolean(location.salespersonId);
   const wasCheckout = isCheckoutAssignment(car);
   const isCheckout = needsCheckoutDates(containerId);
+  const wasWorking = isWorkingDeal(car);
+  const isWorking = isWorkingDealContainer(containerId);
 
   if (isSold) {
     // Newly sold: use the active sales day (or today). Never stamp past `asOf`.
@@ -287,6 +297,19 @@ export function applyContainerLocation(
     next.returnDate = undefined;
     next.tagNumber = undefined;
     next.homeColumnId = undefined;
+  }
+
+  if (isWorking) {
+    if (note !== undefined) {
+      const trimmed = note.trim();
+      next.note = trimmed || undefined;
+    } else if (wasWorking) {
+      next.note = car.note;
+    } else {
+      next.note = undefined;
+    }
+  } else {
+    next.note = undefined;
   }
 
   return next;
@@ -350,6 +373,7 @@ export function applyHalfDeal(
     returnDate: undefined,
     tagNumber: undefined,
     homeColumnId: undefined,
+    note: undefined,
     soldAt: wasSold
       ? car.soldAt
         ? clampSaleDate(car.soldAt, asOf)

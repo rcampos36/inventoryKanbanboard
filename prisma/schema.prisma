@@ -112,6 +112,8 @@ model Car {
   homeColumnId    String?
   /** Exterior paint / body color name of the vehicle. */
   exteriorColor   String?
+  /** Optional note shown on the chip (e.g. working-deal context). */
+  note            String?
   price           Int?
   position        Int      @default(0)
   createdAt       DateTime @default(now())
